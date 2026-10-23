@@ -1,0 +1,12 @@
+/* Design tokens from spec 9.4 (palette) and 9.8 (UI). */
+:root {
+  --color-shadow: #1b1b2f;
+  --color-sky: #9fd8ff;
+  --color-grass: #7ed957;
+  --color-primary-green: #4cd964;
+  --color-secondary-blue: #3fa9f5;
+  --color-buy-yellow: #ffcc00;
+  --color-danger-red: #ff4d4d;
+  --font-title: 'Lilita One', 'Arial Black', sans-serif;
+  --font-body: 'Nunito', system-ui, sans-serif;
+}

@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Test output
+test-results/
+playwright-report/
+blob-report/
+coverage/
+
+# Generated asset output (spec 12.1)
+assets-build/
+
+# Balancing bot output (spec 16.4)
+balance-report/
+
+# Local environment files (spec 13.6)
+.env.local
+.env.*.local
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Editor and OS noise
+.DS_Store
