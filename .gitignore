@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Local agent worktrees, one per parallel session (spec 13.10)
+.worktrees/
+
 # Build output
 dist/
 *.tsbuildinfo
