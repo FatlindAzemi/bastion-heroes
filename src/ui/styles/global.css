@@ -52,11 +52,51 @@ body {
 }
 
 .boot-screen {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
   height: 100%;
+  padding-top: clamp(16px, 5.5vh, 60px);
+}
+
+/* Soft dark edges keep the eye on the title and the gate (spec 9.8 readability). */
+.boot-screen__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, rgba(255, 244, 214, 0.2) 0%, rgba(255, 244, 214, 0) 42%),
+    radial-gradient(
+      ellipse at 50% 44%,
+      rgba(27, 27, 47, 0) 46%,
+      rgba(27, 27, 47, 0.14) 78%,
+      rgba(27, 27, 47, 0.3) 100%
+    );
+}
+
+.boot-screen__lockup {
+  position: relative;
+  z-index: 1;
+  animation: boot-lockup-float 6s ease-in-out infinite;
+}
+
+/* Warm halo behind the logo so the white fill stays readable on the bright sky. */
+.boot-screen__lockup::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -34% -18%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 246, 220, 0.5) 0%,
+    rgba(255, 246, 220, 0.18) 55%,
+    rgba(255, 246, 220, 0) 75%
+  );
+  filter: blur(6px);
 }
 
 /* Spec 9.8: title = Lilita One, white fill, 3 px outline #1B1B2F, drop shadow 0 3px rgba(0,0,0,0.35). */
@@ -64,10 +104,11 @@ body {
   margin: 0;
   color: #ffffff;
   font-family: var(--font-title);
-  font-size: clamp(48px, 11vw, 120px);
+  font-size: clamp(46px, 10.5vw, 116px);
   font-weight: 400;
   line-height: 1;
   letter-spacing: 1px;
+  animation: boot-title-drop 0.85s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
   text-shadow:
     3px 0 0 #1b1b2f,
     -3px 0 0 #1b1b2f,
@@ -77,5 +118,33 @@ body {
     -2px -2px 0 #1b1b2f,
     2px -2px 0 #1b1b2f,
     -2px 2px 0 #1b1b2f,
-    0 6px 12px rgba(0, 0, 0, 0.35);
+    0 7px 14px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes boot-title-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-26px) scale(1.06);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes boot-lockup-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-screen__lockup,
+  .boot-screen__title {
+    animation: none;
+  }
 }
