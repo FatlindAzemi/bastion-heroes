@@ -1,0 +1,18 @@
+# Local agent worktrees, one per parallel session (spec 13.10)
+.worktrees/
+
+# Dependencies and generated output (same folders as .gitignore and the ESLint ignores)
+node_modules/
+dist/
+test-results/
+playwright-report/
+blob-report/
+coverage/
+assets-build/
+balance-report/
+
+# Human-owned documents: the spec is the single source of truth and stays verbatim
+# (spec 1.1), the templates are fixed text from spec 13.4 and 13.5.
+docs/
+.github/ISSUE_TEMPLATE/
+.github/pull_request_template.md
