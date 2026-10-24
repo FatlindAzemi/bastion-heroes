@@ -1,4 +1,5 @@
 import { enemyById, rules } from '../../data';
+import { enemyArmor } from '../enemies/armor';
 import { ticksFromSeconds } from '../placement';
 import type { ComboId, ElementKind, EnemyState, SimEvent, SimState } from '../types';
 import { applyArmorMultiplier, type DamageType } from './damage';
@@ -38,7 +39,7 @@ function applyComboDamage(
   if (enemyDef === undefined) {
     return;
   }
-  const finalAmount = applyArmorMultiplier(amount, damageType, enemyDef.armor);
+  const finalAmount = applyArmorMultiplier(amount, damageType, enemyArmor(enemy, enemyDef));
   enemy.hp -= finalAmount;
   events.push({ type: 'hit', targetId: enemy.id, amount: finalAmount, damageType, crit: false });
 }

@@ -1,5 +1,6 @@
-import { enemyById, rules } from '../data';
+import { rules } from '../data';
 import type { LevelDef } from '../data';
+import { spawnEnemy } from './enemies/spawn';
 import { ENEMY_SPAWN_X } from './grid';
 import { ticksFromSeconds } from './placement';
 import type { PendingSpawn, Rng, SimEvent, SimState, WaveState } from './types';
@@ -207,38 +208,9 @@ function spawnDueEnemies(state: SimState, level: LevelDef, events: SimEvent[]): 
     if (spawn === undefined) {
       return;
     }
-    spawnEnemy(state, spawn, wave.index, events);
+    spawnEnemy(state, spawn.enemyId, spawn.lane, ENEMY_SPAWN_X, wave.index, events);
     wave.nextSpawnTick += spawnGapTicks;
   }
-}
-
-/** Spawns one enemy at the enemy spawn point with its data hp (spec 3.1, 6.1, 11.3). */
-function spawnEnemy(
-  state: SimState,
-  spawn: PendingSpawn,
-  waveIndex: number,
-  events: SimEvent[],
-): void {
-  const enemyDef = enemyById[spawn.enemyId];
-  if (enemyDef === undefined) {
-    return;
-  }
-  const id = state.nextId;
-  state.nextId += 1;
-  state.enemies.push({
-    id,
-    enemyId: spawn.enemyId,
-    lane: spawn.lane,
-    x: ENEMY_SPAWN_X,
-    hp: enemyDef.hp,
-    maxHp: enemyDef.hp,
-    waveIndex,
-    blockedByDefenderId: null,
-    nextBiteTick: null,
-    statuses: [],
-    comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
-  });
-  events.push({ type: 'enemySpawned', id, enemyId: spawn.enemyId, lane: spawn.lane });
 }
 
 /**

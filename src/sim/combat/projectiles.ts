@@ -1,4 +1,6 @@
 import { enemyById, rules } from '../../data';
+import { enemyArmor } from '../enemies/armor';
+import { absorbShieldHit, hasShield, shieldBlocksProjectile } from '../enemies/shieldbearer';
 import { ENEMY_SPAWN_X } from '../grid';
 import type {
   DefenderState,
@@ -112,22 +114,31 @@ function findHitEnemy(
   return hit;
 }
 
-/** Applies one rounded hit to an enemy, its status and the 11.3 hit event (spec 4.2, 4.5). */
+/**
+ * Applies one rounded hit to an enemy, its status and the 11.3 hit event
+ * (spec 4.2, 4.5, 6.2). Returns true when the hit was absorbed by a shield:
+ * a `straight`/`diagonal` projectile hits the right-facing shield first, so the
+ * body, its statuses and the combos are untouched.
+ */
 function applyHit(
   state: SimState,
   enemy: EnemyState,
   projectile: ProjectileState,
   events: SimEvent[],
   ratio = 1,
-): void {
+): boolean {
   const enemyDef = enemyById[enemy.enemyId];
   if (enemyDef === undefined) {
-    return;
+    return false;
+  }
+  if (hasShield(enemy, enemyDef) && shieldBlocksProjectile(projectile)) {
+    absorbShieldHit(enemy, enemyDef, projectile, events);
+    return true;
   }
   // Shatter doubles the hit and ends the Freeze (spec 4.6); the hit then lands.
   const shatterMultiplier = applyShatter(state.tick, projectile.damageType, enemy, events);
   const fullAmount =
-    applyArmorMultiplier(projectile.damage, projectile.damageType, enemyDef.armor) *
+    applyArmorMultiplier(projectile.damage, projectile.damageType, enemyArmor(enemy, enemyDef)) *
     shatterMultiplier;
   const amount = ratio === 1 ? fullAmount : scaleDamage(fullAmount, ratio);
   enemy.hp -= amount;
@@ -151,6 +162,7 @@ function applyHit(
     );
   }
   applyAfterHitCombos(state, state.tick, projectile.element, projectile.damageType, enemy, events);
+  return false;
 }
 
 /**
@@ -219,7 +231,11 @@ function updateMovingProjectile(
   }
   const hitEnemy = findHitEnemy(state.enemies, projectile, previousX);
   if (hitEnemy !== undefined) {
-    applyHit(state, hitEnemy, projectile, events);
+    const hitShield = applyHit(state, hitEnemy, projectile, events);
+    if (hitShield) {
+      // Straight/diagonal projectiles stop on the right-facing shield (spec 6.2).
+      return true;
+    }
     if (projectile.piercesRemaining > 0) {
       // ★3 piercing_arrow: the projectile passes through and keeps flying (spec 5.2).
       projectile.piercesRemaining -= 1;

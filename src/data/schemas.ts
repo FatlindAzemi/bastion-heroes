@@ -93,11 +93,33 @@ export const EnemyDef = z.object({
   hp: z.number().int().positive(),
   armor: z.enum(['light', 'armored', 'spectral']),
   speed: z.number().positive(),
-  biteDamage: z.number().int(),
-  biteIntervalS: z.number().positive(),
+  /** Attack damage; 0 for enemies that cannot attack (Bat Swarm's "—", spec 6.1). */
+  biteDamage: z.number().int().nonnegative(),
+  /** Attack interval; omitted for enemies that cannot attack (Bat Swarm's "—", spec 6.1). */
+  biteIntervalS: z.number().positive().optional(),
   /** Extension: the Flying column of section 6.1 has no field in spec 11.5. */
   isFlying: z.boolean().default(false),
   special: z.string().optional(),
+  /** Extension: the shield of section 6.2 (Shieldbearer: 600). */
+  shieldHp: z.number().int().positive().optional(),
+  /** Extension: the armor type of that shield (Shieldbearer: Armored). */
+  shieldArmor: z.enum(['light', 'armored', 'spectral']).optional(),
+  /** Extension: health at which the armor breaks (Pot-Head Gloomling: 200, section 6.2). */
+  armorBreakHp: z.number().int().positive().optional(),
+  /** Extension: armor type after the break (Pot-Head Gloomling: Light, section 6.2). */
+  armorAfterBreak: z.enum(['light', 'armored', 'spectral']).optional(),
+  /** Extension: health restored by one heal pulse (Gloom Priest: 60, section 6.2). */
+  healAmount: z.number().int().positive().optional(),
+  /** Extension: heal radius in tiles (Gloom Priest: 1.5, section 6.2). */
+  healRadiusTiles: z.number().positive().optional(),
+  /** Extension: seconds between two heal pulses (Gloom Priest: 3.0, section 6.2). */
+  healIntervalS: z.number().positive().optional(),
+  /** Extension: health ratio at which the throw triggers (Gloom Ogre: 0.5, section 6.2). */
+  throwAtHealthRatio: z.number().positive().max(1).optional(),
+  /** Extension: the enemy thrown by that trigger (Gloom Ogre: gloomling, section 6.2). */
+  throwEnemyId: z.string().optional(),
+  /** Extension: how many tiles the thrown enemy lands forward (Gloom Ogre: 3, section 6.2). */
+  throwDistanceTiles: z.number().positive().optional(),
   isBoss: z.boolean().default(false),
   /** Extension: the "Build in" column of section 6.1, like DefenderDef.milestone. */
   milestone: z.enum(['M1', 'M2', 'M7']),

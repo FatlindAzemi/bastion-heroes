@@ -12,7 +12,13 @@ import { pyroFox } from './defenders/pyro_fox';
 import { runeArcher } from './defenders/rune_archer';
 import { snowpupYeti } from './defenders/snowpup_yeti';
 import { sparkboltGremlin } from './defenders/sparkbolt_gremlin';
+import { batSwarm } from './enemies/bat_swarm';
+import { gloomOgre } from './enemies/gloom_ogre';
+import { gloomPriest } from './enemies/gloom_priest';
 import { gloomling } from './enemies/gloomling';
+import { pothead } from './enemies/pothead';
+import { shadeWisp } from './enemies/shade_wisp';
+import { shieldbearer } from './enemies/shieldbearer';
 import { w1_l01 } from './levels/w1_l01';
 import { rules } from './rules';
 
@@ -33,8 +39,16 @@ export const defenders: readonly DefenderDef[] = [
   sparkboltGremlin,
 ];
 
-/** Every enemy definition, ordered by id (the M1 set of spec 14 row 1.2). */
-export const enemies: readonly EnemyDef[] = [gloomling];
+/** Every enemy definition, ordered by id (the M1+M2 set of spec 14 rows 1.2 and 2.6). */
+export const enemies: readonly EnemyDef[] = [
+  batSwarm,
+  gloomOgre,
+  gloomPriest,
+  gloomling,
+  pothead,
+  shadeWisp,
+  shieldbearer,
+];
 
 /** Every level definition, ordered by id (W1-L01 is the M1 level; spec 7.2). */
 export const levels: readonly LevelDef[] = [w1_l01];

@@ -44,6 +44,10 @@ const baseEnemy: EnemyState = {
   nextBiteTick: null,
   statuses: [],
   comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
+  shieldHp: 0,
+  armorBroken: false,
+  nextHealTick: null,
+  hasThrown: false,
 };
 
 const baseProjectile: ProjectileState = {
@@ -320,6 +324,34 @@ const mutationCases: MutationCase[] = [
     mutate: (state) => {
       state.enemies.push({ ...baseEnemy });
       state.enemies[0]!.nextBiteTick = 30;
+    },
+  },
+  {
+    name: 'the enemy shield health',
+    mutate: (state) => {
+      state.enemies.push({ ...baseEnemy });
+      state.enemies[0]!.shieldHp = 600;
+    },
+  },
+  {
+    name: 'the enemy armor-broken flag',
+    mutate: (state) => {
+      state.enemies.push({ ...baseEnemy });
+      state.enemies[0]!.armorBroken = true;
+    },
+  },
+  {
+    name: 'the enemy heal timer',
+    mutate: (state) => {
+      state.enemies.push({ ...baseEnemy });
+      state.enemies[0]!.nextHealTick = 90;
+    },
+  },
+  {
+    name: 'the enemy throw flag',
+    mutate: (state) => {
+      state.enemies.push({ ...baseEnemy });
+      state.enemies[0]!.hasThrown = true;
     },
   },
   {

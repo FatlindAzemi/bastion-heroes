@@ -3,6 +3,7 @@ import type { DefenderDef } from '../../data';
 import { applyArmorMultiplier, calculatePreArmorDamage } from '../combat/damage';
 import { applyAfterHitCombos, applyShatter } from '../combat/combos';
 import { applyAttackStatus, beginDefenderAttack } from '../combat/status';
+import { enemyArmor } from '../enemies/armor';
 import { ENEMY_SPAWN_X } from '../grid';
 import { tileCenterX } from '../grid';
 import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
@@ -11,8 +12,8 @@ import { star3RangeTiles } from './star3';
 
 /**
  * One `beam` attack (spec 4.3): instantly hits every enemy in its lane within
- * `range` tiles. Ignores shields (no shield system yet, see #47) and hits flying
- * enemies (spec 4.4 rule 4). A ★3 `range_up` bonus replaces the range (spec 5.2).
+ * `range` tiles. Beams hit the body of a Shieldbearer directly (spec 6.2) and hit
+ * flying enemies (spec 4.4 rule 4). A ★3 `range_up` bonus replaces the range (spec 5.2).
  */
 export function attackWithBeam(
   state: SimState,
@@ -85,7 +86,7 @@ function hitWithBeam(
   if (enemyDef === undefined) {
     return;
   }
-  const amount = applyArmorMultiplier(preArmorDamage, damageType, enemyDef.armor);
+  const amount = applyArmorMultiplier(preArmorDamage, damageType, enemyArmor(enemy, enemyDef));
   enemy.hp -= amount;
   events.push({ type: 'hit', targetId: enemy.id, amount, damageType, crit: false });
 }

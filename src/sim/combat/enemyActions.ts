@@ -1,5 +1,6 @@
 import { defenderById, enemyById, rules } from '../../data';
 import { star3MeleeReflectRatio } from '../behaviors/star3';
+import { updateEnemySpecial } from '../enemies/dispatch';
 import { tileCenterX } from '../grid';
 import { isDefenderActive, ticksFromSeconds } from '../placement';
 import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
@@ -46,7 +47,8 @@ function findBlockingDefender(state: SimState, enemy: EnemyState): DefenderState
  */
 function biteDefender(enemy: EnemyState, defender: DefenderState, events: SimEvent[]): void {
   const enemyDef = enemyById[enemy.enemyId];
-  if (enemyDef === undefined) {
+  if (enemyDef === undefined || enemyDef.biteDamage <= 0 || enemyDef.biteIntervalS === undefined) {
+    // Enemies without an attack (Bat Swarm's "—", spec 6.1) never damage a defender.
     return;
   }
   defender.hp -= enemyDef.biteDamage;
@@ -90,6 +92,12 @@ export function updateEnemies(state: SimState, events: SimEvent[]): void {
     if (enemyDef === undefined) {
       continue;
     }
+    // Special behaviours tick even while blocked or frozen: healing and the
+    // ogre's one-time throw are abilities, not movement or attacks (spec 6.2).
+    // A dead enemy no longer acts: it is removed in phase 8.
+    if (enemy.hp > 0) {
+      updateEnemySpecial(state, enemy, enemyDef, events);
+    }
     if (updateKnockback(enemy)) {
       continue;
     }
@@ -104,6 +112,10 @@ export function updateEnemies(state: SimState, events: SimEvent[]): void {
     }
 
     enemy.blockedByDefenderId = blocker.id;
+    if (enemyDef.biteIntervalS === undefined) {
+      // An enemy without an attack stays pinned in front of the defender harmlessly.
+      continue;
+    }
     if (enemy.nextBiteTick === null) {
       // A blocked enemy starts eating immediately, then every biteIntervalS.
       enemy.nextBiteTick = state.tick;

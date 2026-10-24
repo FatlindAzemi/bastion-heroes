@@ -165,6 +165,14 @@ export interface EnemyState {
   statuses: EnemyStatusState[];
   /** Per-combo cooldown: the earliest tick at which this enemy may trigger each combo (spec 4.6). */
   comboCooldowns: ComboCooldownState;
+  /** Remaining shield health; 0 for enemies without a shield (spec 6.2 Shieldbearer). */
+  shieldHp: number;
+  /** True once the armor broke (spec 6.2 Pot-Head Gloomling: pot falls off at 200 hp). */
+  armorBroken: boolean;
+  /** Tick of the next heal pulse, or null when the enemy does not heal (spec 6.2 Gloom Priest). */
+  nextHealTick: number | null;
+  /** True once a one-time throw special fired (spec 6.2 Gloom Ogre: at 50 % health). */
+  hasThrown: boolean;
 }
 
 /**
