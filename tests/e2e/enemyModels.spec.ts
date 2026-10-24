@@ -35,12 +35,15 @@ test('enemy models: W1-L05 renders the Pot-Head Gloomling and Shieldbearer', asy
   // Let the async model load swap the placeholders and the mixers tick a few frames.
   await page.waitForTimeout(900);
 
-  // Both enemies loaded with their spec 12.5 clip set (walk + eat).
+  // Both enemies loaded with their spec 12.5 clip set (walk + eat). The async GLB
+  // decode/swap can finish after the HTTP response, so poll instead of asserting immediately.
   for (const id of MODEL_IDS) {
-    expect(modelLogs.filter((log) => log.includes(`models: loaded ${id} `))).toHaveLength(1);
-    expect(modelLogs.filter((log) => log.includes(`models: loaded ${id} (2 clips)`))).toHaveLength(
-      1,
-    );
+    await expect
+      .poll(
+        () => modelLogs.filter((log) => log.includes(`models: loaded ${id} (2 clips)`)).length,
+        { timeout: 15_000 },
+      )
+      .toBe(1);
   }
 
   const overlay = page.locator('#debug-overlay');

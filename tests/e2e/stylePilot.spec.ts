@@ -42,12 +42,21 @@ test('style pilot: W1-L01 renders the monk, gremlin and gloomling models', async
 
   // Let the async model load swap the placeholders and the mixers tick a few frames.
   await page.waitForTimeout(900);
-  // All three models loaded with their spec 12.5 clip sets (identity, attack/eat, etc.).
-  // The loader loads every committed model; #70 added the two M2 enemies, so the
-  // style-pilot level now logs the three pilot models plus the two enemy models.
-  expect(modelLogs).toHaveLength(5);
-  expect(modelLogs.filter((log) => /\b3 clips\b/.test(log))).toHaveLength(2);
-  expect(modelLogs.filter((log) => /\b2 clips\b/.test(log))).toHaveLength(3);
+  // The three pilot models loaded with their spec 12.5 clip sets. Poll per id so the
+  // assertion stays deterministic and independent of how many models are committed.
+  for (const [id, clips] of [
+    ['glowshroom_monk', 3],
+    ['sparkbolt_gremlin', 3],
+    ['gloomling', 2],
+  ] as const) {
+    await expect
+      .poll(
+        () =>
+          modelLogs.filter((log) => log.includes(`models: loaded ${id} (${clips} clips)`)).length,
+        { timeout: 15_000 },
+      )
+      .toBe(1);
+  }
 
   const overlay = page.locator('#debug-overlay');
   await expect(overlay).toContainText(/draw calls \d+/);
