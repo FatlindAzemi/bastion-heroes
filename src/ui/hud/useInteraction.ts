@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 
+import { playSfx } from '../../platform/audio';
 import { resolveTap } from './pointerToTile';
 import type {
   HudBannerKind,
@@ -117,12 +118,14 @@ export function useInteraction(options: HudOptions & { readonly bus: HudBus }): 
 
   /** Toggles a card: the selected card lifts and glows (spec 3.4). */
   const onSelectCard = (index: number): void => {
+    playSfx('card_select');
     setShovelActive(false);
     setSelectedCardIndex((current) => (current === index ? null : index));
   };
 
   /** Toggles shovel mode; it clears any selected card (spec 3.7). */
   const onToggleShovel = (): void => {
+    playSfx('button_tap');
     setSelectedCardIndex(null);
     setShovelActive((current) => !current);
   };
