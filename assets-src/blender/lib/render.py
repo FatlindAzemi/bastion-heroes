@@ -1,9 +1,11 @@
 """Render plumbing shared by preview.py and portrait.py (spec 12.8, 12.9).
 
 Both scripts open an exported `.glb`, hide the helper objects the glTF importer
-adds, put the armature on the idle clip at frame 0, light the scene and render
-with EEVEE on a transparent background. Previews use the palette material as
-exported; the silhouette swaps in a flat black override material (spec 9.5).
+adds, put a character armature on the idle clip at frame 0, light the scene and
+render with EEVEE on a transparent background. Environments (spec 9.3, issue
+#73) have no armature and are rendered through the same helpers. Previews use
+the palette material as exported; the silhouette swaps in a flat black override
+material (spec 9.5).
 """
 
 import math
@@ -32,37 +34,67 @@ RENDER_SAMPLES = 32
 VIEW_TRANSFORM = "Standard"
 
 
+def srgb_to_linear(channel):
+    """Convert one sRGB channel (0-1) to the linear value Blender renders with."""
+    if channel <= 0.04045:
+        return channel / 12.92
+    return ((channel + 0.055) / 1.055) ** 2.4
+
+
+def hex_to_linear_rgba(hex_color):
+    """Convert a 6-digit sRGB hex string like "9FD8FF" to linear RGBA."""
+    text = hex_color.strip().lstrip("#")
+    if len(text) != 6:
+        raise RuntimeError('background colour must be a 6-digit hex value, got "%s"' % hex_color)
+    channels = [int(text[index : index + 2], 16) / 255.0 for index in (0, 2, 4)]
+    return tuple(srgb_to_linear(channel) for channel in channels) + (1.0,)
+
+
 def open_model(glb_path):
-    """Start an empty scene, import `glb_path` and return (armature, meshes)."""
+    """Start an empty scene, import `glb_path` and return (armature or None, meshes).
+
+    Characters have exactly one armature; an environment (issue #73) is a static
+    model without one, in which case the returned armature is None.
+    """
     scene_helper.reset_scene()
     glb = pathlib.Path(glb_path)
     if not glb.is_file():
         raise RuntimeError("model file not found: %s" % glb)
     bpy.ops.import_scene.gltf(filepath=str(glb))
-    armatures = [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]
-    if len(armatures) != 1:
-        raise RuntimeError("expected one armature in %s, found %d" % (glb, len(armatures)))
-    armature = armatures[0]
-    character = {armature, *armature.children_recursive}
+    imported = set(bpy.context.selected_objects)
+    if not imported:
+        imported = {obj for obj in bpy.data.objects if obj.type in {"MESH", "ARMATURE"}}
+    armatures = [obj for obj in imported if obj.type == "ARMATURE"]
+    if len(armatures) > 1:
+        raise RuntimeError("expected at most one armature in %s, found %d" % (glb, len(armatures)))
+    armature = armatures[0] if armatures else None
+    model = set(imported)
+    if armature is not None:
+        model |= set(armature.children_recursive)
     # The glTF importer adds display helpers (for example an Icosphere bone shape);
     # keep them out of the renders and out of the framing.
     for obj in bpy.data.objects:
-        if obj not in character:
+        if obj not in model:
             obj.hide_render = True
-    meshes = [obj for obj in character if obj.type == "MESH"]
+    meshes = [obj for obj in model if obj.type == "MESH"]
     if not meshes:
-        raise RuntimeError("no skinned mesh found in %s" % glb)
+        raise RuntimeError("no mesh found in %s" % glb)
     return armature, meshes
 
 
 def set_idle_pose(armature, frame=0):
-    """Mute all NLA tracks, play the idle clip (if exported) and set `frame`."""
-    animation_data = armature.animation_data or armature.animation_data_create()
-    for track in animation_data.nla_tracks:
-        track.mute = True
-    idle = bpy.data.actions.get("idle")
-    if idle is not None:
-        animation_data.action = idle
+    """Mute all NLA tracks, play the idle clip (if exported) and set `frame`.
+
+    Static models (environments) have no armature; the frame is still set so the
+    caller does not need a special case.
+    """
+    if armature is not None:
+        animation_data = armature.animation_data or armature.animation_data_create()
+        for track in animation_data.nla_tracks:
+            track.mute = True
+        idle = bpy.data.actions.get("idle")
+        if idle is not None:
+            animation_data.action = idle
     bpy.context.scene.frame_set(frame)
 
 
@@ -82,8 +114,13 @@ def evaluated_bounds(meshes):
     return minimum, maximum
 
 
-def setup_render(samples=RENDER_SAMPLES):
-    """Configure EEVEE, a square transparent render and faithful colours."""
+def setup_render(samples=RENDER_SAMPLES, width=RENDER_SIZE, height=RENDER_SIZE, background=None):
+    """Configure EEVEE and faithful colours for a `width` x `height` render.
+
+    The default is the 512x512 transparent review image of spec 12.8. An opaque
+    render with a solid backdrop can be requested with a sRGB `background` hex
+    string; the environment beauty renders (issue #73) use the World 1 sky colour.
+    """
     scene = bpy.context.scene
     engines = [entry.identifier for entry in bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items]
     if "BLENDER_EEVEE_NEXT" in engines:
@@ -92,10 +129,10 @@ def setup_render(samples=RENDER_SAMPLES):
         scene.render.engine = "BLENDER_EEVEE"
     else:
         raise RuntimeError("this Blender build has no EEVEE engine")
-    scene.render.resolution_x = RENDER_SIZE
-    scene.render.resolution_y = RENDER_SIZE
+    scene.render.resolution_x = int(width)
+    scene.render.resolution_y = int(height)
     scene.render.resolution_percentage = 100
-    scene.render.film_transparent = TRANSPARENT_FILM
+    scene.render.film_transparent = background is None and TRANSPARENT_FILM
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGBA"
     scene.render.image_settings.color_depth = "8"
@@ -104,9 +141,13 @@ def setup_render(samples=RENDER_SAMPLES):
         scene.eevee.taa_render_samples = samples
     world = bpy.data.worlds.new("preview_world")
     world.use_nodes = True
-    background = world.node_tree.nodes["Background"]
-    background.inputs["Color"].default_value = (0.16, 0.2, 0.34, 1.0)
-    background.inputs["Strength"].default_value = 0.32
+    background_node = world.node_tree.nodes["Background"]
+    if background is None:
+        background_node.inputs["Color"].default_value = (0.16, 0.2, 0.34, 1.0)
+        background_node.inputs["Strength"].default_value = 0.32
+    else:
+        background_node.inputs["Color"].default_value = hex_to_linear_rgba(background)
+        background_node.inputs["Strength"].default_value = 1.0
     scene.world = world
     return scene
 
@@ -149,11 +190,18 @@ def add_camera(name, location, target, angle_degrees):
     return aim_at(camera, target)
 
 
-def fit_distance(bounds_min, bounds_max, angle_degrees, margin=1.15):
-    """Distance at which the largest model extent fills the frame with a small margin."""
+def fit_distance(bounds_min, bounds_max, angle_degrees, margin=1.15, aspect=1.0):
+    """Distance at which the model fills the frame with a small margin.
+
+    `angle_degrees` is the vertical field of view of the render, so a wide render
+    (`aspect` > 1, an environment beauty shot) fits the horizontal extent too.
+    """
     extent = bounds_max - bounds_min
     radius = max(extent.x, extent.y, extent.z) / 2.0
-    return radius * margin / math.sin(math.radians(angle_degrees) / 2.0)
+    vertical_fov = math.radians(angle_degrees)
+    horizontal_fov = 2.0 * math.atan(math.tan(vertical_fov / 2.0) * max(aspect, 1.0))
+    fov = min(vertical_fov, horizontal_fov)
+    return radius * margin / math.sin(fov / 2.0)
 
 
 def render_to(path):

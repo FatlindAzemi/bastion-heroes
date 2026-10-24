@@ -101,6 +101,15 @@ function toonMaterialForSingle(source: Mesh['material']): MeshToonMaterial {
   return new MeshToonMaterial({ map, gradientMap: getToonGradientMap() });
 }
 
+/**
+ * Converts one imported mesh's glTF material into the spec 9.2 toon material(s).
+ * Used by the static World 1 environment (issue #73); spawned units get their own
+ * per-instance copy through `createModelInstance`.
+ */
+export function toonMaterialsForMesh(mesh: Mesh): MeshToonMaterial | MeshToonMaterial[] {
+  return toonMaterialFor(mesh.material);
+}
+
 /** Adds the skinned inverted-hull outline as a sibling of the skinned mesh. */
 function addSkinnedOutline(mesh: SkinnedMesh): void {
   const outline = new SkinnedMesh(mesh.geometry, skinnedOutlineMaterial);

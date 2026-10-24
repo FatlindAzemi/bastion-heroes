@@ -66,14 +66,16 @@ test('debug overlay: shows sim tick, status, stars and entity counts for a level
   // The fixed 30 Hz loop can advance a few ticks before the test-only rAF throttle
   // kicks in on a loaded CI runner, so assert the requested boot tick within a
   // documented window instead of the exact string (the overlay itself is unchanged).
+  // The environment GLB load (issue #73) can delay the first overlay update on a loaded
+  // runner, so poll until the tick line exists instead of failing on an empty first read.
   await expect
     .poll(
       async () => {
         const text = (await overlay.textContent()) ?? '';
         const match = text.match(/tick (\d+)/);
-        return match === null ? null : Number(match[1]);
+        return match === null ? 0 : Number(match[1]);
       },
-      { timeout: 5000 },
+      { timeout: 8000 },
     )
     .toBeGreaterThanOrEqual(900);
   const overlayText = (await overlay.textContent()) ?? '';

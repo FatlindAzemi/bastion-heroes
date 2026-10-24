@@ -3,6 +3,7 @@ import { Color, DirectionalLight, Group, HemisphereLight, PerspectiveCamera, Sce
 import { rules } from '../data/rules';
 import type { SimEvent, SimState } from '../sim/types';
 import { fitLevelCamera } from './cameraFit';
+import { createEnvironmentLayer } from './environment';
 import { createGrid, type Grid, type LevelViewOptions } from './grid';
 import { GREYBOX_COLORS } from './greyboxPalette';
 import { createOrbLayer, type OrbLayer } from './orbs';
@@ -95,8 +96,9 @@ function applyEvents(
 }
 
 /**
- * Creates the greybox level renderer of issue #24: spec 9.1 camera, spec 9.4 tile grid,
- * defender/enemy capsules, projectile spheres, Essence orbs and tick interpolation.
+ * Creates the level renderer: the spec 9.1 camera and fitted view, the World 1
+ * environment (issue #73, greybox grid as the loading/failure fallback), defender and
+ * enemy models/capsules, projectiles, Essence orbs and tick interpolation.
  */
 export function createLevelScene(options: LevelViewOptions): LevelScene {
   const scene = new Scene();
@@ -112,8 +114,21 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
   scene.add(keyLight);
   scene.add(new HemisphereLight(0xbfe3ff, 0x6b8f4e, 0.9));
 
-  const grid: Grid = createGrid(options);
+  // The final World 1 environment (issue #73) replaces the greybox grid as soon as the
+  // GLB has loaded; the grid stays on screen during loading and if loading fails, so the
+  // level is always playable and the 9.1 camera/pointer mapping is unchanged.
+  let grid: Grid | null = createGrid(options);
   scene.add(grid.group);
+  const environment = createEnvironmentLayer(options);
+  scene.add(environment.group);
+  void environment.ready.then((loaded) => {
+    if (!loaded || grid === null) {
+      return;
+    }
+    scene.remove(grid.group);
+    grid.dispose();
+    grid = null;
+  });
 
   const unitGroup = new Group();
   const projectileGroup = new Group();
@@ -158,7 +173,9 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
       units.dispose();
       projectiles.dispose();
       orbs.dispose();
-      grid.dispose();
+      environment.dispose();
+      grid?.dispose();
+      grid = null;
       scene.clear();
     },
   };

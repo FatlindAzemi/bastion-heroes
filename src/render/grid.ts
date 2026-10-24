@@ -146,27 +146,50 @@ function addRockBlock(
   }
 }
 
+/** The greybox rock geometries of every blocked tile (spec 7.1: inactive lanes and `rock` terrain). */
+export interface RockTileGeometries {
+  readonly blocks: BufferGeometry[];
+  readonly crosses: BufferGeometry[];
+}
+
+/**
+ * Builds the rock block and cross geometries of every blocked tile. The level
+ * scene overlays them on the environment (issue #73), so the very same blocked
+ * tiles read the same in the greybox fallback and in the final environment.
+ */
+export function rockTileGeometries(options: LevelViewOptions): RockTileGeometries {
+  const rockTiles = collectRockTiles(options);
+  const blocks: BufferGeometry[] = [];
+  const crosses: BufferGeometry[] = [];
+  for (let lane = 0; lane < LANE_COUNT; lane += 1) {
+    for (let col = 0; col < COLUMN_COUNT; col += 1) {
+      if (rockTiles.has(tileKey(lane, col))) {
+        addRockBlock(blocks, crosses, columnToWorldX(col), laneToWorldZ(lane));
+      }
+    }
+  }
+  return { blocks, crosses };
+}
+
 /** Checkerboard grass tiles of spec 9.4, with rock blocks for blocked tiles. */
 function addTiles(group: Group, options: LevelViewOptions): void {
   const rockTiles = collectRockTiles(options);
   const lightTiles: BufferGeometry[] = [];
   const darkTiles: BufferGeometry[] = [];
-  const rockBlocks: BufferGeometry[] = [];
-  const rockCrosses: BufferGeometry[] = [];
   for (let lane = 0; lane < LANE_COUNT; lane += 1) {
     for (let col = 0; col < COLUMN_COUNT; col += 1) {
       if (rockTiles.has(tileKey(lane, col))) {
-        addRockBlock(rockBlocks, rockCrosses, columnToWorldX(col), laneToWorldZ(lane));
         continue;
       }
       const tiles = (lane + col) % 2 === 0 ? lightTiles : darkTiles;
       pushGroundPlane(tiles, TILE_SIZE, TILE_SIZE, columnToWorldX(col), laneToWorldZ(lane), 0.02);
     }
   }
+  const rocks = rockTileGeometries(options);
   addMergedMesh(group, lightTiles, GREYBOX_COLORS.grassLight);
   addMergedMesh(group, darkTiles, GREYBOX_COLORS.grassDark);
-  addMergedMesh(group, rockBlocks, GREYBOX_COLORS.stoneDark);
-  addMergedMesh(group, rockCrosses, GREYBOX_COLORS.gloom);
+  addMergedMesh(group, rocks.blocks, GREYBOX_COLORS.stoneDark);
+  addMergedMesh(group, rocks.crosses, GREYBOX_COLORS.gloom);
 }
 
 /** Bold horizontal strips between the lanes, so the five rows read at a glance (spec 9.1). */
