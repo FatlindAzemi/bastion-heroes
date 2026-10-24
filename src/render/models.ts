@@ -30,13 +30,15 @@ import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.j
 
 import { getToonGradientMap } from './toonMaterial';
 
-/** The models committed so far (issues #66, #70; more arrive in 3.6/3.7). */
+/** The models committed so far (issues #66, #67, #70; more arrive in 3.6/3.7). */
 export const PILOT_MODEL_IDS = [
   'glowshroom_monk',
   'sparkbolt_gremlin',
   'gloomling',
   'pothead',
   'shieldbearer',
+  'boomcap_brewer',
+  'snowpup_yeti',
 ] as const;
 
 /** Outline colour and thickness of spec 9.2. */
