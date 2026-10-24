@@ -41,13 +41,14 @@ test('style pilot: W1-L01 renders the monk, gremlin and gloomling models', async
   await expect(page.getByRole('status', { name: /Essence/ })).toBeVisible({ timeout: 5000 });
 
   // Let the async model load swap the placeholders and the mixers tick a few frames.
-  await page.waitForTimeout(900);
-  // The three pilot models loaded with their spec 12.5 clip sets. Poll per id so the
-  // assertion stays deterministic and independent of how many models are committed.
+  // Poll every committed model id (#95 hardening) because the loader logs the three
+  // pilots plus the two M2 enemy models; the decode can finish after the responses.
   for (const [id, clips] of [
     ['glowshroom_monk', 3],
     ['sparkbolt_gremlin', 3],
     ['gloomling', 2],
+    ['pothead', 2],
+    ['shieldbearer', 2],
   ] as const) {
     await expect
       .poll(

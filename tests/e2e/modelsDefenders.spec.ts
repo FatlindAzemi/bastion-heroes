@@ -44,7 +44,15 @@ test('defender models: Boomcap Brewer and Snowpup Yeti render in W1-L01', async 
   await expect(canvas).toBeVisible();
   await expect(page.locator('.hud-card')).toHaveCount(2);
   await expect(page.getByRole('status', { name: /Essence/ })).toBeVisible({ timeout: 5000 });
-  await page.waitForTimeout(900);
+  // The async GLB decode/swap can finish after the HTTP response, so poll per model id
+  // (same hardening as #95) instead of relying on a fixed delay.
+  for (const id of MODEL_IDS) {
+    await expect
+      .poll(() => modelLogs.filter((log) => log.includes(`models: loaded ${id} `)).length, {
+        timeout: 15_000,
+      })
+      .toBe(1);
+  }
 
   // Both new models loaded with their spec 12.5 clip set (idle + attack + victory).
   const clipCounts = new Map<string, number>();
