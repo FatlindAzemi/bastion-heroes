@@ -234,7 +234,7 @@ describe('star-3 bonus framework (spec 5.2)', () => {
 
 // Spec 5.2: the three M1 defenders' ★3 bonuses.
 describe('M1 ★3 bonuses (spec 5.2)', () => {
-  it('5.2: Glowshroom Monk orbs are worth 35 at ★3 and 25 below', () => {
+  it('5.2: Glowshroom Monk orbs are worth 90 at ★3 and 70 below', () => {
     const glowshroom = defenderById['glowshroom_monk'];
     if (glowshroom === undefined) {
       throw new Error('expected the glowshroom data');
@@ -244,14 +244,14 @@ describe('M1 ★3 bonuses (spec 5.2)', () => {
     star3Monk.nextOrbTick = 0;
     const star3Events: SimEvent[] = [];
     spawnProducerOrbs(star3Sim.state as SimState, star3Events);
-    expect(orbSpawnedEvent(star3Events)?.value).toBe(35);
+    expect(orbSpawnedEvent(star3Events)?.value).toBe(90);
 
     const star2Sim = createHarness();
     const star2Monk = addDefender(star2Sim, glowshroom, 2, 0, 2);
     star2Monk.nextOrbTick = 0;
     const star2Events: SimEvent[] = [];
     spawnProducerOrbs(star2Sim.state as SimState, star2Events);
-    expect(orbSpawnedEvent(star2Events)?.value).toBe(25);
+    expect(orbSpawnedEvent(star2Events)?.value).toBe(70);
   });
 
   it('5.2: Sparkbolt Gremlin ★3 fires 2 bolts 0.15 s apart per attack', () => {

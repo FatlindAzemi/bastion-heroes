@@ -96,7 +96,7 @@ test('scout flow: tutorial levels keep their fixed loadout and hide Recommended'
 
   await page.getByRole('button', { name: 'Fight!' }).click();
   await expect(page.locator('.hud-card')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: 'Sparkbolt Gremlin, 100 Essence' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sparkbolt Gremlin, 150 Essence' })).toBeVisible();
 
   expect(errors.consoleErrors, 'browser console errors').toEqual([]);
   expect(errors.pageErrors, 'uncaught page errors').toEqual([]);

@@ -162,11 +162,11 @@ describe('straight pattern', () => {
     expect(hits[0]?.event).toEqual({
       type: 'hit',
       targetId: enemy.id,
-      amount: 25,
+      amount: 106,
       damageType: 'pierce',
       crit: false,
     });
-    expect(enemy.hp).toBe(175);
+    expect(enemy.hp).toBe(94);
     expect(eventsOfType(recorded, 'projectileEnded')).toHaveLength(1);
     expect(sim.state.projectiles).toEqual([]);
   });
@@ -294,7 +294,7 @@ describe('blocking and biting', () => {
     expect(ticksFromSeconds(0.5)).toBe(15);
     expect(bites.map((entry) => entry.tick)).toEqual([15, 30]);
     expect(bites[0]?.event).toMatchObject({ type: 'attack', targetId: grannyId });
-    expect(sim.state.defenders[0]?.hp).toBe(4000 - 50 * 2);
+    expect(sim.state.defenders[0]?.hp).toBe(10000 - 50 * 2);
   });
 
   it('5.2: a wall blocks enemies but never attacks', () => {
@@ -354,7 +354,7 @@ describe('deaths', () => {
 
     const recorded = record(sim, 60);
 
-    expect(eventsOfType(recorded, 'hit').map((entry) => entry.event.amount)).toEqual([25]);
+    expect(eventsOfType(recorded, 'hit').map((entry) => entry.event.amount)).toEqual([106]);
     expect(eventsOfType(recorded, 'enemyDied')).toHaveLength(1);
     expect(eventsOfType(recorded, 'enemyDied')[0]?.event.id).toBe(enemy.id);
     expect(sim.state.enemies).toEqual([]);

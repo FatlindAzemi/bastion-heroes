@@ -8,9 +8,9 @@ import type { EnemyDef } from '../schemas';
 export const pothead: EnemyDef = {
   id: 'pothead',
   name: 'Pot-Head Gloomling',
-  hp: 600,
+  hp: 4500,
   armor: 'armored',
-  speed: 0.22,
+  speed: 0.11,
   biteDamage: 50,
   biteIntervalS: 0.5,
   isFlying: false,

@@ -147,7 +147,7 @@ describe('win condition', () => {
       10001,
     );
 
-    const recorded = advanceUntilLevelEnds(sim);
+    const recorded = advanceUntilLevelEnds(sim, 4000);
 
     expect(recorded.some((entry) => entry.event.type === 'trapFired')).toBe(true);
     expect(recorded.map((entry) => entry.event)).toContainEqual({ type: 'levelWon', stars: 1 });

@@ -8,10 +8,10 @@ import type { EnemyDef } from '../schemas';
 export const gloomOgre: EnemyDef = {
   id: 'gloom_ogre',
   name: 'Gloom Ogre',
-  hp: 1800,
+  hp: 1500,
   armor: 'armored',
-  speed: 0.15,
-  biteDamage: 200,
+  speed: 0.075,
+  biteDamage: 70,
   biteIntervalS: 1,
   isFlying: false,
   special: 'gloom_ogre_throw',

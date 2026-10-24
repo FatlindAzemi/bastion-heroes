@@ -27,7 +27,7 @@ describe('rules data (spec 3, 4)', () => {
   it('3.3: Essence values match the spec', () => {
     expect(rules.essence).toEqual({
       startingEssence: 150,
-      skyDropAmount: 25,
+      skyDropAmount: 35,
       skyDropIntervalS: 8,
       firstSkyDropDelayS: 4,
       skyDropFallTimeS: 1,

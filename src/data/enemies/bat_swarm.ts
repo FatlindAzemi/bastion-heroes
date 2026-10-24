@@ -10,7 +10,7 @@ export const batSwarm: EnemyDef = {
   name: 'Bat Swarm',
   hp: 120,
   armor: 'light',
-  speed: 0.5,
+  speed: 0.1,
   biteDamage: 0,
   isFlying: true,
   isBoss: false,

@@ -7,10 +7,10 @@ import type { EnemyDef } from '../schemas';
 export const shadeWisp: EnemyDef = {
   id: 'shade_wisp',
   name: 'Shade Wisp',
-  hp: 300,
+  hp: 2000,
   armor: 'spectral',
-  speed: 0.3,
-  biteDamage: 40,
+  speed: 0.13,
+  biteDamage: 45,
   biteIntervalS: 0.5,
   isFlying: false,
   isBoss: false,

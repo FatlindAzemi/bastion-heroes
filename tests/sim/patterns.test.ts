@@ -386,7 +386,7 @@ describe('producer pattern', () => {
       throw new Error('expected the glowshroom data');
     }
     const baseSeconds = glowshroom.attackIntervalS ?? 0;
-    expect(baseSeconds).toBe(24);
+    expect(baseSeconds).toBe(14);
 
     for (const [stars, expectedInterval] of [
       [2, ticksFromSeconds(baseSeconds / rules.merge.producerStar2IntervalDivisor)],
