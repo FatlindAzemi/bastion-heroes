@@ -66,6 +66,14 @@ export function applyArmorMultiplier(
   );
 }
 
+/**
+ * Scales one rounded hit down (e.g. the 50 % splash damage of 4.3), keeping the
+ * minimum damage of the formula (spec 4.2).
+ */
+export function scaleDamage(amount: number, ratio: number): number {
+  return Math.max(rules.combat.minimumDamage, Math.round(amount * ratio));
+}
+
 /** One hit: damage = max(1, round(B * L * S * T * (1 + sum(buffs)))) (spec 4.2). */
 export function calculateDamage(input: DamageInput): number {
   return applyArmorMultiplier(

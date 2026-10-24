@@ -1,16 +1,12 @@
-import { defenderById, rules } from '../data';
+import { rules } from '../data';
 import type { LevelDef } from '../data';
+import { spawnProducerOrbs } from './behaviors/producer';
 import { tileCenterX } from './grid';
-import { isDefenderActive, ticksFromSeconds } from './placement';
-import type { Command, OrbState, SimEvent, SimState } from './types';
+import { spawnOrb } from './orbs';
+import { ticksFromSeconds } from './placement';
+import type { Command, SimEvent, SimState } from './types';
 
 type CollectOrbCommand = Extract<Command, { type: 'collectOrb' }>;
-
-/** Ticks an orb falls from above before it lands (spec 3.3: 1.0 s). */
-const SKY_DROP_FALL_TICKS = ticksFromSeconds(rules.essence.skyDropFallTimeS);
-
-/** Ticks an orb stays on the ground before it is lost (spec 3.3: 8.0 s). */
-const ORB_LIFETIME_TICKS = ticksFromSeconds(rules.essence.orbLifetimeS);
 
 /** Ticks after landing at which auto-collect picks an orb up (spec 3.3: 1.0 s). */
 const AUTO_COLLECT_DELAY_TICKS = ticksFromSeconds(rules.essence.autoCollectDelayS);
@@ -20,33 +16,6 @@ const SKY_DROP_INTERVAL_TICKS = ticksFromSeconds(rules.essence.skyDropIntervalS)
 
 /** Tick of the first sky drop after level start (spec 3.3: 4.0 s). */
 const FIRST_SKY_DROP_TICKS = ticksFromSeconds(rules.essence.firstSkyDropDelayS);
-
-/**
- * Spawns one orb that falls for 1.0 s and expires 8.0 s after landing (spec 3.3).
- * Every orb id comes from the shared entity id counter (spec 11.3).
- */
-function spawnOrb(
-  state: SimState,
-  events: SimEvent[],
-  lane: number,
-  x: number,
-  value: number,
-): void {
-  const spawnTick = state.tick;
-  const landTick = spawnTick + SKY_DROP_FALL_TICKS;
-  const orb: OrbState = {
-    id: state.nextId,
-    lane,
-    x,
-    value,
-    spawnTick,
-    landTick,
-    expiresAtTick: landTick + ORB_LIFETIME_TICKS,
-  };
-  state.nextId += 1;
-  state.orbs.push(orb);
-  events.push({ type: 'orbSpawned', id: orb.id, x, lane, value });
-}
 
 /** True on the ticks at which a sky drop spawns (spec 3.3: first at 4.0 s, then every 8.0 s). */
 function isSkyDropTick(tick: number): boolean {
@@ -71,43 +40,6 @@ function spawnSkyDrop(state: SimState, level: LevelDef, events: SimEvent[]): voi
     return;
   }
   spawnOrb(state, events, lane, tileCenterX(col), rules.essence.skyDropAmount);
-}
-
-/**
- * Spawns the producer orbs that are due this tick. Producers only start after
- * they became active, then drop every `attackIntervalS` (spec 3.4, 5.2).
- */
-function spawnProducerOrbs(state: SimState, events: SimEvent[]): void {
-  const producers = state.defenders
-    .filter((defender) => defender.nextOrbTick !== null)
-    .sort((first, second) => first.id - second.id);
-
-  for (const defender of producers) {
-    const firstOrbTick = defender.nextOrbTick;
-    if (firstOrbTick === null || state.tick < firstOrbTick) {
-      continue;
-    }
-    if (!isDefenderActive(defender, state.tick)) {
-      continue;
-    }
-    const defenderDef = defenderById[defender.defenderId];
-    if (defenderDef === undefined || defenderDef.orbEssence === undefined) {
-      continue;
-    }
-    const intervalTicks =
-      defenderDef.attackIntervalS === undefined
-        ? null
-        : ticksFromSeconds(defenderDef.attackIntervalS);
-    if (intervalTicks === null) {
-      continue;
-    }
-    let nextOrbTick = firstOrbTick;
-    while (state.tick >= nextOrbTick) {
-      spawnOrb(state, events, defender.lane, tileCenterX(defender.col), defenderDef.orbEssence);
-      nextOrbTick += intervalTicks;
-    }
-    defender.nextOrbTick = nextOrbTick;
-  }
 }
 
 /** Collects an orb: adds its value immediately, capped at the maximum, and removes it (spec 3.3). */
@@ -156,8 +88,9 @@ export function collectOrb(state: SimState, command: CollectOrbCommand, events: 
 }
 
 /**
- * Phase 3 of every tick (spec 11.3): sky drops spawn, producers drop their orbs,
- * auto-collect picks landed orbs up and expired orbs disappear (spec 3.3).
+ * Phase 3 of every tick (spec 11.3): sky drops spawn, producers drop their orbs
+ * (the `producer` pattern is dispatched here, spec 4.3), auto-collect picks
+ * landed orbs up and expired orbs disappear (spec 3.3).
  */
 export function updateEssence(state: SimState, level: LevelDef, events: SimEvent[]): void {
   spawnSkyDrop(state, level, events);

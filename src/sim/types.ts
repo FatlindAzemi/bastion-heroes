@@ -108,6 +108,10 @@ export interface DefenderState {
   nextOrbTick: number | null;
   /** Absolute tick at which the defender may fire again (spec 5.2 attackIntervalS). */
   nextAttackTick: number;
+  /** Tick at which a trap defender is armed; null while unarmed, used up or rearming (spec 4.3). */
+  trapReadyAtTick: number | null;
+  /** True once a ★3 trap used its one rearm (spec 4.3, 5.2). */
+  trapRearmed: boolean;
 }
 
 /** An enemy walking along a lane (spec 3.8, 11.3). */
@@ -127,17 +131,35 @@ export interface EnemyState {
   nextBiteTick: number | null;
 }
 
-/** A projectile in flight (spec 4.3, 11.3). */
+/**
+ * A projectile in flight (spec 4.3, 11.3). The optional timing fields describe
+ * the pattern: `targetId`/`landTick` for the arcs of lob and splash, `splashRadius`
+ * for splash, and `targetLane`/`switchAtX` for the diagonal lane switch.
+ */
 export interface ProjectileState {
   id: number;
   kind: string;
   lane: number;
   x: number;
+  /** X the projectile was fired from (the arc origin, spec 4.3). */
+  originX: number;
   /** Id of the defender that fired it (spec 11.3 attack event). */
   sourceId: number;
   /** Damage before the armor multiplier T; T is applied when it hits (spec 4.2). */
   damage: number;
   damageType: 'pierce' | 'blast' | 'arcane';
+  /** True when this projectile can hit flying enemies (spec 4.4 rule 4). */
+  hitsFlying: boolean;
+  /** Lob/splash: the enemy the arc is thrown at; null for straight and diagonal. */
+  targetId: number | null;
+  /** Lob/splash: tick at which the arc lands; null for straight and diagonal. */
+  landTick: number | null;
+  /** Splash: impact radius in tiles; null for every other pattern. */
+  splashRadius: number | null;
+  /** Diagonal: lane to switch to at `switchAtX`; null for every other pattern. */
+  targetLane: number | null;
+  /** Diagonal: world x at which the projectile switches to `targetLane`; null otherwise. */
+  switchAtX: number | null;
 }
 
 /**

@@ -89,5 +89,7 @@ describe('rules data (spec 3, 4)', () => {
     expect(rules.combat.meleeRangeTiles).toBe(1.2);
     expect(rules.combat.lobFlightTimeS).toBe(0.8);
     expect(rules.combat.targetingBehindOffsetTiles).toBe(0.3);
+    expect(rules.combat.splashSecondaryDamageRatio).toBe(0.5);
+    expect(rules.combat.diagonalLaneSwitchTiles).toBe(1);
   });
 });

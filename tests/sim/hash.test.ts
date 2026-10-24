@@ -25,6 +25,8 @@ const baseDefender: DefenderState = {
   activeAtTick: 15,
   nextOrbTick: null,
   nextAttackTick: 0,
+  trapReadyAtTick: null,
+  trapRearmed: false,
 };
 
 const baseEnemy: EnemyState = {
@@ -47,6 +49,13 @@ const baseProjectile: ProjectileState = {
   sourceId: 1,
   damage: 20,
   damageType: 'pierce',
+  originX: 0.5,
+  hitsFlying: false,
+  targetId: null,
+  landTick: null,
+  splashRadius: null,
+  targetLane: null,
+  switchAtX: null,
 };
 
 const baseOrb: OrbState = {
@@ -225,6 +234,20 @@ const mutationCases: MutationCase[] = [
     },
   },
   {
+    name: 'the trap arming tick',
+    mutate: (state) => {
+      state.defenders.push({ ...baseDefender });
+      state.defenders[0]!.trapReadyAtTick = 360;
+    },
+  },
+  {
+    name: 'the trap rearm flag',
+    mutate: (state) => {
+      state.defenders.push({ ...baseDefender });
+      state.defenders[0]!.trapRearmed = true;
+    },
+  },
+  {
     name: 'an enemy',
     mutate: (state) => {
       state.enemies.push({ ...baseEnemy });
@@ -283,6 +306,55 @@ const mutationCases: MutationCase[] = [
     mutate: (state) => {
       state.projectiles.push({ ...baseProjectile });
       state.projectiles[0]!.damage = 21;
+    },
+  },
+  {
+    name: 'the projectile origin',
+    mutate: (state) => {
+      state.projectiles.push({ ...baseProjectile });
+      state.projectiles[0]!.originX = 0.6;
+    },
+  },
+  {
+    name: 'the projectile flying flag',
+    mutate: (state) => {
+      state.projectiles.push({ ...baseProjectile });
+      state.projectiles[0]!.hitsFlying = true;
+    },
+  },
+  {
+    name: 'the projectile target',
+    mutate: (state) => {
+      state.projectiles.push({ ...baseProjectile });
+      state.projectiles[0]!.targetId = 2;
+    },
+  },
+  {
+    name: 'the projectile landing tick',
+    mutate: (state) => {
+      state.projectiles.push({ ...baseProjectile });
+      state.projectiles[0]!.landTick = 30;
+    },
+  },
+  {
+    name: 'the projectile splash radius',
+    mutate: (state) => {
+      state.projectiles.push({ ...baseProjectile });
+      state.projectiles[0]!.splashRadius = 0.8;
+    },
+  },
+  {
+    name: 'the projectile target lane',
+    mutate: (state) => {
+      state.projectiles.push({ ...baseProjectile });
+      state.projectiles[0]!.targetLane = 1;
+    },
+  },
+  {
+    name: 'the projectile lane-switch x',
+    mutate: (state) => {
+      state.projectiles.push({ ...baseProjectile });
+      state.projectiles[0]!.switchAtX = 1.5;
     },
   },
   {

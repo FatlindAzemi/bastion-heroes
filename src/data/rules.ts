@@ -65,5 +65,9 @@ export const rules: RulesDef = {
     meleeRangeTiles: 1.2,
     lobFlightTimeS: 0.8,
     targetingBehindOffsetTiles: 0.3,
+    // 4.3: splash deals 50 % of its damage to the other enemies inside the radius.
+    splashSecondaryDamageRatio: 0.5,
+    // 4.3: diagonal projectiles switch lane once, 1 tile after spawning.
+    diagonalLaneSwitchTiles: 1,
   },
 };
