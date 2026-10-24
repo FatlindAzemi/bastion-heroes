@@ -7,9 +7,6 @@ import type { GameRenderer } from './renderer';
 /** Fixed tick of the screenshot (spec 13.7 uses tick 900 in its debug URL example). */
 const PREVIEW_TICK = 900;
 
-/** Interpolation alpha of the screenshot: exactly halfway between two ticks (spec 11.4). */
-const PREVIEW_ALPHA = 0.5;
-
 /**
  * Illustrative greybox layout for the screenshot: a full 5 x 9 lawn and a few rock terrain
  * tiles, so the whole renderer of issue #24 is visible. The real level route (`?level=`)
@@ -107,10 +104,11 @@ const PREVIEW_WAVE = {
 };
 
 /**
- * Creates the fixed preview frame of one tick; `enemyStep` shifts the enemies back so the
- * interpolation frame lies exactly between two ticks (spec 11.4).
+ * Creates the preview frame at `tick`. Enemies keep walking left at their data speed, so the
+ * loop's ticks and the interpolation between them are visible (spec 3.2, 6.1).
  */
-function createPreviewState(tick: number, enemyStep: number): Readonly<SimState> {
+function createPreviewState(tick: number): Readonly<SimState> {
+  const enemyStep = (PREVIEW_TICK - tick) * ENEMY_TICK_STEP;
   const previewFrame = {
     levelId: 'w1_l01',
     seed: 10001,
@@ -163,21 +161,40 @@ function createPreviewEvents(): SimEvent[] {
   ];
 }
 
+/** Minimal sim shape the fixed-tick loop drives; the real `createSim` wiring arrives with #27. */
+export interface GreyboxPreviewSim {
+  readonly state: Readonly<SimState>;
+  /** Advances the preview by one tick and returns no events (spec 11.3 shape). */
+  step(): SimEvent[];
+}
+
 /**
- * Dev-only fixed-tick greybox preview for the issue #24 screenshot (spec 13.7). It drives
- * the public `showLevel` / `handleEvents` / `draw` seam exactly like the future game loop.
+ * Creates the greybox preview sim: every step advances the preview tick by one and returns
+ * an empty event list; the spawn events are sent once by `showGreyboxPreview`.
+ */
+export function createGreyboxPreviewSim(): GreyboxPreviewSim {
+  let tick = PREVIEW_TICK;
+  let state = createPreviewState(tick);
+  return {
+    get state(): Readonly<SimState> {
+      return state;
+    },
+    step: (): SimEvent[] => {
+      tick += 1;
+      state = createPreviewState(tick);
+      return [];
+    },
+  };
+}
+
+/**
+ * Shows the dev-only greybox preview on the renderer and returns the preview sim for the
+ * fixed-tick game loop of issue #25. The route exists only in dev builds and exercises the
+ * real loop path without inventing new game numbers.
  * TODO(#27): remove the greybox preview route when the debug URL lands.
  */
-export function startGreyboxPreview(renderer: GameRenderer): void {
+export function showGreyboxPreview(renderer: GameRenderer): GreyboxPreviewSim {
   renderer.showLevel(PREVIEW_LEVEL);
-  const firstTick = createPreviewState(PREVIEW_TICK, ENEMY_TICK_STEP);
-  const nextTick = createPreviewState(PREVIEW_TICK + 1, 0);
   renderer.handleEvents(createPreviewEvents());
-  renderer.draw(firstTick, 1);
-  renderer.handleEvents([]);
-  const frame = (): void => {
-    renderer.draw(nextTick, PREVIEW_ALPHA);
-    requestAnimationFrame(frame);
-  };
-  requestAnimationFrame(frame);
+  return createGreyboxPreviewSim();
 }
