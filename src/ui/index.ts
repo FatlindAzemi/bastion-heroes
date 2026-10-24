@@ -1,8 +1,11 @@
 import { createElement, render } from 'preact';
 
 import { App } from './app';
+import { Hud } from './hud/Hud';
+import type { HudBus, HudHandle, HudOptions } from './hud/types';
 import './styles/tokens.css';
 import './styles/global.css';
+import './styles/hud.css';
 
 /** Mounts the Preact UI overlay on top of the 3D canvas (spec 11.8). */
 export function mountUi(container: HTMLElement): void {
@@ -11,3 +14,27 @@ export function mountUi(container: HTMLElement): void {
   container.appendChild(uiRoot);
   render(createElement(App, {}), uiRoot);
 }
+
+/**
+ * Mounts the in-level HUD over the canvas (spec 9.8) and returns its handle. The caller
+ * forwards the per-tick command feedback events to `handleEvents` for the red reason text
+ * and the control shake (spec 3.4); #27 wires this to the real level run.
+ */
+export function mountHud(container: HTMLElement, options: HudOptions): HudHandle {
+  const hudRoot = document.createElement('div');
+  hudRoot.className = 'ui-root hud-root';
+  container.appendChild(hudRoot);
+  const bus: HudBus = { listener: null };
+  render(createElement(Hud, { ...options, bus }), hudRoot);
+  return {
+    handleEvents: (events): void => {
+      bus.listener?.(events);
+    },
+    dispose: (): void => {
+      render(null, hudRoot);
+      hudRoot.remove();
+    },
+  };
+}
+
+export type { HudActions, HudEvent, HudHandle, HudOptions, HudStateView } from './hud/types';

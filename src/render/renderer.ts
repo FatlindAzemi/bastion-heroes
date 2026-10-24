@@ -3,7 +3,10 @@ import {
   DirectionalLight,
   HemisphereLight,
   PerspectiveCamera,
+  Plane,
+  Raycaster,
   Scene,
+  Vector2,
   Vector3,
   WebGLRenderer,
 } from 'three';
@@ -32,6 +35,14 @@ export interface GameRenderer {
   handleEvents(events: readonly SimEvent[]): void;
   /** Switches the canvas to the greybox level renderer of issue #24 (spec 9.1, 11.7). */
   showLevel(options: LevelViewOptions): LevelScene;
+  /**
+   * Converts a DOM pointer position into the world point where its ray hits the ground
+   * plane (spec 9.1). The HUD (#26) uses it to turn taps into tiles and orb picks.
+   */
+  pointerToWorld(
+    clientX: number,
+    clientY: number,
+  ): { readonly x: number; readonly z: number } | null;
   dispose(): void;
 }
 
@@ -69,6 +80,12 @@ export function createRenderer(container: HTMLElement): GameRenderer {
   );
 
   let levelScene: LevelScene | null = null;
+
+  // Reused for HUD pointer picking: a ray from the level camera against the y = 0 plane.
+  const pointer = new Vector2();
+  const pointerRaycaster = new Raycaster();
+  const groundPlane = new Plane(new Vector3(0, 1, 0), 0);
+  const groundHit = new Vector3();
 
   container.appendChild(renderer.domElement);
 
@@ -122,6 +139,22 @@ export function createRenderer(container: HTMLElement): GameRenderer {
       levelScene = createLevelScene(options);
       resize();
       return levelScene;
+    },
+    pointerToWorld: (clientX, clientY) => {
+      if (levelScene === null) {
+        return null;
+      }
+      const bounds = renderer.domElement.getBoundingClientRect();
+      if (bounds.width === 0 || bounds.height === 0) {
+        return null;
+      }
+      pointer.set(
+        ((clientX - bounds.left) / bounds.width) * 2 - 1,
+        -(((clientY - bounds.top) / bounds.height) * 2 - 1),
+      );
+      pointerRaycaster.setFromCamera(pointer, levelScene.camera);
+      const hit = pointerRaycaster.ray.intersectPlane(groundPlane, groundHit);
+      return hit === null ? null : { x: hit.x, z: hit.z };
     },
     dispose: (): void => {
       window.removeEventListener('resize', resize);
