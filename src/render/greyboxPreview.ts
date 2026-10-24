@@ -1,6 +1,6 @@
 import { defenderById, enemyById } from '../data';
 import { rules } from '../data/rules';
-import type { DefenderState, LoadoutEntry, SimEvent, SimState } from '../sim/types';
+import type { DefenderState, LoadoutEntry, OrbState, SimEvent, SimState } from '../sim/types';
 import type { LevelViewOptions } from './grid';
 import type { GameRenderer } from './renderer';
 
@@ -45,10 +45,17 @@ const PREVIEW_DEFENDERS: readonly PreviewDefender[] = [
   { id: 5, defenderId: 'glowshroom_monk', lane: 4, col: 3 },
 ];
 
-/** Builds a preview defender at its data health, active since level start (spec 5.1, 3.4). */
+/**
+ * Builds a preview defender at its data health, placed at level start and already active
+ * (spec 3.4, 5.1). Producers get their first-orb tick from the data (spec 5.2).
+ */
 function createPreviewDefender(defender: PreviewDefender): DefenderState {
   const definition = defenderById[defender.defenderId];
   const maxHp = definition?.hp ?? 0;
+  const nextOrbTick =
+    definition?.pattern === 'producer'
+      ? Math.round((definition.firstOrbDelayS ?? 0) * rules.tick.tickRate)
+      : null;
   return {
     id: defender.id,
     defenderId: defender.defenderId,
@@ -59,11 +66,37 @@ function createPreviewDefender(defender: PreviewDefender): DefenderState {
     maxHp,
     cardLevel: 1,
     activeAtTick: 0,
+    nextOrbTick,
   };
 }
 
 /** One tick of gloomling movement: its data speed divided by the tick rate (spec 3.2, 6.1). */
 const ENEMY_TICK_STEP = (enemyById.gloomling?.speed ?? 0) / rules.tick.tickRate;
+
+interface PreviewOrb {
+  readonly id: number;
+  readonly lane: number;
+  readonly x: number;
+  readonly value: number;
+}
+
+const PREVIEW_ORBS: readonly PreviewOrb[] = [
+  { id: 25, lane: 0, x: 2.6, value: 25 },
+  { id: 26, lane: 2, x: 4.9, value: 25 },
+  { id: 27, lane: 4, x: 8.4, value: 25 },
+];
+
+/** Builds a preview orb that just landed at `tick`, with the 3.3 fall and lifetime timings. */
+function createPreviewOrb(orb: PreviewOrb, tick: number): OrbState {
+  const fallTicks = Math.round(rules.essence.skyDropFallTimeS * rules.tick.tickRate);
+  const lifetimeTicks = Math.round(rules.essence.orbLifetimeS * rules.tick.tickRate);
+  return {
+    ...orb,
+    spawnTick: tick - fallTicks,
+    landTick: tick,
+    expiresAtTick: tick + lifetimeTicks,
+  };
+}
 
 interface PreviewEnemy {
   readonly id: number;
@@ -106,11 +139,7 @@ function createPreviewState(tick: number, enemyStep: number): Readonly<SimState>
       { id: 21, kind: 'bolt', lane: 2, x: 4.6 },
       { id: 22, kind: 'bolt', lane: 3, x: 5.1 },
     ],
-    orbs: [
-      { id: 25, lane: 0, x: 2.6, value: 25 },
-      { id: 26, lane: 2, x: 4.9, value: 25 },
-      { id: 27, lane: 4, x: 8.4, value: 25 },
-    ],
+    orbs: PREVIEW_ORBS.map((orb) => createPreviewOrb(orb, tick)),
   };
 }
 
