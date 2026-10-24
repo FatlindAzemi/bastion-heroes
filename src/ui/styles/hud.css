@@ -1,0 +1,440 @@
+/*
+ * Greybox in-level HUD (spec 9.8): Essence counter, card bar, shovel, speed/pause and the
+ * rejected-command feedback. Buttons use the 9.8 style (radius 16 px, 6 px bottom edge,
+ * 4 px press travel); every touch target is at least 48 px. Final art is M3 issue 3.11.
+ */
+
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-family: var(--font-body);
+  color: #ffffff;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Full-field tap layer: turns taps into tile placements, shovel removals and orb picks. */
+.hud__tap-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+/* Spec 9.8: white fill, 3 px #1B1B2F outline and a drop shadow for numbers and titles. */
+.hud-outlined-text {
+  text-shadow:
+    3px 0 0 var(--color-shadow),
+    -3px 0 0 var(--color-shadow),
+    0 3px 0 var(--color-shadow),
+    0 -3px 0 var(--color-shadow),
+    2px 2px 0 var(--color-shadow),
+    -2px -2px 0 var(--color-shadow),
+    2px -2px 0 var(--color-shadow),
+    -2px 2px 0 var(--color-shadow),
+    0 6px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- Essence counter (top left, 140 x 72 px) ---------- */
+
+.hud-essence {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  left: calc(10px + env(safe-area-inset-left, 0px));
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 140px;
+  height: 72px;
+  padding: 0 12px;
+  border: 3px solid var(--color-shadow);
+  border-radius: 16px;
+  background: rgba(27, 27, 47, 0.72);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.hud-essence__orb {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-shadow);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 38% 32%,
+    #f4fbff 0%,
+    #8dffe8 26%,
+    #3bf0c8 62%,
+    #1a9c86 100%
+  );
+  box-shadow: 0 0 14px rgba(59, 240, 200, 0.65);
+}
+
+.hud-essence__value {
+  flex: 1 1 auto;
+  font-family: var(--font-title);
+  font-size: 38px;
+  line-height: 1;
+  text-align: center;
+  text-shadow:
+    3px 0 0 var(--color-shadow),
+    -3px 0 0 var(--color-shadow),
+    0 3px 0 var(--color-shadow),
+    0 -3px 0 var(--color-shadow),
+    2px 2px 0 var(--color-shadow),
+    -2px -2px 0 var(--color-shadow),
+    0 5px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- Card bar (top, right of the counter) ---------- */
+
+.hud-card-bar {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  left: calc(160px + env(safe-area-inset-left, 0px));
+  z-index: 2;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: calc(100vw - 330px - env(safe-area-inset-left, 0px));
+  padding: 8px 2px 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  pointer-events: auto;
+  scrollbar-width: none;
+}
+
+.hud-card-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Spec 9.8: card 72 x 96 px, rarity frame, cost badge bottom left, cooldown overlay. */
+.hud-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: 72px;
+  height: 96px;
+  padding: 0;
+  overflow: hidden;
+  border: 3px solid var(--color-secondary-blue);
+  border-radius: 16px;
+  background: var(--color-shadow);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.hud-card--selected {
+  transform: translateY(-6px) scale(1.04);
+  box-shadow:
+    0 0 0 3px var(--color-buy-yellow),
+    0 12px 18px rgba(0, 0, 0, 0.45);
+}
+
+.hud-card__portrait {
+  position: absolute;
+  inset: 3px 3px 22px;
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+/* Greybox placeholder silhouette: a chunky capsule, like the renderer's units (9.5). */
+.hud-card__blob {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  width: 34px;
+  height: 46px;
+  transform: translateX(-50%);
+  border: 2px solid rgba(27, 27, 47, 0.8);
+  border-radius: 16px 16px 12px 12px;
+  background: rgba(27, 27, 47, 0.55);
+}
+
+.hud-card__name {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 24px;
+  z-index: 3;
+  overflow: hidden;
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud-card__cost {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(27, 27, 47, 0.9);
+  color: #ffffff;
+  font-family: var(--font-title);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.hud-card__essence-icon {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #f4fbff 0%, #3bf0c8 70%);
+}
+
+/* Dark overlay shrinking from the top down as the cooldown runs (spec 3.5). */
+.hud-card__cooldown {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  border-radius: 0 0 13px 13px;
+  background: rgba(27, 27, 47, 0.78);
+  pointer-events: none;
+}
+
+.hud-card__cooldown-label {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-family: var(--font-title);
+  font-size: 26px;
+  line-height: 1;
+  text-shadow:
+    2px 0 0 var(--color-shadow),
+    -2px 0 0 var(--color-shadow),
+    0 2px 0 var(--color-shadow),
+    0 -2px 0 var(--color-shadow);
+  pointer-events: none;
+}
+
+/* ---------- Buttons (9.8: radius 16, 6 px darker bottom edge, 4 px press travel) ---------- */
+
+.hud-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 3px solid var(--color-shadow);
+  border-radius: 16px;
+  background: var(--color-secondary-blue);
+  color: #ffffff;
+  font-family: var(--font-title);
+  font-size: 24px;
+  line-height: 1;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
+}
+
+.hud-button:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
+}
+
+.hud-button--primary {
+  width: auto;
+  min-width: 64px;
+  padding: 0 30px;
+  background: var(--color-primary-green);
+  font-size: 28px;
+}
+
+.hud-button--secondary {
+  background: var(--color-secondary-blue);
+}
+
+.hud-button--selected {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 3px var(--color-buy-yellow),
+    0 10px 16px rgba(0, 0, 0, 0.4);
+}
+
+.hud-button--shake {
+  animation: hud-shake 0.3s linear;
+}
+
+/* ---------- Shovel button (end of the card bar, 72 x 72 px) ---------- */
+
+.hud-shovel {
+  width: 72px;
+  height: 72px;
+  background: var(--color-secondary-blue);
+}
+
+.hud-shovel__handle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 30px;
+  border: 2px solid var(--color-shadow);
+  border-radius: 4px;
+  background: #efe6d2;
+  transform: translate(-50%, -50%) rotate(38deg) translateY(-13px);
+}
+
+.hud-shovel__blade {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24px;
+  height: 22px;
+  border: 2px solid var(--color-shadow);
+  border-radius: 4px 4px 12px 12px;
+  background: #8a9ba8;
+  transform: translate(-50%, -50%) rotate(38deg) translateY(12px);
+}
+
+/* ---------- Speed toggle and pause (top right, 64 x 64 px each) ---------- */
+
+.hud-controls {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.hud-button--speed {
+  font-size: 22px;
+}
+
+.hud-button--pause {
+  font-size: 22px;
+  letter-spacing: 1px;
+}
+
+/* ---------- Rejected command feedback (spec 3.4) ---------- */
+
+.hud-rejection {
+  position: absolute;
+  top: calc(118px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  z-index: 3;
+  padding: 6px 18px;
+  transform: translateX(-50%);
+  border: 2px solid var(--color-danger-red);
+  border-radius: 12px;
+  background: rgba(27, 27, 47, 0.82);
+  color: var(--color-danger-red);
+  font-family: var(--font-title);
+  font-size: 24px;
+  line-height: 1.1;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hud-rejection-pop 0.18s ease-out;
+}
+
+@keyframes hud-rejection-pop {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes hud-shake {
+  0%,
+  100% {
+    translate: 0;
+  }
+  20% {
+    translate: -5px 0;
+  }
+  40% {
+    translate: 5px 0;
+  }
+  60% {
+    translate: -4px 0;
+  }
+  80% {
+    translate: 4px 0;
+  }
+}
+
+/* ---------- Minimal pause overlay (the full pause menu is M4) ---------- */
+
+.hud-paused {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  background: rgba(27, 27, 47, 0.55);
+  pointer-events: auto;
+}
+
+.hud-paused__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 36px 30px;
+  border: 3px solid var(--color-shadow);
+  border-radius: 20px;
+  background: rgba(27, 27, 47, 0.92);
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.3);
+}
+
+.hud-paused__title {
+  margin: 0;
+  color: #ffffff;
+  font-family: var(--font-title);
+  font-size: 46px;
+  line-height: 1;
+  text-shadow:
+    3px 0 0 var(--color-shadow),
+    -3px 0 0 var(--color-shadow),
+    0 3px 0 var(--color-shadow),
+    0 -3px 0 var(--color-shadow),
+    2px 2px 0 var(--color-shadow),
+    -2px -2px 0 var(--color-shadow);
+}
+
+.hud-paused__resume {
+  min-width: 160px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-button--shake,
+  .hud-rejection,
+  .hud-card,
+  .hud-button {
+    animation: none;
+    transition: none;
+  }
+}
