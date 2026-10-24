@@ -30,7 +30,11 @@ import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.j
 
 import { getToonGradientMap } from './toonMaterial';
 
+<<<<<<< HEAD
 /** The models committed so far (issues #66, #67, #70; more arrive in 3.6/3.7). */
+=======
+/** The models committed so far (issues #66, #70, #71; more arrive in 3.6/3.7). */
+>>>>>>> 87da729 (art(assets): add the Shade Wisp and Bat Swarm models (#71))
 export const PILOT_MODEL_IDS = [
   'glowshroom_monk',
   'sparkbolt_gremlin',
@@ -41,6 +45,8 @@ export const PILOT_MODEL_IDS = [
   'snowpup_yeti',
   'rune_archer',
   'pyro_fox',
+  'shade_wisp',
+  'bat_swarm',
 ] as const;
 
 /** Outline colour and thickness of spec 9.2. */
