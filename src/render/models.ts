@@ -196,8 +196,15 @@ export interface ModelInstance {
   readonly object: Object3D;
   /** Plays a looping base clip (idle for defenders, walk for enemies). */
   playBase(clipName: string): void;
+  /**
+   * Speed of the looping base clip, e.g. the walk clip of an enemy scaled by its
+   * current speed (spec 9.6: Slow halves the walk playback).
+   */
+  setBasePlaybackRate(rate: number): void;
   /** Plays a one-shot clip and returns to the base clip when it finishes. */
-  playOneShot(clipName: string): void;
+  playOneShot(clipName: string, timeScale?: number): void;
+  /** Duration in seconds of a clip of this model, or 0 when the model has no such clip. */
+  clipDuration(clipName: string): number;
   /** Mixes the toon materials towards white for the spec 9.2 hit flash. */
   setFlash(on: boolean): void;
   update(deltaSeconds: number): void;
@@ -231,13 +238,20 @@ export function createModelInstance(asset: PilotModelAsset): ModelInstance | nul
     actions.set(clip.name, mixer.clipAction(clip));
   }
   let baseAction: AnimationAction | null = null;
+  let basePlaybackRate = 1;
   let oneShotAction: AnimationAction | null = null;
   mixer.addEventListener('finished', (event) => {
-    if (event.action !== oneShotAction) {
+    const finishedAction = event.action;
+    if (finishedAction !== oneShotAction) {
       return;
     }
     oneShotAction = null;
-    baseAction?.reset().fadeIn(0.08).play();
+    // Cross-fade the finished one-shot out and the base loop back in, so the pose
+    // never snaps back to idle/attack frame 0 (spec 9.6: blend clips sensibly).
+    finishedAction.fadeOut(0.1);
+    if (baseAction !== null) {
+      baseAction.reset().setEffectiveTimeScale(basePlaybackRate).fadeIn(0.1).play();
+    }
   });
 
   return {
@@ -247,21 +261,32 @@ export function createModelInstance(asset: PilotModelAsset): ModelInstance | nul
       if (action === undefined || action === baseAction) {
         return;
       }
-      action.reset().setLoop(LoopRepeat, Infinity).fadeIn(0.15).play();
+      action
+        .reset()
+        .setLoop(LoopRepeat, Infinity)
+        .setEffectiveTimeScale(basePlaybackRate)
+        .fadeIn(0.15)
+        .play();
       baseAction?.fadeOut(0.15);
       baseAction = action;
     },
-    playOneShot: (clipName): void => {
+    setBasePlaybackRate: (rate): void => {
+      const safeRate = Math.max(0, rate);
+      basePlaybackRate = safeRate;
+      baseAction?.setEffectiveTimeScale(safeRate);
+    },
+    playOneShot: (clipName, timeScale = 1): void => {
       const action = actions.get(clipName);
       if (action === undefined) {
         return;
       }
-      action.reset().setLoop(LoopOnce, 1).fadeIn(0.05).play();
+      action.reset().setLoop(LoopOnce, 1).setEffectiveTimeScale(timeScale).fadeIn(0.05).play();
       action.clampWhenFinished = true;
       baseAction?.fadeOut(0.05);
       oneShotAction?.fadeOut(0.05);
       oneShotAction = action;
     },
+    clipDuration: (clipName): number => actions.get(clipName)?.getClip().duration ?? 0,
     setFlash: (on): void => {
       for (const material of materials) {
         material.emissive.setHex(on ? 0xffffff : 0x000000);
