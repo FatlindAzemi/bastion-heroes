@@ -17,6 +17,7 @@
     "e2e": "playwright test",
     "validate-data": "tsx tools/validate-data.ts",
     "balance": "tsx tools/balance-sim/run.ts",
+    "assets": "tsx tools/build-assets/run.ts",
     "check": "npm run typecheck && npm run lint && npm test && npm run validate-data"
   },
   "dependencies": {
