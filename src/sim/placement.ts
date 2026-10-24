@@ -120,6 +120,7 @@ export function placeDefender(
     cardLevel: card.level,
     activeAtTick: state.tick + ACTIVATION_DELAY_TICKS,
     nextOrbTick: initialNextOrbTick(defender, state.tick),
+    nextAttackTick: 0,
   });
   events.push({
     type: 'defenderPlaced',
