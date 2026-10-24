@@ -11,6 +11,7 @@ import { startGameLoop, startRenderLoop, type GameLoop } from './loop';
 import { installAudioUnlock, playMusic, playSfx, setBigWaveIntensity } from './platform/audio';
 import type { SfxId } from './platform/audioManifest';
 import { playHaptic } from './platform/haptics';
+import { SLOW_MOTION_DURATION_S, SLOW_MOTION_SCALE } from './render/vfx/juice';
 import { createRenderer, type GameRenderer } from './render';
 import { createSim } from './sim';
 import type { Command, ComboId, LoadoutEntry, SimEvent, SimState } from './sim/types';
@@ -326,11 +327,23 @@ function startLevelRun(
   }
 
   let hud: HudHandle | null = null;
+  let finalWaveStarted = false;
+  let slowMotionPlayed = false;
   const levelRenderer = {
     handleEvents: (events: readonly SimEvent[]): void => {
       renderer.handleEvents(events);
       hud?.handleEvents(mapHudEvents(events));
       playEventAudio(events, sim.state);
+      for (const event of events) {
+        if (event.type === 'waveStarted' && event.kind === 'final') {
+          finalWaveStarted = true;
+        }
+        if (event.type === 'levelWon' && finalWaveStarted && !slowMotionPlayed) {
+          // Spec 9.7: the last enemy of the final wave dying runs the game at 0.3x for 0.6 s.
+          slowMotionPlayed = true;
+          loop.setTimeScale(SLOW_MOTION_SCALE, SLOW_MOTION_DURATION_S * 1000);
+        }
+      }
     },
     draw: (state: Readonly<SimState>, alpha: number): void => {
       renderer.draw(state, alpha);

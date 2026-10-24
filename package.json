@@ -19,7 +19,8 @@
     "balance": "tsx tools/balance-sim/run.ts",
     "assets": "tsx tools/build-assets/run.ts",
     "assets:check": "tsx tools/build-assets/check.ts",
-    "check": "npm run typecheck && npm run lint && npm test && npm run validate-data"
+    "check": "npm run typecheck && npm run lint && npm test && npm run validate-data",
+    "textures:particles": "tsx tools/particles-texture.ts"
   },
   "dependencies": {
     "@preact/signals": "2.11.3",
