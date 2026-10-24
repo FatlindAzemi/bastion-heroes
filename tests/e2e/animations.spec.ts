@@ -49,6 +49,10 @@ async function waitForDefendersGone(page: import('@playwright/test').Page): Prom
   );
 }
 
+// The in-game merge/death tests drive a real WebGL scene and wait for star pips and
+// clip playback; under CI load they can exceed Playwright's default 30 s timeout.
+test.setTimeout(90_000);
+
 test('procedural animations: spawn drop is visible at 844x390 and 1280x720', async ({ page }) => {
   const errors = trackErrors(page);
   const url =
