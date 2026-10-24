@@ -149,6 +149,10 @@ describe('placement', () => {
       nextBiteTick: null,
       statuses: [],
       comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
+      shieldHp: 0,
+      armorBroken: false,
+      nextHealTick: null,
+      hasThrown: false,
     });
 
     sim.enqueue(place(SPARKBOLT, 0, 0));

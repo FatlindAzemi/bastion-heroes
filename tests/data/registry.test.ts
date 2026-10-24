@@ -39,7 +39,7 @@ describe('data registry (spec 11.2, 11.5)', () => {
     expect(Object.keys(levelById).sort()).toEqual(levels.map((level) => level.id).sort());
   });
 
-  it('5.1/6.1: the M2 data set has the eight defenders and the M1 enemy roster so far', () => {
+  it('5.1/6.1/14 row 2.6: the M2 roster has the eight defenders and the seven section-6 enemies', () => {
     expect(defenders.map((defender) => defender.id)).toEqual([
       'boomcap_brewer',
       'frost_witch',
@@ -50,6 +50,14 @@ describe('data registry (spec 11.2, 11.5)', () => {
       'snowpup_yeti',
       'sparkbolt_gremlin',
     ]);
-    expect(enemies.map((enemy) => enemy.id)).toEqual(['gloomling']);
+    expect(enemies.map((enemy) => enemy.id)).toEqual([
+      'bat_swarm',
+      'gloom_ogre',
+      'gloom_priest',
+      'gloomling',
+      'pothead',
+      'shade_wisp',
+      'shieldbearer',
+    ]);
   });
 });

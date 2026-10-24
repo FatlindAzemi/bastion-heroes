@@ -75,6 +75,10 @@ function spawnEnemy(sim: Sim, lane: number, x: number, hp = 200): EnemyState {
     nextBiteTick: null,
     statuses: [],
     comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
+    shieldHp: 0,
+    armorBroken: false,
+    nextHealTick: null,
+    hasThrown: false,
   };
   state.enemies.push(enemy);
   return enemy;
@@ -113,6 +117,10 @@ function makeEnemy(id: number, x: number, lane = 0): EnemyState {
     nextBiteTick: null,
     statuses: [],
     comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
+    shieldHp: 0,
+    armorBroken: false,
+    nextHealTick: null,
+    hasThrown: false,
   };
 }
 

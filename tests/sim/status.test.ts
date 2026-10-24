@@ -70,6 +70,10 @@ function addEnemy(
     nextBiteTick: null,
     statuses: [],
     comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
+    shieldHp: 0,
+    armorBroken: false,
+    nextHealTick: null,
+    hasThrown: false,
   };
   state.nextId += 1;
   state.enemies.push(enemy);

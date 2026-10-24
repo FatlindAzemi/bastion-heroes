@@ -64,6 +64,10 @@ export function hashState(state: Readonly<SimState>): string {
       enemy.comboCooldowns.shatter,
       enemy.comboCooldowns.toxic,
       enemy.comboCooldowns.chain,
+      enemy.shieldHp,
+      enemy.armorBroken,
+      enemy.nextHealTick,
+      enemy.hasThrown,
     ]),
     projectiles: state.projectiles.map((projectile) => [
       projectile.id,

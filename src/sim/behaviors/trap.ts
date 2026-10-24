@@ -2,6 +2,7 @@ import { enemyById, rules } from '../../data';
 import type { DefenderDef } from '../../data';
 import { applyAfterHitCombos, applyShatter } from '../combat/combos';
 import { applyArmorMultiplier, calculatePreArmorDamage } from '../combat/damage';
+import { enemyArmor } from '../enemies/armor';
 import { ticksFromSeconds } from '../placement';
 import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
 import { collectAuraDamageBuffs } from './aura';
@@ -61,7 +62,7 @@ export function updateTrapDefender(
   const amount = applyArmorMultiplier(
     preArmorDamage * shatterMultiplier,
     damageType,
-    triggerDef.armor,
+    enemyArmor(trigger, triggerDef),
   );
   trigger.hp -= amount;
   events.push({ type: 'attack', sourceId: defender.id, targetId: trigger.id });
