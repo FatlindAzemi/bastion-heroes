@@ -39,6 +39,8 @@ export const PILOT_MODEL_IDS = [
   'shieldbearer',
   'boomcap_brewer',
   'snowpup_yeti',
+  'rune_archer',
+  'pyro_fox',
 ] as const;
 
 /** Outline colour and thickness of spec 9.2. */
