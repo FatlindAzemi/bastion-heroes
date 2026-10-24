@@ -45,6 +45,9 @@ export type SimEvent =
   | { type: 'orbCollected'; id: number }
   | { type: 'orbExpired'; id: number }
   | { type: 'waveStarted'; index: number; kind: 'normal' | 'big' | 'final' }
+  // Contract extension for the M1 row 1.5 "banners as events" (spec 3.10): the
+  // big-wave warning is shown 3 s before the wave, the final banner at its start.
+  | { type: 'waveBanner'; index: number; kind: 'big' | 'final' }
   | { type: 'trapFired'; lane: number }
   | { type: 'levelWon'; stars: 1 | 2 | 3 }
   | { type: 'levelLost' }
@@ -88,12 +91,17 @@ export interface DefenderState {
   nextOrbTick: number | null;
 }
 
-/** An enemy walking along a lane (spec 11.3). Later issues extend it with health and statuses. */
+/** An enemy walking along a lane (spec 3.8, 11.3). Issue #21 adds movement and combat timers. */
 export interface EnemyState {
   id: number;
   enemyId: string;
   lane: number;
   x: number;
+  /** Current health; the base hp comes from the enemy data, damage is #21. */
+  hp: number;
+  maxHp: number;
+  /** Index of the wave that spawned this enemy; the early-clear rule of 3.10 uses it. */
+  waveIndex: number;
 }
 
 /** A projectile in flight (spec 11.3). */
@@ -120,6 +128,36 @@ export interface OrbState {
   landTick: number;
   /** Tick the orb expires: landTick + 8.0 s, then it is lost (spec 3.3). */
   expiresAtTick: number;
+}
+
+/** One enemy of the current wave that still has to spawn, in spawn order (spec 7.1). */
+export interface PendingSpawn {
+  enemyId: string;
+  /** Lane chosen at wave start; "random" lanes never repeat a lane three times (spec 7.1). */
+  lane: number;
+}
+
+/**
+ * Wave runner state (spec 3.10, 7.1). The UI (#26) reads it for the wave progress
+ * bar and banners, and the win check (#22) uses `allWavesSpawned` and `pendingSpawns`.
+ */
+export interface WaveState {
+  /** Index of the current wave; -1 until the first wave starts. */
+  index: number;
+  /** Tick at which the next wave starts (firstWaveDelay / duration end); null = no timer (final wave). */
+  nextWaveTick: number | null;
+  /** Enemies of the current wave still to spawn, in spawn order (spec 7.1). */
+  pendingSpawns: PendingSpawn[];
+  /** Tick of the next enemy spawn of the current wave (spec 3.10). */
+  nextSpawnTick: number;
+  /** Tick at which the current wave advances because all its enemies are dead; null = not cleared (spec 3.10). */
+  earlyClearTick: number | null;
+  /** True once the final wave has started; #22 uses it for the win check (spec 3.10). */
+  allWavesSpawned: boolean;
+  /** Pending big-wave banner: index of the wave it announces, null when none is pending (spec 3.10). */
+  bannerWaveIndex: number | null;
+  /** Pending big-wave banner: tick at which it is shown, null when none is pending (spec 3.10). */
+  bannerTick: number | null;
 }
 
 /**
@@ -156,6 +194,8 @@ export interface SimState {
   readonly projectiles: ProjectileState[];
   /** Essence orbs currently on the field (spec 3.3, 11.3). */
   readonly orbs: OrbState[];
+  /** Wave runner state (spec 3.10). */
+  wave: WaveState;
 }
 
 /** The simulation of one level run. It is the only entry point into `src/sim/` (spec 11.2). */

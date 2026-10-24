@@ -35,9 +35,11 @@ export type {
   LevelDef,
   LoadoutEntry,
   OrbState,
+  PendingSpawn,
   ProjectileState,
   Rng,
   Sim,
   SimEvent,
   SimState,
+  WaveState,
 } from './types';
