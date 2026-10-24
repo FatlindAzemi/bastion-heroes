@@ -1,8 +1,11 @@
 /**
  * Debug URL support (issue #27, spec 13.7): turns
  * `?level=<id>&seed=<n>&tick=<n>` into a boot request and fast-forwards the
- * simulation before the first frame. `parseDebugUrl` is a pure function so it
- * can be tested without a browser; the module uses no Node APIs.
+ * simulation before the first frame. Issue #49 adds the additive
+ * `?level=<id>&scout=1` entry that opens the Scouting -> Loadout flow first; the
+ * `scout` value is exactly `1`, every other value keeps the direct level start.
+ * `parseDebugUrl` is a pure function so it can be tested without a browser; the
+ * module uses no Node APIs.
  */
 import { defenders, levelById } from './data';
 import type { LevelDef } from './data/schemas';
@@ -15,10 +18,14 @@ export interface DebugLevelRequest {
   readonly tick: number;
 }
 
-/** The result of reading the debug URL: title screen, a level run, or a readable error. */
+/**
+ * The result of reading the debug URL: title screen, a direct level run, the
+ * Scouting -> Loadout entry (`scout=1`), or a readable error.
+ */
 export type DebugUrlResult =
   | { readonly kind: 'title' }
   | ({ readonly kind: 'level' } & DebugLevelRequest)
+  | ({ readonly kind: 'scout' } & DebugLevelRequest)
   | { readonly kind: 'error'; readonly message: string };
 
 /** Maps a URL level token like `w1-l01` to the data id `w1_l01` (spec 7.2). */
@@ -52,7 +59,10 @@ function parseIntegerParam(
 /**
  * Parses the debug URL query (spec 13.7: `?level=w1-l01&seed=10001&tick=900`).
  * Without a `level` parameter the app shows its title screen. Unknown levels and
- * malformed seed/tick values give a readable error instead of a crash.
+ * malformed seed/tick values give a readable error instead of a crash. The
+ * additive `scout=1` value of issue #49 routes to the Scouting -> Loadout flow
+ * and carries `seed`/`tick` through; `scout` is exact, so any other value keeps
+ * starting the level directly.
  */
 export function parseDebugUrl(search: string): DebugUrlResult {
   const parameters = new URLSearchParams(search);
@@ -77,7 +87,8 @@ export function parseDebugUrl(search: string): DebugUrlResult {
   if (typeof tick === 'string') {
     return { kind: 'error', message: tick };
   }
-  return { kind: 'level', levelId, seed, tick };
+  const kind = parameters.get('scout') === '1' ? 'scout' : 'level';
+  return { kind, levelId, seed, tick };
 }
 
 /**

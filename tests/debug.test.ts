@@ -74,6 +74,60 @@ describe('debug URL parsing (issue #27, spec 13.7)', () => {
     expect(parseDebugUrl('?level=').kind).toBe('error');
     expect(parseDebugUrl('?level=w1-l01&tick=9007199254740993').kind).toBe('error');
   });
+
+  it('13.7: ?level=<id>&scout=1 opens the Scouting -> Loadout flow with the level seed', () => {
+    expect(parseDebugUrl('?level=w1-l05&scout=1')).toEqual({
+      kind: 'scout',
+      levelId: 'w1_l05',
+      seed: 10005,
+      tick: 0,
+    });
+  });
+
+  it('13.7: scout=1 carries an explicit seed and tick through', () => {
+    expect(parseDebugUrl('?level=w1-l05&scout=1&seed=7&tick=120')).toEqual({
+      kind: 'scout',
+      levelId: 'w1_l05',
+      seed: 7,
+      tick: 120,
+    });
+  });
+
+  it('13.7: only scout=1 opens the flow; every other value starts the level directly', () => {
+    const directStarts = [
+      '?level=w1-l05&scout=0',
+      '?level=w1-l05&scout=2',
+      '?level=w1-l05&scout=true',
+      '?level=w1-l05&scout=',
+    ];
+    for (const search of directStarts) {
+      expect(parseDebugUrl(search), search).toEqual({
+        kind: 'level',
+        levelId: 'w1_l05',
+        seed: 10005,
+        tick: 0,
+      });
+    }
+  });
+
+  it('13.7: scout=1 keeps the readable unknown-level and seed/tick errors of the direct start', () => {
+    const directUnknown = parseDebugUrl('?level=w1-l99');
+    const scoutUnknown = parseDebugUrl('?level=w1-l99&scout=1');
+    expect(scoutUnknown).toEqual(directUnknown);
+    expect(scoutUnknown.kind).toBe('error');
+
+    for (const search of ['?level=w1-l05&scout=1&seed=abc', '?level=w1-l05&scout=1&tick=-5']) {
+      const result = parseDebugUrl(search);
+      expect(result.kind, search).toBe('error');
+      if (result.kind === 'error') {
+        expect(result.message, search).toMatch(/seed|tick/);
+      }
+    }
+  });
+
+  it('13.7: ?scout=1 without a level still shows the title screen', () => {
+    expect(parseDebugUrl('?scout=1')).toEqual({ kind: 'title' });
+  });
 });
 
 describe('debug level boot (issue #27)', () => {
