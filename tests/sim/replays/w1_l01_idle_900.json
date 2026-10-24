@@ -1,0 +1,32 @@
+{
+  "description": "Idle W1-L01 for 900 ticks: sky-drop economy and the first wave spawn without player input.",
+  "levelId": "w1_l01",
+  "seed": 10001,
+  "loadout": [
+    {
+      "defenderId": "sparkbolt_gremlin",
+      "level": 1
+    }
+  ],
+  "endTick": 900,
+  "commands": [],
+  "expected": {
+    "status": "playing",
+    "stars": 0,
+    "finalTick": 900,
+    "hashes": [
+      {
+        "tick": 300,
+        "hash": "0e32240c"
+      },
+      {
+        "tick": 600,
+        "hash": "6668803c"
+      },
+      {
+        "tick": 900,
+        "hash": "82f48098"
+      }
+    ]
+  }
+}

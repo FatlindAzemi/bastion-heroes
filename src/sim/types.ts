@@ -62,6 +62,23 @@ export interface LoadoutEntry {
   level: number;
 }
 
+/** One command of a replay, recorded with the tick whose phase 1 applies it (spec 11.6). */
+export interface ReplayCommand {
+  tick: number;
+  cmd: Command;
+}
+
+/**
+ * A recorded level run (spec 11.6): the same level, seed, loadout and commands
+ * always produce the same states, compared through `hashState` in src/sim/hash.ts.
+ */
+export interface Replay {
+  levelId: string;
+  seed: number;
+  loadout: LoadoutEntry[];
+  commands: ReplayCommand[];
+}
+
 /**
  * Seeded random generator (mulberry32, spec 3.2). `state` is part of the
  * simulation state so that replays and state hashes can compare it (spec 11.6).
