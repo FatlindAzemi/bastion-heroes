@@ -1,25 +1,20 @@
-import {
-  Color,
-  DirectionalLight,
-  Group,
-  HemisphereLight,
-  PerspectiveCamera,
-  Scene,
-  Vector3,
-} from 'three';
+import { Color, DirectionalLight, Group, HemisphereLight, PerspectiveCamera, Scene } from 'three';
 
 import { rules } from '../data/rules';
 import type { SimEvent, SimState } from '../sim/types';
+import { fitLevelCamera } from './cameraFit';
 import { createGrid, type Grid, type LevelViewOptions } from './grid';
 import { GREYBOX_COLORS } from './greyboxPalette';
 import { createOrbLayer, type OrbLayer } from './orbs';
 import { createProjectileLayer, type ProjectileLayer } from './projectiles';
 import { createUnitLayer, type UnitLayer } from './units';
 
-/** Camera values of spec 9.1. Tune only if a screenshot shows them unusable, and say so in the PR. */
+/**
+ * Camera FOV of spec 9.1. The distance is fitted to the aspect ratio by
+ * `fitLevelCamera` so the whole playfield stays visible on phones and desktops and the
+ * top 14 % of the screen stays free for the HUD (spec 9.1).
+ */
 const CAMERA_FOV = 32;
-const CAMERA_POSITION = new Vector3(4.5, 7.5, 10.5);
-const CAMERA_TARGET = new Vector3(4.5, 0, 2.6);
 
 /**
  * Greybox orb hover height. The sim state has no orb y yet; when issue #19 adds the
@@ -35,7 +30,7 @@ export interface LevelScene {
   handleEvents(events: readonly SimEvent[]): void;
   /** Stores the state of the latest tick once per tick and lerps all objects (spec 11.4). */
   draw(state: Readonly<SimState>, alpha: number): void;
-  resize(aspect: number): void;
+  resize(aspect: number, hudTopFraction?: number): void;
   dispose(): void;
 }
 
@@ -63,6 +58,10 @@ function applyEvents(
         break;
       case 'enemyDied':
         units.remove(event.id);
+        break;
+      case 'hit':
+        // Spec 9.2: every hit flashes the struck unit white for 0.08 s.
+        units.flash(event.targetId);
         break;
       case 'projectileSpawned':
         projectiles.spawn(event.id, event.kind, event.x, event.lane);
@@ -94,8 +93,7 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
   scene.background = new Color(GREYBOX_COLORS.sky);
 
   const camera = new PerspectiveCamera(CAMERA_FOV, 1, 0.1, 60);
-  camera.position.copy(CAMERA_POSITION);
-  camera.lookAt(CAMERA_TARGET);
+  fitLevelCamera(camera, 1);
 
   // Spec 9.2: one warm key light from the upper left front plus the cool hemisphere fill.
   // No real-time shadows; the greybox units get no shadows until M3 (issue 3.4).
@@ -143,9 +141,8 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
       projectiles.apply(alpha);
       orbs.apply(alpha);
     },
-    resize: (aspect): void => {
-      camera.aspect = aspect;
-      camera.updateProjectionMatrix();
+    resize: (aspect, hudTopFraction): void => {
+      fitLevelCamera(camera, aspect, hudTopFraction);
     },
     dispose: (): void => {
       units.dispose();
