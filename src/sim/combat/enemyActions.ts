@@ -2,17 +2,22 @@ import { defenderById, enemyById, rules } from '../../data';
 import { tileCenterX } from '../grid';
 import { isDefenderActive, ticksFromSeconds } from '../placement';
 import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
+import {
+  enemyAttackSpeedMultiplier,
+  enemyMoveSpeedMultiplier,
+  findStatus,
+  isEnemyIncapacitated,
+} from './status';
 
 /**
  * Finds the active ground defender that blocks this enemy (spec 3.8): same lane,
- * tile centre at most 0.55 units to the left of the enemy. Flying enemies are
- * never blocked by ground defenders (M2 adds flying enemies and deflectors).
+ * tile centre at most 0.55 units to the left of the enemy. Traps are invisible to
+ * enemies (spec 4.3) and flying enemies are never blocked by ground defenders.
  */
 function findBlockingDefender(state: SimState, enemy: EnemyState): DefenderState | undefined {
   let blocker: DefenderState | undefined;
   for (const defender of state.defenders) {
     if (defenderById[defender.defenderId]?.pattern === 'trap') {
-      // Traps are invisible to enemies: they never block or get eaten (spec 4.3).
       continue;
     }
     if (defender.lane !== enemy.lane || !isDefenderActive(defender, state.tick)) {
@@ -43,7 +48,24 @@ function biteDefender(enemy: EnemyState, defender: DefenderState, events: SimEve
   events.push({ type: 'attack', sourceId: enemy.id, targetId: defender.id });
 }
 
-/** Phase 7 (spec 11.3): enemies move, block and eat, sorted by id (spec 3.8, 4.7). */
+/** Applies one tick of active knockback movement; returns true when it moved (spec 4.5). */
+function updateKnockback(enemy: EnemyState): boolean {
+  const knockback = findStatus(enemy, 'knockback');
+  if (knockback === undefined) {
+    return false;
+  }
+  enemy.x += knockback.knockbackTilesPerTick;
+  return true;
+}
+
+/** Walks the enemy left with its status-aware speed (spec 3.8, 4.5). */
+function walkLeft(enemy: EnemyState, speedTilesPerSecond: number): void {
+  enemy.blockedByDefenderId = null;
+  enemy.nextBiteTick = null;
+  enemy.x -= (speedTilesPerSecond / rules.tick.tickRate) * enemyMoveSpeedMultiplier(enemy);
+}
+
+/** Phase 7 (spec 11.3): enemies move, block and eat, sorted by id (spec 3.8, 4.5, 4.7). */
 export function updateEnemies(state: SimState, events: SimEvent[]): void {
   const enemies = [...state.enemies].sort((first, second) => first.id - second.id);
   for (const enemy of enemies) {
@@ -51,11 +73,16 @@ export function updateEnemies(state: SimState, events: SimEvent[]): void {
     if (enemyDef === undefined) {
       continue;
     }
+    if (updateKnockback(enemy)) {
+      continue;
+    }
+    if (isEnemyIncapacitated(enemy)) {
+      // Frozen or stunned: no movement and no bites (spec 4.5).
+      continue;
+    }
     const blocker = enemyDef.isFlying ? undefined : findBlockingDefender(state, enemy);
     if (blocker === undefined) {
-      enemy.blockedByDefenderId = null;
-      enemy.nextBiteTick = null;
-      enemy.x -= enemyDef.speed / rules.tick.tickRate;
+      walkLeft(enemy, enemyDef.speed);
       continue;
     }
 
@@ -66,7 +93,9 @@ export function updateEnemies(state: SimState, events: SimEvent[]): void {
     }
     if (state.tick >= enemy.nextBiteTick) {
       biteDefender(enemy, blocker, events);
-      enemy.nextBiteTick = state.tick + ticksFromSeconds(enemyDef.biteIntervalS);
+      // Slow halves the attack speed, so the next bite takes longer (spec 4.5).
+      const biteIntervalSeconds = enemyDef.biteIntervalS / enemyAttackSpeedMultiplier(enemy);
+      enemy.nextBiteTick = state.tick + ticksFromSeconds(biteIntervalSeconds);
     }
   }
 }

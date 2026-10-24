@@ -35,6 +35,7 @@ function spawnEnemy(sim: Sim, lane: number, x: number, hp = 200): EnemyState {
     waveIndex: 0,
     blockedByDefenderId: null,
     nextBiteTick: null,
+    statuses: [],
   };
   state.enemies.push(enemy);
   return enemy;

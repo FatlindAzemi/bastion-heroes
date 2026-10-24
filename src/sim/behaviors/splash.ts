@@ -6,6 +6,7 @@ import { findTarget } from '../combat/targeting';
 import { tileCenterX } from '../grid';
 import { ticksFromSeconds } from '../placement';
 import type { DefenderState, SimEvent, SimState } from '../types';
+import { beginDefenderAttack } from '../combat/status';
 import { collectAuraDamageBuffs } from './aura';
 
 /** The splash radius of a defender: the data value, replaced by the ★3 value in star3Params. */
@@ -43,6 +44,7 @@ export function attackWithSplash(
   }
 
   const buffs = collectAuraDamageBuffs(state, defender);
+  const attackStatus = beginDefenderAttack(defender, defenderDef);
   events.push({ type: 'attack', sourceId: defender.id, targetId: target.id });
   spawnProjectile(
     state,
@@ -59,6 +61,7 @@ export function attackWithSplash(
       ),
       damageType,
       hitsFlying: false,
+      status: attackStatus,
       targetId: target.id,
       landTick: state.tick + ticksFromSeconds(rules.combat.lobFlightTimeS),
       splashRadius,

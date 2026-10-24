@@ -1,6 +1,7 @@
 import { enemyById, rules } from '../../data';
 import type { DefenderDef } from '../../data';
 import { applyArmorMultiplier, calculatePreArmorDamage } from '../combat/damage';
+import { applyAttackStatus, beginDefenderAttack } from '../combat/status';
 import { ENEMY_SPAWN_X } from '../grid';
 import { tileCenterX } from '../grid';
 import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
@@ -43,9 +44,13 @@ export function attackWithBeam(
     buffs,
   );
   const primary = nearestTarget(targets);
+  const attackStatus = beginDefenderAttack(defender, defenderDef);
   events.push({ type: 'attack', sourceId: defender.id, targetId: primary?.id ?? null });
   for (const enemy of targets) {
     hitWithBeam(enemy, preArmorDamage, damageType, events);
+    if (attackStatus !== null) {
+      applyAttackStatus(state.tick, enemy, attackStatus, events);
+    }
   }
   return true;
 }

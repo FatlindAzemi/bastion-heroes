@@ -97,6 +97,7 @@ function addDefender(
     trapReadyAtTick:
       defenderDef.pattern === 'trap' ? ticksFromSeconds(defenderDef.armDelayS ?? 0) : null,
     trapRearmed: false,
+    attackCount: 0,
   };
   state.nextId += 1;
   state.defenders.push(defender);
@@ -116,6 +117,7 @@ function addEnemy(sim: Sim, lane: number, x: number, hp = 200, enemyId = GLOOMLI
     waveIndex: 0,
     blockedByDefenderId: null,
     nextBiteTick: null,
+    statuses: [],
   };
   state.nextId += 1;
   state.enemies.push(enemy);

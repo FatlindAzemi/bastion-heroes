@@ -4,6 +4,7 @@ import { spawnProjectile } from '../combat/projectiles';
 import { findTarget } from '../combat/targeting';
 import { tileCenterX } from '../grid';
 import type { DefenderState, SimEvent, SimState } from '../types';
+import { beginDefenderAttack } from '../combat/status';
 import { collectAuraDamageBuffs } from './aura';
 
 /**
@@ -34,6 +35,7 @@ export function attackWithStraight(
   }
 
   const buffs = collectAuraDamageBuffs(state, defender);
+  const attackStatus = beginDefenderAttack(defender, defenderDef);
   events.push({ type: 'attack', sourceId: defender.id, targetId: target.id });
   spawnProjectile(
     state,
@@ -50,6 +52,7 @@ export function attackWithStraight(
       ),
       damageType,
       hitsFlying,
+      status: attackStatus,
     },
     events,
   );

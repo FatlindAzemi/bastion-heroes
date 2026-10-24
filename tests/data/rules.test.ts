@@ -92,4 +92,26 @@ describe('rules data (spec 3, 4)', () => {
     expect(rules.combat.splashSecondaryDamageRatio).toBe(0.5);
     expect(rules.combat.diagonalLaneSwitchTiles).toBe(1);
   });
+
+  it('4.5: status effect values match the spec', () => {
+    expect(rules.status.slow).toEqual({
+      moveSpeedMultiplier: 0.5,
+      attackSpeedMultiplier: 0.5,
+      durationS: 3,
+    });
+    expect(rules.status.freeze).toEqual({ durationS: 2 });
+    expect(rules.status.burn).toEqual({
+      damage: 6,
+      damageType: 'blast',
+      intervalS: 0.5,
+      durationS: 3,
+    });
+    expect(rules.status.poison).toEqual({
+      maxHealthRatio: 0.02,
+      intervalS: 1,
+      durationS: 4,
+      maxStacks: 3,
+    });
+    expect(rules.status.knockback).toEqual({ durationS: 0.2 });
+  });
 });

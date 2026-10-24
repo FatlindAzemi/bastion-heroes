@@ -27,6 +27,7 @@ const baseDefender: DefenderState = {
   nextAttackTick: 0,
   trapReadyAtTick: null,
   trapRearmed: false,
+  attackCount: 0,
 };
 
 const baseEnemy: EnemyState = {
@@ -39,6 +40,7 @@ const baseEnemy: EnemyState = {
   waveIndex: 0,
   blockedByDefenderId: null,
   nextBiteTick: null,
+  statuses: [],
 };
 
 const baseProjectile: ProjectileState = {
@@ -56,6 +58,9 @@ const baseProjectile: ProjectileState = {
   splashRadius: null,
   targetLane: null,
   switchAtX: null,
+  statusKind: null,
+  statusDurationS: 0,
+  statusStacks: 1,
 };
 
 const baseOrb: OrbState = {
@@ -248,6 +253,13 @@ const mutationCases: MutationCase[] = [
     },
   },
   {
+    name: 'the attack counter',
+    mutate: (state) => {
+      state.defenders.push({ ...baseDefender });
+      state.defenders[0]!.attackCount = 3;
+    },
+  },
+  {
     name: 'an enemy',
     mutate: (state) => {
       state.enemies.push({ ...baseEnemy });
@@ -286,6 +298,31 @@ const mutationCases: MutationCase[] = [
     mutate: (state) => {
       state.enemies.push({ ...baseEnemy });
       state.enemies[0]!.nextBiteTick = 30;
+    },
+  },
+  {
+    name: 'an enemy status',
+    mutate: (state) => {
+      state.enemies.push({ ...baseEnemy });
+      state.enemies[0]!.statuses.push({
+        kind: 'slow',
+        expiresAtTick: 90,
+        nextTickAt: null,
+        knockbackTilesPerTick: 0,
+      });
+    },
+  },
+  {
+    name: 'the enemy status expiry',
+    mutate: (state) => {
+      state.enemies.push({ ...baseEnemy });
+      state.enemies[0]!.statuses.push({
+        kind: 'slow',
+        expiresAtTick: 90,
+        nextTickAt: null,
+        knockbackTilesPerTick: 0,
+      });
+      state.enemies[0]!.statuses[0]!.expiresAtTick = 91;
     },
   },
   {
@@ -355,6 +392,15 @@ const mutationCases: MutationCase[] = [
     mutate: (state) => {
       state.projectiles.push({ ...baseProjectile });
       state.projectiles[0]!.switchAtX = 1.5;
+    },
+  },
+  {
+    name: 'the projectile status',
+    mutate: (state) => {
+      state.projectiles.push({ ...baseProjectile });
+      state.projectiles[0]!.statusKind = 'burn';
+      state.projectiles[0]!.statusDurationS = 3;
+      state.projectiles[0]!.statusStacks = 1;
     },
   },
   {

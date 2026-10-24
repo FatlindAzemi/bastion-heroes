@@ -4,7 +4,9 @@ import { calculatePreArmorDamage } from '../combat/damage';
 import { spawnProjectile } from '../combat/projectiles';
 import { findTarget } from '../combat/targeting';
 import { tileCenterX } from '../grid';
+import type { AttackStatus } from '../combat/status';
 import type { DefenderState, SimEvent, SimState } from '../types';
+import { beginDefenderAttack } from '../combat/status';
 import { collectAuraDamageBuffs } from './aura';
 
 /**
@@ -42,9 +44,21 @@ export function attackWithDiagonal(
     buffs,
   );
   const hitsFlying = defenderDef.hitsFlying === true;
+  const attackStatus = beginDefenderAttack(defender, defenderDef);
   const switchAtX = fromX + rules.combat.diagonalLaneSwitchTiles;
   events.push({ type: 'attack', sourceId: defender.id, targetId: target.id });
-  fireLane(state, defender, events, damageType, damage, hitsFlying, fromX, null, null);
+  fireLane(
+    state,
+    defender,
+    events,
+    damageType,
+    damage,
+    hitsFlying,
+    fromX,
+    null,
+    null,
+    attackStatus,
+  );
   if (defender.lane > 0) {
     fireLane(
       state,
@@ -56,6 +70,7 @@ export function attackWithDiagonal(
       fromX,
       defender.lane - 1,
       switchAtX,
+      attackStatus,
     );
   }
   if (defender.lane < rules.grid.laneCount - 1) {
@@ -69,6 +84,7 @@ export function attackWithDiagonal(
       fromX,
       defender.lane + 1,
       switchAtX,
+      attackStatus,
     );
   }
   return true;
@@ -85,6 +101,7 @@ function fireLane(
   fromX: number,
   targetLane: number | null,
   switchAtX: number | null,
+  attackStatus: AttackStatus | null,
 ): void {
   spawnProjectile(
     state,
@@ -98,6 +115,7 @@ function fireLane(
       hitsFlying,
       targetLane,
       switchAtX,
+      status: attackStatus,
     },
     events,
   );

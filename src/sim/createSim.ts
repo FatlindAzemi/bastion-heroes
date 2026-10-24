@@ -1,6 +1,7 @@
 import { updateDefenders } from './combat/defenderActions';
 import { removeDeadEntities } from './combat/deaths';
 import { updateEnemies } from './combat/enemyActions';
+import { updateStatusEffects } from './combat/status';
 import { updateProjectiles } from './combat/projectiles';
 import { collectOrb, updateEssence } from './essence';
 import { checkLevelResult } from './levelResult';
@@ -68,11 +69,6 @@ export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number
     }
   }
 
-  /** Phase 6 (spec 11.3): status effects tick; they arrive with milestone M2 (#2.2). */
-  function updateStatusEffects(): void {
-    // Status effects are implemented in M2 (spec 4.5, issue #2.2).
-  }
-
   /** Runs one tick step: the fixed phase order of spec 11.3, then advances the tick. */
   function step(): SimEvent[] {
     // After the level ended (won or lost) nothing changes any more: further step()
@@ -89,7 +85,7 @@ export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number
     updateEssence(state, level, events); // 3) Essence and orbs
     updateDefenders(state, events); // 4) defenders act, sorted by id
     updateProjectiles(state, events); // 5) projectiles move and hit
-    updateStatusEffects(); // 6) status effects tick
+    updateStatusEffects(state, level, events); // 6) status effects tick
     updateEnemies(state, events); // 7) enemies move, block and eat, sorted by id
     removeDeadEntities(state, events); // 8) remove dead entities
     updateTraps(state, events); // 9) Last Stand Traps

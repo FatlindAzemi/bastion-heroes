@@ -61,6 +61,8 @@ export const DefenderDef = z.object({
   statusOnHit: z
     .object({ status: z.string(), durationS: z.number(), value: z.number() })
     .optional(),
+  /** Extension: every N-th attack applies Freeze instead of `statusOnHit` (section 5.2 Frost Witch). */
+  freezeEveryNthAttack: z.number().int().positive().optional(),
   /** Extension: seconds until the first producer orb (section 5.2 special rules). */
   firstOrbDelayS: z.number().positive().optional(),
   /** Extension: Essence value of one producer orb (section 5.2 special rules). */
@@ -186,6 +188,28 @@ export const RulesDef = z.object({
     splashSecondaryDamageRatio: z.number().positive(),
     /** Section 4.3 diagonal: the projectiles switch lane once, this many tiles after spawning. */
     diagonalLaneSwitchTiles: z.number().positive(),
+  }),
+  /** Section 4.5: the enemy status effects (effect, duration, stacking). */
+  status: z.object({
+    slow: z.object({
+      moveSpeedMultiplier: z.number().positive(),
+      attackSpeedMultiplier: z.number().positive(),
+      durationS: z.number().positive(),
+    }),
+    freeze: z.object({ durationS: z.number().positive() }),
+    burn: z.object({
+      damage: z.number().int().positive(),
+      damageType: z.literal('blast'),
+      intervalS: z.number().positive(),
+      durationS: z.number().positive(),
+    }),
+    poison: z.object({
+      maxHealthRatio: z.number().positive(),
+      intervalS: z.number().positive(),
+      durationS: z.number().positive(),
+      maxStacks: z.number().int().positive(),
+    }),
+    knockback: z.object({ durationS: z.number().positive() }),
   }),
 });
 

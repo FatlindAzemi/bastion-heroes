@@ -2,6 +2,7 @@ import { enemyById, rules } from '../../data';
 import { ENEMY_SPAWN_X } from '../grid';
 import type { DefenderState, EnemyState, ProjectileState, SimEvent, SimState } from '../types';
 import { applyArmorMultiplier, scaleDamage, type DamageType } from './damage';
+import { applyStatus, type AttackStatus } from './status';
 
 /** Tiles a moving projectile covers per tick (spec 4.3: 6 tiles/s at 30 ticks/s). */
 const PROJECTILE_TILES_PER_TICK =
@@ -23,6 +24,8 @@ export interface ProjectileOptions {
   splashRadius?: number | null;
   targetLane?: number | null;
   switchAtX?: number | null;
+  /** Status applied to every enemy this projectile damages (spec 4.5, 5.2). */
+  status?: AttackStatus | null;
 }
 
 /** Adds a projectile to the state, allocates its id and emits `projectileSpawned` (spec 11.3). */
@@ -47,6 +50,9 @@ export function spawnProjectile(
     splashRadius: options.splashRadius ?? null,
     targetLane: options.targetLane ?? null,
     switchAtX: options.switchAtX ?? null,
+    statusKind: options.status?.kind ?? null,
+    statusDurationS: options.status?.durationS ?? 0,
+    statusStacks: options.status?.stacks ?? 1,
   };
   state.nextId += 1;
   state.projectiles.push(projectile);
@@ -87,8 +93,9 @@ function findHitEnemy(
   return hit;
 }
 
-/** Applies one rounded hit to an enemy and emits the 11.3 hit event (spec 4.2). */
+/** Applies one rounded hit to an enemy, its status and the 11.3 hit event (spec 4.2, 4.5). */
 function applyHit(
+  tick: number,
   enemy: EnemyState,
   projectile: ProjectileState,
   events: SimEvent[],
@@ -108,6 +115,18 @@ function applyHit(
     damageType: projectile.damageType,
     crit: false,
   });
+  if (projectile.statusKind !== null) {
+    applyStatus(
+      tick,
+      enemy,
+      {
+        kind: projectile.statusKind,
+        durationS: projectile.statusDurationS,
+        stacks: projectile.statusStacks,
+      },
+      events,
+    );
+  }
 }
 
 /**
@@ -124,7 +143,7 @@ function resolveArcImpact(state: SimState, projectile: ProjectileState, events: 
     return;
   }
   const impactX = target.x;
-  applyHit(target, projectile, events);
+  applyHit(state.tick, target, projectile, events);
   const splashRadius = projectile.splashRadius;
   if (splashRadius === null) {
     return;
@@ -138,7 +157,7 @@ function resolveArcImpact(state: SimState, projectile: ProjectileState, events: 
     )
     .sort((first, second) => first.id - second.id);
   for (const enemy of splashTargets) {
-    applyHit(enemy, projectile, events, rules.combat.splashSecondaryDamageRatio);
+    applyHit(state.tick, enemy, projectile, events, rules.combat.splashSecondaryDamageRatio);
   }
 }
 
@@ -172,7 +191,7 @@ function updateMovingProjectile(
   }
   const hitEnemy = findHitEnemy(state.enemies, projectile, previousX);
   if (hitEnemy !== undefined) {
-    applyHit(hitEnemy, projectile, events);
+    applyHit(state.tick, hitEnemy, projectile, events);
     return true;
   }
   return projectile.x > ENEMY_SPAWN_X;

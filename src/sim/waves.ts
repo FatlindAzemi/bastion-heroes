@@ -235,6 +235,7 @@ function spawnEnemy(
     waveIndex,
     blockedByDefenderId: null,
     nextBiteTick: null,
+    statuses: [],
   });
   events.push({ type: 'enemySpawned', id, enemyId: spawn.enemyId, lane: spawn.lane });
 }
