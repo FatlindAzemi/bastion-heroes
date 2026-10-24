@@ -56,6 +56,7 @@ def render_previews(glb_path, model_id, out_dir=None):
     render.set_idle_pose(armature)
     scene = render.setup_render()
     render.setup_lights()
+    render.apply_toon_materials(meshes)
     bounds_min, bounds_max = render.evaluated_bounds(meshes)
     centre = (bounds_min + bounds_max) / 2.0
     distance = render.fit_distance(bounds_min, bounds_max, render.GAME_CAMERA_FOV_DEGREES)

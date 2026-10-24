@@ -105,8 +105,8 @@ def setup_render(samples=RENDER_SAMPLES):
     world = bpy.data.worlds.new("preview_world")
     world.use_nodes = True
     background = world.node_tree.nodes["Background"]
-    background.inputs["Color"].default_value = (0.05, 0.06, 0.09, 1.0)
-    background.inputs["Strength"].default_value = 0.8
+    background.inputs["Color"].default_value = (0.16, 0.2, 0.34, 1.0)
+    background.inputs["Strength"].default_value = 0.32
     scene.world = world
     return scene
 
@@ -124,12 +124,12 @@ def _add_sun(name, position, energy, color):
 
 
 def setup_lights():
-    """Warm key, front fill, cool fill and a rim light so chunky shapes read clearly."""
+    """Warm key, soft fills and a rim; tuned so the toon bands of spec 9.2 read."""
     # Spec 9.2 key-light colour, from the upper left front of the character (+X).
-    _add_sun("key", (2.2, -2.4, 3.2), 2.8, (1.0, 0.949, 0.851))
-    _add_sun("front", (2.4, -2.2, 0.9), 1.0, (1.0, 0.97, 0.92))
-    _add_sun("fill", (-1.8, -2.0, 1.2), 1.4, (0.749, 0.89, 1.0))
-    _add_sun("rim", (-1.6, 2.4, 2.2), 1.8, (1.0, 1.0, 1.0))
+    _add_sun("key", (2.2, -2.4, 3.2), 2.0, (1.0, 0.949, 0.851))
+    _add_sun("front", (2.4, -2.2, 0.9), 0.35, (1.0, 0.97, 0.92))
+    _add_sun("fill", (-1.8, -2.0, 1.2), 0.5, (0.749, 0.89, 1.0))
+    _add_sun("rim", (-1.6, 2.4, 2.2), 0.9, (1.0, 1.0, 1.0))
 
 
 def aim_at(camera, target):
@@ -182,6 +182,68 @@ def silhouette_material():
         if input_name in principled.inputs:
             principled.inputs[input_name].default_value = 0.0
     return material
+
+
+def _material_image(material):
+    """The palette image of an imported glTF material, if any."""
+    if material is None or not material.use_nodes:
+        return None
+    for node in material.node_tree.nodes:
+        if node.type == "TEX_IMAGE" and node.image is not None:
+            return node.image
+    return None
+
+
+def toon_material(image):
+    """EEVEE toon material: palette albedo times the spec 9.2 three-step light ramp."""
+    name = "preview_toon_%s" % image.name
+    material = bpy.data.materials.get(name)
+    if material is not None:
+        return material
+    material = bpy.data.materials.new(name)
+    material.use_nodes = True
+    nodes = material.node_tree.nodes
+    links = material.node_tree.links
+    nodes.clear()
+    output = nodes.new("ShaderNodeOutputMaterial")
+    emission = nodes.new("ShaderNodeEmission")
+    multiply = nodes.new("ShaderNodeMixRGB")
+    multiply.blend_type = "MULTIPLY"
+    multiply.inputs["Fac"].default_value = 1.0
+    ramp = nodes.new("ShaderNodeValToRGB")
+    ramp.color_ramp.interpolation = "CONSTANT"
+    bands = ramp.color_ramp.elements
+    bands[0].position = 0.0
+    bands[0].color = (0.55, 0.55, 0.55, 1.0)
+    bands[1].position = 0.38
+    bands[1].color = (0.8, 0.8, 0.8, 1.0)
+    highlight = bands.new(0.78)
+    highlight.color = (1.0, 1.0, 1.0, 1.0)
+    diffuse = nodes.new("ShaderNodeBsdfDiffuse")
+    diffuse.inputs["Color"].default_value = (1.0, 1.0, 1.0, 1.0)
+    shader_to_rgb = nodes.new("ShaderNodeShaderToRGB")
+    texture = nodes.new("ShaderNodeTexImage")
+    texture.image = image
+    texture.interpolation = "Closest"
+    links.new(diffuse.outputs["BSDF"], shader_to_rgb.inputs["Shader"])
+    links.new(shader_to_rgb.outputs["Color"], ramp.inputs["Fac"])
+    links.new(ramp.outputs["Color"], multiply.inputs["Color1"])
+    links.new(texture.outputs["Color"], multiply.inputs["Color2"])
+    links.new(multiply.outputs["Color"], emission.inputs["Color"])
+    links.new(emission.outputs["Emission"], output.inputs["Surface"])
+    return material
+
+
+def apply_toon_materials(meshes):
+    """Swap imported glTF materials for the toon preview material (spec 9.2, 12.8)."""
+    for mesh in meshes:
+        source = mesh.data.materials[0] if len(mesh.data.materials) > 0 else None
+        image = _material_image(source)
+        if image is None:
+            continue
+        material = toon_material(image)
+        mesh.data.materials.clear()
+        mesh.data.materials.append(material)
 
 
 def save_webp(webp_path, quality=85):

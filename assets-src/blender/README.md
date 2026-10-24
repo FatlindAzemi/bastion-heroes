@@ -75,8 +75,10 @@ index is the same number in Blender and after export.
 
 ## Preview and portrait scripts (spec 12.8, 12.9)
 
-Both open an exported raw `.glb`, so they run after the character script. `preview.py` writes four
-512x512 transparent PNGs - front three-quarter, right side, the fixed game camera angle of spec 9.1
+Both open an exported raw `.glb`, so they run after the character script. They swap the imported
+glTF materials for an EEVEE toon material with the spec 9.2 three-step light ramp, so the review
+images match the `MeshToonMaterial` look of the game instead of glossy PBR.
+`preview.py` writes four 512x512 transparent PNGs - front three-quarter, right side, the fixed game camera angle of spec 9.1
 (FOV 32) and the solid black silhouette of spec 9.5 - into `assets-build/previews/<id>/`:
 
 ```bash
