@@ -1,5 +1,7 @@
 import type { ComponentChildren } from 'preact';
 
+import { playSfx } from '../../platform/audio';
+
 /** Colour roles of the 9.8 button palette (primary green, secondary blue, buy yellow, danger red). */
 export type ButtonVariant = 'primary' | 'secondary' | 'buy' | 'danger';
 
@@ -28,7 +30,10 @@ export function Button({
     <button
       type="button"
       class={`screen-button screen-button--${variant}`}
-      onClick={onClick}
+      onClick={(): void => {
+        playSfx('button_tap');
+        onClick();
+      }}
       disabled={disabled}
       data-testid={testId}
     >

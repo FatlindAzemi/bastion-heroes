@@ -88,6 +88,16 @@ environment limits (30,000 triangles, 1.5 MB) and do not apply the character rul
 `root`/`head` bones, bounding height or data-id mapping). `preview_*.py` files in that folder
 are review scripts, not model scripts, and are ignored by the pipeline.
 
+### Placeholder audio (spec 9.9, 12.11; issue #77)
+
+`npx tsx tools/build-assets/audio.ts` converts the CC0 WAV sources in
+`assets-src/audio/{music,sfx}/` to the committed `public/audio/` files: AAC 128 kbps M4A + an OGG
+fallback for music, AAC 96 kbps M4A for SFX. It fails when an SFX exceeds the spec 12.11 budget of
+1.5 s / 50 KB. ffmpeg and ffprobe must be on `PATH` (`FFMPEG_PATH`/`FFPROBE_PATH` override); the
+source mapping and the ffmpeg derivation are documented in `assets-src/audio/README.md`. The music
+tracks are 8 s placeholder loops, and the wrapper (`src/platform/audio.ts`) applies the spec 9.9
+volume defaults (music 0.6, SFX 0.8), the big-wave intensity layer and the 30 % sting duck.
+
 CI runs `npm run assets:check` after `npm run check` (which ends with `npm run validate-data`), so a
 model that breaks a budget or the data registry turns the pull request red. With no committed models
 the check passes (empty set).

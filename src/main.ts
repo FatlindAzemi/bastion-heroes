@@ -8,9 +8,12 @@ import {
   type DebugPlacement,
 } from './debug';
 import { startGameLoop, startRenderLoop, type GameLoop } from './loop';
+import { installAudioUnlock, playMusic, playSfx, setBigWaveIntensity } from './platform/audio';
+import type { SfxId } from './platform/audioManifest';
+import { playHaptic } from './platform/haptics';
 import { createRenderer, type GameRenderer } from './render';
 import { createSim } from './sim';
-import type { Command, LoadoutEntry, SimEvent, SimState } from './sim/types';
+import type { Command, ComboId, LoadoutEntry, SimEvent, SimState } from './sim/types';
 import {
   mountHud,
   mountScoutFlow,
@@ -110,8 +113,14 @@ function createHudActions(sim: HudSim, loop: GameLoop): HudActions {
     },
     shovel: (lane, col) => sim.enqueue({ type: 'shovel', lane, col }),
     collectOrb: (orbId) => sim.enqueue({ type: 'collectOrb', orbId }),
-    togglePause: () => loop.togglePause(),
-    toggleSpeed: () => loop.setSpeed(loop.getSpeed() === 1 ? 2 : 1),
+    togglePause: () => {
+      playSfx('button_tap');
+      loop.togglePause();
+    },
+    toggleSpeed: () => {
+      playSfx('button_tap');
+      loop.setSpeed(loop.getSpeed() === 1 ? 2 : 1);
+    },
   };
 }
 
@@ -137,9 +146,112 @@ function parseRequestedLevel(request: DebugLevelRequest): LevelDef | null {
   return LevelDef.parse(levelDefinition);
 }
 
+/** Defender attack pattern -> attack SFX (spec 9.9 "each attack type"). */
+const ATTACK_SFX: Readonly<Record<string, SfxId>> = {
+  straight: 'attack_straight',
+  lob: 'attack_lob',
+  splash: 'attack_splash',
+  beam: 'attack_beam',
+  diagonal: 'attack_diagonal',
+};
+
+/** Damage type -> hit SFX (spec 9.9 "each hit type"). */
+const HIT_SFX: Readonly<Record<'pierce' | 'blast' | 'arcane', SfxId>> = {
+  pierce: 'hit_pierce',
+  blast: 'hit_blast',
+  arcane: 'hit_arcane',
+};
+
+/** Elemental combo -> combo SFX (spec 9.9 "each combo"). */
+const COMBO_SFX: Readonly<Record<ComboId, SfxId>> = {
+  steam: 'combo_steam',
+  shatter: 'combo_shatter',
+  toxic: 'combo_toxic',
+  chain: 'combo_chain',
+};
+
+/**
+ * Plays the placeholder audio of one live sim tick (spec 9.9). Fast-forwarded debug
+ * ticks skip this, so a `?tick=` screenshot run does not fire hundreds of sounds.
+ */
+function playEventAudio(events: readonly SimEvent[], state: Readonly<SimState>): void {
+  for (const event of events) {
+    switch (event.type) {
+      case 'defenderPlaced':
+        playSfx('card_place');
+        playHaptic('light');
+        break;
+      case 'defenderMerged':
+        playSfx('card_merge');
+        break;
+      case 'defenderRemoved':
+        playSfx(
+          event.reason === 'shovel'
+            ? 'shovel'
+            : event.reason === 'eaten'
+              ? 'enemy_eat'
+              : 'defender_death',
+        );
+        break;
+      case 'enemySpawned':
+        playSfx(enemyById[event.enemyId]?.isBoss === true ? 'boss_roar' : 'enemy_groan');
+        break;
+      case 'attack': {
+        const attacker = state.defenders.find((defender) => defender.id === event.sourceId);
+        const pattern =
+          attacker === undefined
+            ? 'straight'
+            : (defenderById[attacker.defenderId]?.pattern ?? 'straight');
+        playSfx(ATTACK_SFX[pattern] ?? 'attack_straight');
+        break;
+      }
+      case 'hit':
+        playSfx(HIT_SFX[event.damageType]);
+        break;
+      case 'combo':
+        playSfx(COMBO_SFX[event.combo]);
+        break;
+      case 'enemyDied':
+        playSfx('enemy_death');
+        break;
+      case 'orbSpawned':
+        playSfx('orb_drop');
+        break;
+      case 'orbCollected':
+        playSfx('orb_collect');
+        break;
+      case 'waveStarted':
+        // Spec 9.9: the big-wave intensity layer fades in for BIG and FINAL waves.
+        setBigWaveIntensity(event.kind !== 'normal');
+        break;
+      case 'waveBanner':
+        playSfx('wave_horn');
+        break;
+      case 'trapFired':
+        playSfx('trap');
+        playHaptic('medium');
+        break;
+      case 'levelWon':
+        playSfx('level_win');
+        playMusic('victory');
+        playHaptic('heavy');
+        break;
+      case 'levelLost':
+        playSfx('level_lose');
+        playMusic('defeat');
+        playHaptic('heavy');
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 /** The fast-forward result the HUD needs from the skipped ticks (spec 13.7 screenshots). */
 interface FastForwardSummary {
   readonly initialBanner: HudBannerKind | null;
+  /** Wave kind at the requested tick, so a deep debug tick gets the big-wave layer too. */
+  readonly waveKind: 'normal' | 'big' | 'final' | null;
 }
 
 /**
@@ -155,20 +267,24 @@ function fastForwardWithBanner(
   let lastBannerKind: HudBannerKind | null = null;
   let lastBannerTick = 0;
   let processedTicks = 0;
+  let waveKind: 'normal' | 'big' | 'final' | null = null;
   fastForward(sim, tick, (events) => {
     processedTicks += 1;
     for (const event of events) {
       if (event.type === 'waveBanner') {
         lastBannerKind = event.kind;
         lastBannerTick = processedTicks;
+      } else if (event.type === 'waveStarted') {
+        waveKind = event.kind;
       }
     }
     renderer.handleEvents(events);
   });
-  if (lastBannerKind === null || processedTicks - lastBannerTick > BANNER_WINDOW_TICKS) {
-    return { initialBanner: null };
-  }
-  return { initialBanner: lastBannerKind };
+  const initialBanner =
+    lastBannerKind === null || processedTicks - lastBannerTick > BANNER_WINDOW_TICKS
+      ? null
+      : lastBannerKind;
+  return { initialBanner, waveKind };
 }
 
 /**
@@ -195,7 +311,9 @@ function startLevelRun(
     sim.enqueue({ type: 'setAutoCollect', on: true });
   }
   renderer.showLevel(level);
-  const { initialBanner } = fastForwardWithBanner(sim, tick, renderer);
+  playMusic('world1_calm');
+  const { initialBanner, waveKind } = fastForwardWithBanner(sim, tick, renderer);
+  setBigWaveIntensity(waveKind !== null && waveKind !== 'normal');
   // Debug-only (issue #66): place defenders after the fast-forward, so a deep tick has
   // accumulated enough Essence for the screenshot loadout.
   for (const placement of placements) {
@@ -212,6 +330,7 @@ function startLevelRun(
     handleEvents: (events: readonly SimEvent[]): void => {
       renderer.handleEvents(events);
       hud?.handleEvents(mapHudEvents(events));
+      playEventAudio(events, sim.state);
     },
     draw: (state: Readonly<SimState>, alpha: number): void => {
       renderer.draw(state, alpha);
@@ -293,6 +412,7 @@ function boot(): void {
     showDebugError(root, debugUrl.message);
     return;
   }
+  installAudioUnlock();
   const renderer = createRenderer(root);
   if (debugUrl.kind === 'level') {
     startDebugLevel(root, renderer, debugUrl);
@@ -300,9 +420,11 @@ function boot(): void {
   }
   if (debugUrl.kind === 'scout') {
     startScoutFlow(root, renderer, debugUrl);
+    playMusic('menu');
     return;
   }
   mountUi(root);
+  playMusic('menu');
   startRenderLoop(() => {
     renderer.draw();
   });
