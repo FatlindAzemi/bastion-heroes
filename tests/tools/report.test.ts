@@ -320,6 +320,28 @@ describe('16.4 report formatting', () => {
     expect(markdown).toContain('❌ 3-star rate 0.0% (40.0%-80.0%) (+3 more)');
   });
 
+  it('16.3/#81: fixed-loadout levels count in the raw share but not in the target', () => {
+    const level = LevelDef.parse({
+      ...createTestLevel(),
+      id: 'w1_l04',
+      number: 4,
+      fixedLoadout: ['sparkbolt_gremlin'],
+    });
+    const runs = makeRuns(
+      'recommended',
+      { total: 50, wins: 50, placed: ['sparkbolt_gremlin'] },
+      level.id,
+    );
+    const report = buildWorldReport(1, [level], runs, 50);
+    const diversity = report.cardDiversity[0];
+
+    expect(diversity?.wins).toBe(0);
+    expect(diversity?.winShare).toBe(0);
+    expect(diversity?.allLevelsWins).toBe(50);
+    expect(diversity?.allLevelsWinShare).toBe(1);
+    expect(report.worldTargets[0]?.pass).toBe(false);
+  });
+
   it('16.3: card diversity fails above 80 % of recommended wins', () => {
     const level = testLevelAt(5);
     const runs = makeRuns(

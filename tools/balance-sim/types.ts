@@ -79,6 +79,8 @@ export interface LevelReport {
   levelName: string;
   world: number;
   number: number;
+  /** True on levels without a fixed loadout (W1-L05-L10), where the player picks the cards. */
+  freeLoadout: boolean;
   bots: BotMetrics[];
   targets: TargetEvaluation[];
 }
@@ -88,10 +90,17 @@ export interface CardDiversityRow {
   defenderId: string;
   name: string;
   role: string;
-  /** Won recommended runs in which the defender was placed. */
+  /**
+   * Won recommended runs on FREE-loadout levels in which the defender was placed.
+   * Fixed tutorial levels are excluded from the target, per decision #81 option A.
+   */
   wins: number;
-  /** `wins / recommended wins in the world`, 0..1. */
+  /** `wins / recommended wins on free-loadout levels`, 0..1; the 16.3 target value. */
   winShare: number;
+  /** Won recommended runs on ALL levels in which the defender was placed (raw info). */
+  allLevelsWins: number;
+  /** `allLevelsWins / all recommended wins`, 0..1; shown next to the target value. */
+  allLevelsWinShare: number;
   /** True when the role is a producer; those are exempt from the 16.3 target. */
   exempt: boolean;
   pass: boolean;
