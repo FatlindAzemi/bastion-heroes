@@ -70,7 +70,7 @@ export interface Rng {
   next(): number;
 }
 
-/** A defender standing on the grid (spec 11.3, 3.4). */
+/** A defender standing on the grid (spec 11.3, 3.4, 5.2). */
 export interface DefenderState {
   id: number;
   defenderId: string;
@@ -84,6 +84,8 @@ export interface DefenderState {
   cardLevel: number;
   /** First tick at which the defender may act or be targeted, after its 0.5 s drop (spec 3.4). */
   activeAtTick: number;
+  /** Absolute tick of its next producer orb, or null if the defender does not produce (spec 5.2). */
+  nextOrbTick: number | null;
 }
 
 /** An enemy walking along a lane (spec 11.3). Later issues extend it with health and statuses. */
@@ -102,12 +104,22 @@ export interface ProjectileState {
   x: number;
 }
 
-/** An Essence orb on the field (spec 3.3, 11.3). */
+/**
+ * An Essence orb on the field (spec 3.3, 11.3). The tick fields tell the
+ * renderer where the drop animation is: from `spawnTick` to `landTick` it falls,
+ * then it sits on the tile until `expiresAtTick`.
+ */
 export interface OrbState {
   id: number;
   lane: number;
   x: number;
   value: number;
+  /** Tick the orb spawned (spec 3.3). */
+  spawnTick: number;
+  /** Tick the orb lands on its tile: spawnTick + 1.0 s (spec 3.3). */
+  landTick: number;
+  /** Tick the orb expires: landTick + 8.0 s, then it is lost (spec 3.3). */
+  expiresAtTick: number;
 }
 
 /**

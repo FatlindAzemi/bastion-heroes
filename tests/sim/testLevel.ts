@@ -6,6 +6,7 @@ export interface TestLevelOptions {
   readonly activeLanes?: number[];
   readonly terrain?: { lane: number; col: number; type: TerrainType }[];
   readonly startEssence?: number;
+  readonly skyDrops?: boolean;
 }
 
 /**
@@ -21,7 +22,7 @@ export function createTestLevel(options: TestLevelOptions = {}): LevelDef {
     name: 'Test Level',
     activeLanes: options.activeLanes ?? [0, 1, 2, 3, 4],
     startEssence: options.startEssence ?? 150,
-    skyDrops: true,
+    skyDrops: options.skyDrops ?? true,
     terrain: options.terrain ?? [],
     loadoutSlots: 6,
     fixedLoadout: null,

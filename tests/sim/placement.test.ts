@@ -15,7 +15,11 @@ function createTestSim(
   options: TestLevelOptions = {},
   loadout: LoadoutEntry[] = [{ defenderId: SPARKBOLT, level: 1 }],
 ): Sim {
-  return createSim(createTestLevel({ startEssence: 999, ...options }), loadout, 10001);
+  return createSim(
+    createTestLevel({ skyDrops: false, startEssence: 999, ...options }),
+    loadout,
+    10001,
+  );
 }
 
 function place(defenderId: string, lane: number, col: number): Command {
@@ -56,6 +60,7 @@ describe('placement', () => {
         maxHp: 300,
         cardLevel: 1,
         activeAtTick: ACTIVATION_DELAY_TICKS,
+        nextOrbTick: null,
       },
     ]);
   });
@@ -240,13 +245,16 @@ describe('placement', () => {
 
     sim.enqueue({ type: 'shovel', lane: 0, col: 0 });
     sim.step();
+    // The Glowshroom Monk drops its first orb before the Sparkbolt card is ready
+    // again; the orb takes the next id from the same counter (spec 3.3, 11.3).
     while (sim.state.tick < 225) {
       sim.step();
     }
+    expect(sim.state.orbs.map((orb) => orb.id)).toEqual([3]);
     sim.enqueue(place(SPARKBOLT, 0, 0));
-    expect(sim.step()[0]).toMatchObject({ type: 'defenderPlaced', id: 3 });
-    expect(sim.state.nextId).toBe(4);
-    expect(sim.state.defenders.map((defender) => defender.id)).toEqual([2, 3]);
+    expect(sim.step()[0]).toMatchObject({ type: 'defenderPlaced', id: 4 });
+    expect(sim.state.nextId).toBe(5);
+    expect(sim.state.defenders.map((defender) => defender.id)).toEqual([2, 4]);
   });
 
   it('11.3: queued commands are applied in order within one tick', () => {
