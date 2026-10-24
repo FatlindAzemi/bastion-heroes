@@ -1,7 +1,9 @@
 /**
  * Performance numbers reported by `renderer.info` plus the measured fps, shown in a
  * dev overlay toggled with the backquote key (spec 11.7; the `?perf=1` URL parameter
- * of spec 16.6 shows it immediately). Numbers are refreshed about four times a second.
+ * of spec 16.6 shows it immediately). When a level is active it also reports read-only
+ * simulation diagnostics for the M1 exit evidence (issue #39).
+ * Numbers are refreshed about four times a second.
  */
 export interface DebugStats {
   /** Draw calls of the last rendered frame (`renderer.info.render.calls`). */
@@ -10,11 +12,53 @@ export interface DebugStats {
   readonly triangles: number;
 }
 
+/**
+ * Read-only simulation diagnostics shown when a level is active (issue #39, spec 14 M1
+ * exit criteria): tick, level status, stars and the live entity counts.
+ */
+export interface DebugSimInfo {
+  /** Sim tick currently rendered (spec 3.2). */
+  readonly tick: number;
+  /** Level status: playing until the win/loss check ends the level (spec 3.9, 3.10). */
+  readonly status: 'playing' | 'won' | 'lost';
+  /** Stars earned by a win, 0 while playing or lost (spec 3.11). */
+  readonly stars: number;
+  readonly enemies: number;
+  readonly defenders: number;
+  readonly orbs: number;
+}
+
 /** The debug overlay handle the renderer updates after every frame. */
 export interface DebugOverlay {
-  /** Records one rendered frame; updates the visible text when enough time has passed. */
-  recordFrame(nowMs: number, stats: DebugStats): void;
+  /**
+   * Records one rendered frame; updates the visible text when enough time has passed.
+   * `simInfo` is only passed while a level is active, so the title screen keeps showing
+   * the renderer stats only (issue #39).
+   */
+  recordFrame(nowMs: number, stats: DebugStats, simInfo?: DebugSimInfo): void;
   dispose(): void;
+}
+
+/** Builds the overlay text: renderer stats, plus the sim diagnostics when present. */
+function formatOverlayText(stats: DebugStats, fps: number, simInfo?: DebugSimInfo): string {
+  const frameTimeMs = fps > 0 ? (1000 / fps).toFixed(1) : '--';
+  const parts = [
+    `fps ${fps > 0 ? fps : '--'}`,
+    `frame ${frameTimeMs} ms`,
+    `draw calls ${stats.drawCalls}`,
+    `triangles ${stats.triangles.toLocaleString('en-US')}`,
+  ];
+  if (simInfo !== undefined) {
+    parts.push(
+      `tick ${simInfo.tick}`,
+      `status ${simInfo.status}`,
+      `stars ${simInfo.stars}`,
+      `enemies ${simInfo.enemies}`,
+      `defenders ${simInfo.defenders}`,
+      `orbs ${simInfo.orbs}`,
+    );
+  }
+  return parts.join(' | ');
 }
 
 /** Text is refreshed this often, so reading it never costs a DOM write per frame. */
@@ -42,7 +86,8 @@ export function createDebugOverlay(
     'color: #f4fbff',
     'font: 12px/1.4 ui-monospace, SFMono-Regular, monospace',
     'pointer-events: none',
-    'white-space: pre',
+    'white-space: pre-wrap',
+    'max-width: calc(100vw - 16px)',
   ].join('; ');
   element.hidden = !initiallyVisible;
   container.appendChild(element);
@@ -72,7 +117,7 @@ export function createDebugOverlay(
   window.addEventListener('keydown', onKeyDown);
 
   return {
-    recordFrame: (nowMs: number, stats: DebugStats): void => {
+    recordFrame: (nowMs: number, stats: DebugStats, simInfo?: DebugSimInfo): void => {
       if (!visible) {
         return;
       }
@@ -86,13 +131,8 @@ export function createDebugOverlay(
         return;
       }
       lastUpdateMs = nowMs;
-      const frameTimeMs = fps > 0 ? (1000 / fps).toFixed(1) : '--';
-      element.textContent = [
-        `fps ${fps > 0 ? fps : '--'}`,
-        `frame ${frameTimeMs} ms`,
-        `draw calls ${stats.drawCalls}`,
-        `triangles ${stats.triangles.toLocaleString('en-US')}`,
-      ].join(' | ');
+      // One DOM write per update window keeps the per-frame cost out of the hot path.
+      element.textContent = formatOverlayText(stats, fps, simInfo);
     },
     dispose: (): void => {
       window.removeEventListener('keydown', onKeyDown);

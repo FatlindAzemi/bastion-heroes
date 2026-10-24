@@ -12,7 +12,7 @@ import {
 } from 'three';
 
 import type { SimEvent, SimState } from '../sim/types';
-import { createDebugOverlay } from './debugOverlay';
+import { createDebugOverlay, type DebugSimInfo } from './debugOverlay';
 import type { LevelViewOptions } from './grid';
 import { createLevelScene, type LevelScene } from './levelScene';
 import { createTitleScene } from './titleScene';
@@ -100,13 +100,27 @@ export function createRenderer(container: HTMLElement): GameRenderer {
   resize();
   window.addEventListener('resize', resize);
 
-  /** Records the `renderer.info` numbers of the frame that was just rendered. */
-  const recordDebugFrame = (): void => {
-    debugOverlay.recordFrame(performance.now(), {
-      drawCalls: renderer.info.render.calls,
-      triangles: renderer.info.render.triangles,
-    });
+  /** Records the `renderer.info` numbers plus the sim diagnostics of the frame just rendered. */
+  const recordDebugFrame = (simInfo?: DebugSimInfo): void => {
+    debugOverlay.recordFrame(
+      performance.now(),
+      {
+        drawCalls: renderer.info.render.calls,
+        triangles: renderer.info.render.triangles,
+      },
+      simInfo,
+    );
   };
+
+  /** Read-only sim diagnostics for the debug overlay while a level is active (issue #39). */
+  const readDebugSimInfo = (state: Readonly<SimState>): DebugSimInfo => ({
+    tick: state.tick,
+    status: state.status,
+    stars: state.stars,
+    enemies: state.enemies.length,
+    defenders: state.defenders.length,
+    orbs: state.orbs.length,
+  });
 
   /** Animates and renders the title scene with its gentle camera sway (spec 9.7). */
   const drawTitle = (): void => {
@@ -121,15 +135,17 @@ export function createRenderer(container: HTMLElement): GameRenderer {
   return {
     canvas: renderer.domElement,
     draw: (state?: Readonly<SimState>, alpha = 0): void => {
+      let simInfo: DebugSimInfo | undefined;
       if (levelScene === null) {
         drawTitle();
       } else {
         if (state !== undefined) {
           levelScene.draw(state, alpha);
+          simInfo = readDebugSimInfo(state);
         }
         renderer.render(levelScene.scene, levelScene.camera);
       }
-      recordDebugFrame();
+      recordDebugFrame(simInfo);
     },
     handleEvents: (events): void => {
       levelScene?.handleEvents(events);

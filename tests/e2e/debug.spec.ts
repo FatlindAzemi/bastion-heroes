@@ -28,6 +28,62 @@ test('debug URL: boots W1-L01 at tick 900 with the HUD', async ({ page }) => {
   expect(pageErrors, 'uncaught page errors').toEqual([]);
 });
 
+test('debug overlay: shows sim tick, status, stars and entity counts for a level run', async ({
+  page,
+}) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      consoleErrors.push(message.text());
+    }
+  });
+  page.on('pageerror', (error) => {
+    pageErrors.push(error.message);
+  });
+
+  // Test-only: the first two animation frames run immediately (the boot frame shows
+  // tick 900), then the frame loop is slowed down so the requested tick stays visible
+  // while the screenshot is taken. The overlay itself is unchanged.
+  await page.addInitScript(() => {
+    const originalRequestAnimationFrame = window.requestAnimationFrame.bind(window);
+    let frames = 0;
+    window.requestAnimationFrame = (callback) => {
+      frames += 1;
+      if (frames <= 2) {
+        return originalRequestAnimationFrame(callback);
+      }
+      return window.setTimeout(() => callback(performance.now()), 5000);
+    };
+  });
+
+  await page.goto('/?level=w1-l01&seed=10001&tick=900&perf=1', { waitUntil: 'commit' });
+  await page.waitForTimeout(600);
+
+  // Spec 11.7 / 16.6: ?perf=1 opens the overlay, which now shows the read-only sim state.
+  const overlay = page.locator('#debug-overlay');
+  await expect(overlay).toBeVisible();
+  await expect(overlay).toContainText('tick 900');
+  await expect(overlay).toContainText('status playing');
+  await expect(overlay).toContainText(/stars [0-3]/);
+  await expect(overlay).toContainText(/enemies \d+ \| defenders \d+ \| orbs \d+/);
+
+  await page.screenshot({ path: 'test-results/screens/debug-overlay-w1-l01-844x390.png' });
+
+  expect(consoleErrors, 'browser console errors').toEqual([]);
+  expect(pageErrors, 'uncaught page errors').toEqual([]);
+});
+
+test('debug overlay: the title screen shows renderer stats only', async ({ page }) => {
+  await page.goto('/?perf=1');
+
+  const overlay = page.locator('#debug-overlay');
+  await expect(overlay).toBeVisible();
+  await expect(overlay).toContainText(/draw calls \d+/);
+  await expect(overlay).toContainText(/triangles [\d,]+/);
+  await expect(overlay).not.toContainText('tick ');
+});
+
 test('debug URL: unknown level ids show a readable error instead of crashing', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => {
