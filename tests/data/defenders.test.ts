@@ -76,3 +76,127 @@ describe('M1 defender data (spec 5.1, 5.2)', () => {
     expect(defenderById['iron_granny']?.range).toBeUndefined();
   });
 });
+
+/** Exact section 5.1 and 5.2 values of the M2 defenders (spec 1.1 rule 3). */
+describe('M2 defender data (spec 5.1, 5.2)', () => {
+  it('5.1/5.2: boomcap_brewer matches the spec', () => {
+    expect(defenderById['boomcap_brewer']).toMatchObject({
+      id: 'boomcap_brewer',
+      name: 'Boomcap Brewer',
+      faction: 'wildgrove',
+      rarity: 'common',
+      role: 'shooter',
+      pattern: 'splash',
+      cost: 150,
+      cooldownS: 7.5,
+      startsReady: true,
+      hp: 300,
+      damage: 40,
+      damageType: 'blast',
+      attackIntervalS: 2.8,
+      range: 9,
+      splashRadius: 0.8,
+      element: 'none',
+      star3Bonus: 'splash_radius_up',
+      star3Params: { splashRadius: 1.2 },
+      milestone: 'M2',
+    });
+  });
+
+  it('5.1/5.2: snowpup_yeti matches the spec', () => {
+    expect(defenderById['snowpup_yeti']).toMatchObject({
+      id: 'snowpup_yeti',
+      name: 'Snowpup Yeti',
+      faction: 'frost',
+      rarity: 'common',
+      role: 'shooter',
+      pattern: 'straight',
+      cost: 175,
+      cooldownS: 7.5,
+      startsReady: true,
+      hp: 300,
+      damage: 20,
+      damageType: 'pierce',
+      attackIntervalS: 1.4,
+      range: 9,
+      element: 'frost',
+      statusOnHit: { status: 'slow', durationS: 3, value: 0.5 },
+      star3Bonus: 'slow_duration_up',
+      star3Params: { slowDurationS: 5 },
+      milestone: 'M2',
+    });
+  });
+
+  it('5.1/5.2: rune_archer matches the spec', () => {
+    expect(defenderById['rune_archer']).toMatchObject({
+      id: 'rune_archer',
+      name: 'Rune Archer',
+      faction: 'neon',
+      rarity: 'rare',
+      role: 'shooter',
+      pattern: 'straight',
+      cost: 150,
+      cooldownS: 7.5,
+      startsReady: true,
+      hp: 300,
+      damage: 30,
+      damageType: 'arcane',
+      attackIntervalS: 1.5,
+      range: 9,
+      hitsFlying: true,
+      element: 'none',
+      star3Bonus: 'piercing_arrow',
+      star3Params: { extraHits: 1 },
+      milestone: 'M2',
+    });
+  });
+
+  it('5.1/5.2: pyro_fox matches the spec', () => {
+    expect(defenderById['pyro_fox']).toMatchObject({
+      id: 'pyro_fox',
+      name: 'Pyro Fox',
+      faction: 'wildgrove',
+      rarity: 'epic',
+      role: 'shooter',
+      pattern: 'lob',
+      cost: 200,
+      cooldownS: 15,
+      startsReady: false,
+      hp: 300,
+      damage: 25,
+      damageType: 'blast',
+      attackIntervalS: 2,
+      range: 6,
+      element: 'fire',
+      statusOnHit: { status: 'burn', durationS: 3, value: 6 },
+      star3Bonus: 'fire_patch',
+      star3Params: { firePatchRadiusTiles: 0.5, firePatchDurationS: 2 },
+      milestone: 'M2',
+    });
+  });
+
+  it('5.1/5.2: frost_witch matches the spec', () => {
+    expect(defenderById['frost_witch']).toMatchObject({
+      id: 'frost_witch',
+      name: 'Frost Witch',
+      faction: 'frost',
+      rarity: 'epic',
+      role: 'control',
+      pattern: 'beam',
+      cost: 250,
+      cooldownS: 20,
+      startsReady: false,
+      hp: 400,
+      damage: 30,
+      damageType: 'arcane',
+      attackIntervalS: 2,
+      range: 4,
+      element: 'frost',
+      statusOnHit: { status: 'slow', durationS: 3, value: 0.5 },
+      freezeEveryNthAttack: 4,
+      star3Bonus: 'range_up',
+      star3Params: { range: 6 },
+      milestone: 'M2',
+    });
+  });
+});
