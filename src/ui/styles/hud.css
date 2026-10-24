@@ -1,15 +1,19 @@
 /*
- * Greybox in-level HUD (spec 9.8): Essence counter, card bar, shovel, speed/pause and the
- * rejected-command feedback. Buttons use the 9.8 style (radius 16 px, 6 px bottom edge,
- * 4 px press travel); every touch target is at least 48 px. Final art is M3 issue 3.11.
+ * Final in-level HUD (spec 9.8, issue #76): Essence counter, 6-card bar with the shovel,
+ * speed/pause controls, level progress, wave banner, boss bar, rejected-command feedback
+ * and the pause overlay. Typography is Lilita One for titles/numbers/buttons and Nunito
+ * for body text; text uses the 9.8 white fill, 3 px #1B1B2F outline and drop shadow.
+ * Buttons use the 9.8 3D style (16 px radius, 6 px bottom edge, 4 px press travel) and
+ * every control stays above the 48 x 48 px minimum touch target.
  */
 
 .hud {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  font-family: var(--font-body);
   color: #ffffff;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -22,7 +26,7 @@
   touch-action: manipulation;
 }
 
-/* Spec 9.8: white fill, 3 px #1B1B2F outline and a drop shadow for numbers and titles. */
+/* Spec 9.8 text style: white fill, 3 px #1B1B2F outline, drop shadow 0 3px rgba(0,0,0,0.35). */
 .hud-outlined-text {
   text-shadow:
     3px 0 0 var(--color-shadow),
@@ -33,7 +37,7 @@
     -2px -2px 0 var(--color-shadow),
     2px -2px 0 var(--color-shadow),
     -2px 2px 0 var(--color-shadow),
-    0 6px 10px rgba(0, 0, 0, 0.35);
+    0 3px 3px rgba(0, 0, 0, 0.35);
 }
 
 /* ---------- Essence counter (top left, 140 x 72 px) ---------- */
@@ -45,73 +49,63 @@
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   width: 140px;
   height: 72px;
-  padding: 0 12px;
+  padding: 0 8px;
   border: 3px solid var(--color-shadow);
   border-radius: 16px;
-  background: rgba(27, 27, 47, 0.72);
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25);
+  background: linear-gradient(180deg, rgba(43, 32, 64, 0.95) 0%, rgba(27, 27, 47, 0.95) 100%);
+  box-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.32),
+    inset 0 2px 0 rgba(244, 251, 255, 0.16);
   pointer-events: none;
 }
 
 .hud-essence__orb {
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--color-shadow);
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 38% 32%,
-    #f4fbff 0%,
-    #8dffe8 26%,
-    #3bf0c8 62%,
-    #1a9c86 100%
-  );
-  box-shadow: 0 0 14px rgba(59, 240, 200, 0.65);
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 0 9px rgba(59, 240, 200, 0.7));
 }
 
 .hud-essence__value {
   flex: 1 1 auto;
   font-family: var(--font-title);
-  font-size: 38px;
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: -0.5px;
   line-height: 1;
   text-align: center;
-  text-shadow:
-    3px 0 0 var(--color-shadow),
-    -3px 0 0 var(--color-shadow),
-    0 3px 0 var(--color-shadow),
-    0 -3px 0 var(--color-shadow),
-    2px 2px 0 var(--color-shadow),
-    -2px -2px 0 var(--color-shadow),
-    0 5px 8px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
 }
 
-/* ---------- Card bar (top, right of the counter) ---------- */
+/* ---------- Card bar (top, right of the counter; 6 cards of 72 x 96 px, 8 px gaps) ---------- */
 
 .hud-card-bar {
   position: absolute;
   top: calc(10px + env(safe-area-inset-top, 0px));
+  right: calc(156px + env(safe-area-inset-right, 0px));
   left: calc(160px + env(safe-area-inset-left, 0px));
   z-index: 2;
   display: flex;
   flex-wrap: nowrap;
   align-items: flex-start;
   gap: 8px;
-  max-width: calc(100vw - 330px - env(safe-area-inset-left, 0px));
-  padding: 8px 2px 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
   pointer-events: auto;
-  scrollbar-width: none;
 }
 
-.hud-card-bar::-webkit-scrollbar {
-  display: none;
+/* 844 x 390 phones: the 6 cards + shovel only fit next to the counter and controls with
+   the card gap tightened to 4 px, so the 9.8 element sizes are kept (see PR). */
+@media (max-width: 900px) {
+  .hud-card-bar {
+    right: calc(156px + env(safe-area-inset-right, 0px));
+    left: calc(154px + env(safe-area-inset-left, 0px));
+    gap: 4px;
+  }
 }
 
-/* Spec 9.8: card 72 x 96 px, rarity frame, cost badge bottom left, cooldown overlay. */
+/* Spec 9.8: card 72 x 96 px, rarity frame, portrait, cost badge, cooldown, star pips. */
 .hud-card {
   position: relative;
   flex: 0 0 auto;
@@ -122,83 +116,64 @@
   border: 3px solid var(--color-secondary-blue);
   border-radius: 16px;
   background: var(--color-shadow);
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+  box-shadow:
+    0 6px 0 rgba(0, 0, 0, 0.32),
+    inset 0 2px 0 rgba(244, 251, 255, 0.14);
   cursor: pointer;
   touch-action: manipulation;
   transition:
     transform 0.1s ease,
-    box-shadow 0.1s ease;
-}
-
-.hud-card--selected {
-  transform: translateY(-6px) scale(1.04);
-  box-shadow:
-    0 0 0 3px var(--color-buy-yellow),
-    0 12px 18px rgba(0, 0, 0, 0.45);
+    box-shadow 0.1s ease,
+    filter 0.1s ease;
 }
 
 .hud-card__portrait {
   position: absolute;
   inset: 3px 3px 22px;
   border-radius: 11px;
-  overflow: hidden;
 }
 
-/* Greybox placeholder silhouette: a chunky capsule, like the renderer's units (9.5). */
-.hud-card__blob {
-  position: absolute;
-  left: 50%;
-  bottom: 12%;
-  width: 34px;
-  height: 46px;
-  transform: translateX(-50%);
-  border: 2px solid rgba(27, 27, 47, 0.8);
-  border-radius: 16px 16px 12px 12px;
-  background: rgba(27, 27, 47, 0.55);
-}
-
-.hud-card__name {
-  position: absolute;
-  left: 3px;
-  right: 3px;
-  bottom: 24px;
+.hud-card--selected {
   z-index: 3;
-  overflow: hidden;
-  color: #ffffff;
-  font-family: var(--font-body);
-  font-size: 8px;
-  font-weight: 800;
-  line-height: 1.1;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  transform: translateY(-6px) scale(1.04);
+  box-shadow:
+    0 0 0 3px var(--color-buy-yellow),
+    0 12px 18px rgba(0, 0, 0, 0.45),
+    inset 0 2px 0 rgba(244, 251, 255, 0.2);
+}
+
+.hud-card--selected .hud-card__portrait {
+  box-shadow: inset 0 0 12px rgba(255, 204, 0, 0.6);
+}
+
+.hud-card--cooling .hud-card__portrait {
+  filter: saturate(0.6) brightness(0.85);
+}
+
+/* Star pips at ★2/★3 (spec 3.6, 9.8). */
+.hud-card__stars {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 4;
+  display: flex;
+  gap: 1px;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6));
+}
+
+.hud-card__star {
+  width: 12px;
+  height: 12px;
 }
 
 .hud-card__cost {
   position: absolute;
+  bottom: 3px;
   left: 4px;
-  bottom: 4px;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 5px;
-  border-radius: 8px;
-  background: rgba(27, 27, 47, 0.9);
-  color: #ffffff;
-  font-family: var(--font-title);
-  font-size: 13px;
-  line-height: 1.2;
+  z-index: 4;
+  font-size: 15px;
 }
 
-.hud-card__essence-icon {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #f4fbff 0%, #3bf0c8 70%);
-}
-
-/* Dark overlay shrinking from the top down as the cooldown runs (spec 3.5). */
 .hud-card__cooldown {
   position: absolute;
   right: 0;
@@ -206,7 +181,7 @@
   left: 0;
   z-index: 2;
   border-radius: 0 0 13px 13px;
-  background: rgba(27, 27, 47, 0.78);
+  background: linear-gradient(180deg, rgba(27, 27, 47, 0.82) 0%, rgba(27, 27, 47, 0.92) 100%);
   pointer-events: none;
 }
 
@@ -219,23 +194,25 @@
   justify-content: center;
   color: #ffffff;
   font-family: var(--font-title);
-  font-size: 26px;
+  font-size: 30px;
   line-height: 1;
   text-shadow:
     2px 0 0 var(--color-shadow),
     -2px 0 0 var(--color-shadow),
     0 2px 0 var(--color-shadow),
-    0 -2px 0 var(--color-shadow);
+    0 -2px 0 var(--color-shadow),
+    0 3px 4px rgba(0, 0, 0, 0.4);
   pointer-events: none;
 }
 
-/* ---------- Buttons (9.8: radius 16, 6 px darker bottom edge, 4 px press travel) ---------- */
+/* ---------- Buttons (spec 9.8: radius 16, 6 px bottom edge, 4 px press travel) ---------- */
 
 .hud-button {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   width: 64px;
   height: 64px;
   padding: 0;
@@ -246,7 +223,9 @@
   font-family: var(--font-title);
   font-size: 24px;
   line-height: 1;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+  box-shadow:
+    0 6px 0 rgba(0, 0, 0, 0.34),
+    inset 0 2px 0 rgba(244, 251, 255, 0.2);
   cursor: pointer;
   touch-action: manipulation;
   transition:
@@ -256,62 +235,66 @@
 
 .hud-button:active {
   transform: translateY(4px);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.34),
+    inset 0 2px 0 rgba(244, 251, 255, 0.15);
 }
 
 .hud-button--primary {
-  width: auto;
-  min-width: 64px;
-  padding: 0 30px;
   background: var(--color-primary-green);
-  font-size: 28px;
 }
 
 .hud-button--secondary {
   background: var(--color-secondary-blue);
 }
 
+.hud-button--buy {
+  background: var(--color-buy-yellow);
+}
+
+.hud-button--danger {
+  background: var(--color-danger-red);
+}
+
 .hud-button--selected {
   transform: translateY(-4px);
   box-shadow:
     0 0 0 3px var(--color-buy-yellow),
-    0 10px 16px rgba(0, 0, 0, 0.4);
+    0 10px 16px rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(244, 251, 255, 0.2);
 }
 
 .hud-button--shake {
   animation: hud-shake 0.3s linear;
 }
 
-/* ---------- Shovel button (end of the card bar, 72 x 72 px) ---------- */
+.hud-button__icon {
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.25));
+}
+
+.hud-button__icon--speed {
+  width: 20px;
+  height: 20px;
+}
+
+.hud-button__label {
+  font-family: var(--font-title);
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* ---------- Shovel (end of the card bar, 72 x 72 px) ---------- */
 
 .hud-shovel {
   width: 72px;
   height: 72px;
-  background: var(--color-secondary-blue);
 }
 
-.hud-shovel__handle {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 7px;
-  height: 30px;
-  border: 2px solid var(--color-shadow);
-  border-radius: 4px;
-  background: #efe6d2;
-  transform: translate(-50%, -50%) rotate(38deg) translateY(-13px);
-}
-
-.hud-shovel__blade {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 24px;
-  height: 22px;
-  border: 2px solid var(--color-shadow);
-  border-radius: 4px 4px 12px 12px;
-  background: #8a9ba8;
-  transform: translate(-50%, -50%) rotate(38deg) translateY(12px);
+.hud-shovel__icon {
+  width: 42px;
+  height: 42px;
 }
 
 /* ---------- Speed toggle and pause (top right, 64 x 64 px each) ---------- */
@@ -327,33 +310,215 @@
 }
 
 .hud-button--speed {
-  font-size: 22px;
+  gap: 2px;
 }
 
-.hud-button--pause {
-  font-size: 22px;
+/* ---------- Level progress (bottom right, 220 x 28 px; spec 3.10, 9.8) ---------- */
+
+.hud-progress {
+  position: absolute;
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  z-index: 2;
+  width: 220px;
+  height: 28px;
+  pointer-events: none;
+}
+
+.hud-progress__track {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 16px;
+  border: 2px solid var(--color-shadow);
+  border-radius: 10px;
+  background: rgba(27, 27, 47, 0.8);
+  box-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(244, 251, 255, 0.12);
+}
+
+.hud-progress__fill {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 1px;
+  max-width: calc(100% - 2px);
+  border-radius: 7px;
+  background: linear-gradient(180deg, #7ef08b 0%, var(--color-primary-green) 55%, #2f9e45 100%);
+  box-shadow: inset 0 1px 0 rgba(244, 251, 255, 0.5);
+  transition: width 0.25s ease-out;
+}
+
+.hud-progress__mark {
+  position: absolute;
+  bottom: 12px;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45));
+}
+
+.hud-progress__icon {
+  width: 18px;
+  height: 18px;
+}
+
+.hud-progress__mark--final .hud-progress__icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------- Wave banner (center, full width, 120 px; spec 3.10, 9.8) ---------- */
+
+.hud-banner {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    90deg,
+    rgba(27, 27, 47, 0) 0%,
+    rgba(27, 27, 47, 0.86) 14%,
+    rgba(43, 32, 64, 0.92) 50%,
+    rgba(27, 27, 47, 0.86) 86%,
+    rgba(27, 27, 47, 0) 100%
+  );
+  animation: hud-banner-slide 3.2s ease-in-out both;
+  pointer-events: none;
+}
+
+.hud-banner--big {
+  box-shadow:
+    inset 0 3px 0 rgba(255, 204, 0, 0.55),
+    inset 0 -3px 0 rgba(255, 204, 0, 0.55);
+}
+
+.hud-banner--final {
+  background: linear-gradient(
+    90deg,
+    rgba(27, 27, 47, 0) 0%,
+    rgba(64, 27, 47, 0.9) 14%,
+    rgba(92, 27, 47, 0.94) 50%,
+    rgba(64, 27, 47, 0.9) 86%,
+    rgba(27, 27, 47, 0) 100%
+  );
+  box-shadow:
+    inset 0 3px 0 rgba(255, 77, 77, 0.6),
+    inset 0 -3px 0 rgba(255, 77, 77, 0.6);
+}
+
+.hud-banner__text {
+  font-family: var(--font-title);
+  font-size: clamp(30px, 5.6vw, 76px);
+  font-weight: 400;
   letter-spacing: 1px;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+@keyframes hud-banner-slide {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-100%);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+  86% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(100%);
+  }
+}
+
+/* ---------- Boss bar (top center below the card bar, 50 % width; spec 6.3, 9.8) ---------- */
+
+.hud-boss {
+  position: absolute;
+  top: calc(118px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.hud-boss__name {
+  font-family: var(--font-title);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.hud-boss__track {
+  position: relative;
+  width: 100%;
+  height: 18px;
+  border: 2px solid var(--color-shadow);
+  border-radius: 9px;
+  background: rgba(27, 27, 47, 0.85);
+  box-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(244, 251, 255, 0.12);
+}
+
+.hud-boss__fill {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 1px;
+  max-width: calc(100% - 2px);
+  border-radius: 7px;
+  background: linear-gradient(180deg, #ff8a8a 0%, var(--color-danger-red) 45%, #a81f1f 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.hud-boss__phase {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  border-radius: 1px;
+  background: rgba(244, 251, 255, 0.75);
 }
 
 /* ---------- Rejected command feedback (spec 3.4) ---------- */
 
 .hud-rejection {
   position: absolute;
-  top: calc(118px + env(safe-area-inset-top, 0px));
+  top: calc(120px + env(safe-area-inset-top, 0px));
   left: 50%;
-  z-index: 3;
+  z-index: 4;
   padding: 6px 18px;
   transform: translateX(-50%);
-  border: 2px solid var(--color-danger-red);
-  border-radius: 12px;
-  background: rgba(27, 27, 47, 0.82);
-  color: var(--color-danger-red);
-  font-family: var(--font-title);
-  font-size: 24px;
-  line-height: 1.1;
+  border: 3px solid var(--color-shadow);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(92, 27, 47, 0.95) 0%, rgba(64, 20, 36, 0.95) 100%);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
   white-space: nowrap;
   pointer-events: none;
   animation: hud-rejection-pop 0.18s ease-out;
+}
+
+.hud-rejection__text {
+  color: #ffd4d4;
+  font-family: var(--font-title);
+  font-size: 22px;
+  line-height: 1.1;
 }
 
 @keyframes hud-rejection-pop {
@@ -386,15 +551,17 @@
   }
 }
 
-/* ---------- Minimal pause overlay (the full pause menu is M4) ---------- */
+/* ---------- Pause overlay (Resume now; Restart/Settings/Quit are M4) ---------- */
 
 .hud-paused {
   position: absolute;
   inset: 0;
-  z-index: 4;
+  z-index: 6;
   display: grid;
   place-items: center;
-  background: rgba(27, 27, 47, 0.55);
+  background: rgba(27, 27, 47, 0.62);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
   pointer-events: auto;
 }
 
@@ -403,38 +570,263 @@
   flex-direction: column;
   align-items: center;
   gap: 18px;
-  padding: 24px 36px 30px;
+  padding: 24px 40px 30px;
   border: 3px solid var(--color-shadow);
   border-radius: 20px;
-  background: rgba(27, 27, 47, 0.92);
-  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.3);
+  background: linear-gradient(180deg, #2b2140 0%, #1b1b2f 100%);
+  box-shadow:
+    0 10px 0 rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(244, 251, 255, 0.12);
 }
 
 .hud-paused__title {
   margin: 0;
-  color: #ffffff;
   font-family: var(--font-title);
   font-size: 46px;
+  font-weight: 400;
   line-height: 1;
-  text-shadow:
-    3px 0 0 var(--color-shadow),
-    -3px 0 0 var(--color-shadow),
-    0 3px 0 var(--color-shadow),
-    0 -3px 0 var(--color-shadow),
-    2px 2px 0 var(--color-shadow),
-    -2px -2px 0 var(--color-shadow);
 }
 
-.hud-paused__resume {
-  min-width: 160px;
+/* ---------- Tablets and desktop (1280 x 720 and up): keep the layout proportionate ---------- */
+
+@media (min-width: 1000px) and (min-height: 600px) {
+  .hud-essence {
+    top: calc(14px + env(safe-area-inset-top, 0px));
+    left: calc(14px + env(safe-area-inset-left, 0px));
+    gap: 8px;
+    width: 189px;
+    height: 97px;
+    padding: 0 11px;
+  }
+
+  .hud-essence__orb {
+    width: 51px;
+    height: 51px;
+  }
+
+  .hud-essence__value {
+    font-size: 46px;
+  }
+
+  .hud-card-bar {
+    top: calc(14px + env(safe-area-inset-top, 0px));
+    right: calc(211px + env(safe-area-inset-right, 0px));
+    left: calc(216px + env(safe-area-inset-left, 0px));
+    gap: 11px;
+  }
+
+  .hud-card {
+    width: 97px;
+    height: 130px;
+    border-radius: 21px;
+  }
+
+  .hud-card__portrait {
+    inset: 4px 4px 30px;
+    border-radius: 15px;
+  }
+
+  .hud-card__cost {
+    bottom: 4px;
+    left: 5px;
+    font-size: 20px;
+  }
+
+  .hud-card__stars {
+    top: 5px;
+    right: 5px;
+  }
+
+  .hud-card__star {
+    width: 16px;
+    height: 16px;
+  }
+
+  .hud-card__cooldown {
+    border-radius: 0 0 18px 18px;
+  }
+
+  .hud-card__cooldown-label {
+    font-size: 40px;
+  }
+
+  .hud-controls {
+    top: calc(14px + env(safe-area-inset-top, 0px));
+    right: calc(14px + env(safe-area-inset-right, 0px));
+    gap: 11px;
+  }
+
+  .hud-button {
+    width: 86px;
+    height: 86px;
+    border-radius: 21px;
+  }
+
+  .hud-button__icon {
+    width: 43px;
+    height: 43px;
+  }
+
+  .hud-button__icon--speed {
+    width: 27px;
+    height: 27px;
+  }
+
+  .hud-button__label {
+    font-size: 20px;
+  }
+
+  .hud-shovel {
+    width: 97px;
+    height: 97px;
+  }
+
+  .hud-shovel__icon {
+    width: 57px;
+    height: 57px;
+  }
+
+  .hud-progress {
+    right: calc(14px + env(safe-area-inset-right, 0px));
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    width: 297px;
+    height: 38px;
+  }
+
+  .hud-progress__track {
+    height: 22px;
+    border-radius: 13px;
+  }
+
+  .hud-progress__fill {
+    border-radius: 10px;
+  }
+
+  .hud-progress__mark {
+    bottom: 16px;
+  }
+
+  .hud-progress__icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .hud-progress__mark--final .hud-progress__icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  .hud-boss {
+    top: calc(159px + env(safe-area-inset-top, 0px));
+  }
+
+  .hud-boss__name {
+    font-size: 27px;
+  }
+
+  .hud-boss__track {
+    height: 24px;
+    border-radius: 12px;
+  }
+
+  .hud-banner {
+    height: 162px;
+  }
+
+  .hud-rejection {
+    top: calc(162px + env(safe-area-inset-top, 0px));
+    padding: 8px 24px;
+    border-radius: 19px;
+  }
+
+  .hud-rejection__text {
+    font-size: 30px;
+  }
+
+  .hud-paused__title {
+    font-size: 62px;
+  }
+
+  .hud-paused__panel {
+    padding: 32px 54px 40px;
+  }
+}
+
+/* ---------- Short screens (below the 844 x 390 target): scale down, keep 48 px targets ---------- */
+
+@media (max-height: 340px) {
+  .hud-essence {
+    width: 120px;
+    height: 62px;
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  .hud-essence__orb {
+    width: 34px;
+    height: 34px;
+  }
+
+  .hud-essence__value {
+    font-size: 30px;
+  }
+
+  .hud-card-bar {
+    left: calc(134px + env(safe-area-inset-left, 0px));
+    gap: 4px;
+  }
+
+  .hud-card {
+    width: 62px;
+    height: 82px;
+    border-radius: 13px;
+  }
+
+  .hud-card__portrait {
+    inset: 2px 2px 20px;
+  }
+
+  .hud-card__cost {
+    font-size: 13px;
+  }
+
+  .hud-button {
+    width: 54px;
+    height: 54px;
+  }
+
+  .hud-shovel {
+    width: 62px;
+    height: 62px;
+  }
+
+  .hud-shovel__icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .hud-boss {
+    top: calc(104px + env(safe-area-inset-top, 0px));
+  }
+
+  .hud-progress {
+    width: 178px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hud-button--shake,
-  .hud-rejection,
-  .hud-card,
-  .hud-button {
+  .hud-rejection {
     animation: none;
+  }
+
+  .hud-banner {
+    animation-duration: 0.01s;
+  }
+
+  .hud-card,
+  .hud-button,
+  .hud-progress__fill {
     transition: none;
   }
 }

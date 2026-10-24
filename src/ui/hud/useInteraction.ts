@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 
 import { resolveTap } from './pointerToTile';
-import type { HudBus, HudOptions, HudRejectionReason, HudWorldPoint } from './types';
+import type {
+  HudBannerKind,
+  HudBannerView,
+  HudBus,
+  HudOptions,
+  HudRejectionReason,
+  HudWorldPoint,
+} from './types';
 
 /** Player-facing reason texts of spec 3.4; `invalidTile` covers blocked/empty-tile misses. */
 const REJECTION_MESSAGES: Readonly<Record<HudRejectionReason, string>> = {
@@ -14,6 +21,9 @@ const REJECTION_MESSAGES: Readonly<Record<HudRejectionReason, string>> = {
 /** How long the rejection text and card shake stay visible (spec 3.4 feedback). */
 const REJECTION_VISIBLE_MS = 900;
 
+/** How long the wave banner stays on screen (spec 3.10: big-wave warning 3 s before the wave). */
+export const BANNER_VISIBLE_MS = 3200;
+
 /** Which control should shake when a command is rejected (spec 3.4). */
 type ShakeTarget = { readonly kind: 'card'; readonly index: number } | { readonly kind: 'shovel' };
 
@@ -22,13 +32,14 @@ interface RejectionState {
   readonly shake: ShakeTarget | null;
 }
 
-/** The HUD behaviour state and handlers derived from the current frame (spec 3.4, 3.5, 3.7). */
+/** The HUD behaviour state and handlers derived from the current frame (spec 3.4, 3.5, 3.7, 3.10). */
 export interface HudInteraction {
   readonly selectedCardIndex: number | null;
   readonly shovelActive: boolean;
   readonly rejectionMessage: string | null;
   readonly shakeCardIndex: number | null;
   readonly shovelShaking: boolean;
+  readonly banner: HudBannerView | null;
   readonly onTap: (event: PointerEvent) => void;
   readonly onSelectCard: (index: number) => void;
   readonly onToggleShovel: () => void;
@@ -48,43 +59,61 @@ export function useAnimationRedraw(): void {
   }, []);
 }
 
-/** Shows the sim's `commandRejected` feedback as a red message and a control shake (spec 3.4). */
-function useCommandFeedback(
+/**
+ * Forwards the sim events the HUD cares about: rejected commands become the red reason
+ * text plus a control shake (spec 3.4), wave banners slide in and out (spec 3.10). The
+ * `initialBanner` of a fast-forwarded debug tick is shown on mount (spec 13.7).
+ */
+function useHudEvents(
   bus: HudBus,
   lastAction: { current: ShakeTarget | null },
   setRejection: (rejection: RejectionState | null) => void,
+  setBanner: (update: (current: HudBannerView | null) => HudBannerView | null) => void,
+  initialBanner: HudBannerKind | null | undefined,
 ): void {
   useEffect((): (() => void) => {
-    let timer = 0;
+    let rejectionTimer = 0;
+    let bannerTimer = 0;
+    const showBanner = (kind: HudBannerKind): void => {
+      window.clearTimeout(bannerTimer);
+      setBanner((current) => ({ kind, nonce: (current?.nonce ?? 0) + 1 }));
+      bannerTimer = window.setTimeout(() => setBanner(() => null), BANNER_VISIBLE_MS);
+    };
     bus.listener = (events): void => {
       for (const event of events) {
-        if (event.type !== 'commandRejected') {
-          continue;
+        if (event.type === 'commandRejected') {
+          window.clearTimeout(rejectionTimer);
+          setRejection({ message: REJECTION_MESSAGES[event.reason], shake: lastAction.current });
+          lastAction.current = null;
+          rejectionTimer = window.setTimeout(() => setRejection(null), REJECTION_VISIBLE_MS);
+        } else if (event.type === 'waveBanner') {
+          showBanner(event.kind);
         }
-        window.clearTimeout(timer);
-        setRejection({ message: REJECTION_MESSAGES[event.reason], shake: lastAction.current });
-        lastAction.current = null;
-        timer = window.setTimeout(() => setRejection(null), REJECTION_VISIBLE_MS);
       }
     };
+    if (initialBanner !== null && initialBanner !== undefined) {
+      showBanner(initialBanner);
+    }
     return (): void => {
       bus.listener = null;
-      window.clearTimeout(timer);
+      window.clearTimeout(rejectionTimer);
+      window.clearTimeout(bannerTimer);
     };
-  }, [bus, lastAction, setRejection]);
+  }, [bus, lastAction, setRejection, setBanner, initialBanner]);
 }
 
 /**
- * HUD interaction state: card selection, shovel mode, rejected-command feedback and the
- * tap resolver that turns a field tap into a place/shovel/collect/cancel action
- * (spec 3.3, 3.4, 3.7).
+ * HUD interaction state: card selection, shovel mode, rejected-command feedback, the
+ * wave banner and the tap resolver that turns a field tap into a place/shovel/collect/
+ * cancel action (spec 3.3, 3.4, 3.7, 3.10).
  */
 export function useInteraction(options: HudOptions & { readonly bus: HudBus }): HudInteraction {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [shovelActive, setShovelActive] = useState(false);
   const [rejection, setRejection] = useState<RejectionState | null>(null);
+  const [banner, setBanner] = useState<HudBannerView | null>(null);
   const lastAction = useRef<ShakeTarget | null>(null);
-  useCommandFeedback(options.bus, lastAction, setRejection);
+  useHudEvents(options.bus, lastAction, setRejection, setBanner, options.initialBanner);
 
   /** Toggles a card: the selected card lifts and glows (spec 3.4). */
   const onSelectCard = (index: number): void => {
@@ -129,6 +158,7 @@ export function useInteraction(options: HudOptions & { readonly bus: HudBus }): 
     rejectionMessage: rejection?.message ?? null,
     shakeCardIndex: shake?.kind === 'card' ? shake.index : null,
     shovelShaking: shake?.kind === 'shovel',
+    banner,
     onTap,
     onSelectCard,
     onToggleShovel,

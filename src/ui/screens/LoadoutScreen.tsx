@@ -1,7 +1,9 @@
 import type { LevelDef } from '../../data/schemas';
 import { Button } from '../components/Button';
+import { CardPortrait } from '../components/CardPortrait';
 import { DefenderCard } from '../components/DefenderCard';
-import { factionColor, rarityColor } from '../hud/factionStyles';
+import { Icon } from '../components/Icon';
+import { rarityColor } from '../hud/factionStyles';
 import {
   filledSlotCount,
   hasFixedLoadout,
@@ -74,13 +76,15 @@ function LoadoutSlot({
       disabled={disabled}
       onClick={onRemove}
     >
-      <span
+      <CardPortrait
+        defenderId={card.defenderId}
+        faction={card.faction}
+        rarity={card.rarity}
         class="loadout-slot__portrait"
-        style={{ background: factionColor(card.faction) }}
-        aria-hidden="true"
       />
       <span class="loadout-slot__name">{card.name}</span>
-      <span class="loadout-slot__cost" aria-hidden="true">
+      <span class="loadout-slot__cost essence-badge" aria-hidden="true">
+        <Icon name="essence" class="loadout-slot__essence-icon" />
         {card.cost}
       </span>
     </button>

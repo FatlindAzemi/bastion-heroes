@@ -1,7 +1,7 @@
 import type { ComponentChildren } from 'preact';
 
-/** Colour roles of the 9.8 button palette: primary green and secondary blue. */
-export type ButtonVariant = 'primary' | 'secondary';
+/** Colour roles of the 9.8 button palette (primary green, secondary blue, buy yellow, danger red). */
+export type ButtonVariant = 'primary' | 'secondary' | 'buy' | 'danger';
 
 /** Props of the shared screen button. */
 export interface ButtonProps {

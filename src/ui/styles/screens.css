@@ -153,6 +153,14 @@
   background: var(--color-secondary-blue);
 }
 
+.screen-button--buy {
+  background: var(--color-buy-yellow);
+}
+
+.screen-button--danger {
+  background: var(--color-danger-red);
+}
+
 .screen-button:active:not(:disabled) {
   transform: translateY(4px);
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.36);
@@ -295,7 +303,7 @@
   align-content: start;
 }
 
-/* Greybox collection card: rarity frame, faction portrait placeholder, cost and role/damage badge. */
+/* Collection card: rarity frame, M3 portrait on the rarity gradient, cost and role/damage badge. */
 .defender-card {
   position: relative;
   height: 100%;
@@ -331,19 +339,6 @@
   position: absolute;
   inset: 3px 3px 34px;
   border-radius: 10px;
-  overflow: hidden;
-}
-
-.defender-card__blob {
-  position: absolute;
-  left: 50%;
-  bottom: 8%;
-  width: 30px;
-  height: 42px;
-  transform: translateX(-50%);
-  border: 2px solid rgba(27, 27, 47, 0.8);
-  border-radius: 14px 14px 10px 10px;
-  background: rgba(27, 27, 47, 0.55);
 }
 
 .defender-card__rarity {
@@ -410,22 +405,7 @@
   bottom: 3px;
   left: 4px;
   z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 1px 5px;
-  border-radius: 8px;
-  background: rgba(27, 27, 47, 0.92);
-  font-family: var(--font-title);
   font-size: 11px;
-  line-height: 1.2;
-}
-
-.defender-card__essence-icon {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #f4fbff 0%, #3bf0c8 70%);
 }
 
 .defender-card__level {
@@ -507,9 +487,8 @@
 }
 
 .loadout-slot__portrait {
-  width: 32px;
-  height: 32px;
-  border: 2px solid rgba(27, 27, 47, 0.9);
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
 }
 
@@ -525,10 +504,7 @@
 }
 
 .loadout-slot__cost {
-  color: #f4fbff;
-  font-family: var(--font-title);
   font-size: 12px;
-  line-height: 1.1;
 }
 
 .loadout-note {

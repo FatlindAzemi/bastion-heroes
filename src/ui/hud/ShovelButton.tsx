@@ -1,3 +1,5 @@
+import { Icon } from '../components/Icon';
+
 /** Props of the shovel button at the end of the card bar (spec 3.7, 9.8). */
 export interface ShovelButtonProps {
   readonly active: boolean;
@@ -5,7 +7,7 @@ export interface ShovelButtonProps {
   readonly onToggle: () => void;
 }
 
-/** Greybox shovel button: tap it, then tap a defender to remove it (spec 3.7). */
+/** Shovel button (spec 9.8, 72 x 72 px): tap it, then tap a defender to remove it (spec 3.7). */
 export function ShovelButton({ active, shaking, onToggle }: ShovelButtonProps) {
   const classNames = ['hud-button', 'hud-shovel'];
   if (active) {
@@ -22,8 +24,7 @@ export function ShovelButton({ active, shaking, onToggle }: ShovelButtonProps) {
       aria-pressed={active}
       aria-label="Shovel"
     >
-      <span class="hud-shovel__handle" aria-hidden="true" />
-      <span class="hud-shovel__blade" aria-hidden="true" />
+      <Icon name="shovel" class="hud-button__icon hud-shovel__icon" />
     </button>
   );
 }
