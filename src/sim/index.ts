@@ -3,6 +3,30 @@
  * this module; the simulation never imports the renderer, the UI or the platform.
  */
 export { createSim } from './createSim';
+export {
+  BASE_LINE_X,
+  COLUMN_COUNT,
+  ENEMY_SPAWN_X,
+  isActiveLane,
+  isInBounds,
+  isPlaceableTerrain,
+  isPlaceableTile,
+  isValidColumn,
+  isValidLane,
+  LANE_COUNT,
+  TILE_SIZE,
+  terrainAt,
+  tileCenter,
+  tileCenterX,
+  type TerrainType,
+  type WorldPosition,
+} from './grid';
+export {
+  ACTIVATION_DELAY_TICKS,
+  isCardReady,
+  isDefenderActive,
+  ticksFromSeconds,
+} from './placement';
 export { createRng } from './rng';
 export type {
   Command,

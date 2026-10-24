@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { createSim } from '../../src/sim/createSim';
-import type { LevelDef, LoadoutEntry, Sim } from '../../src/sim/types';
+import type { LoadoutEntry, Sim } from '../../src/sim/types';
+import { createTestLevel } from './testLevel';
 
-// Minimal level definition fixture until the Zod LevelDef schema lands in issue #17.
-const testLevel: LevelDef = { id: 'test_level', startEssence: 150 };
+const testLevel = createTestLevel();
 const testLoadout: LoadoutEntry[] = [{ defenderId: 'sparkbolt_gremlin', level: 1 }];
 
 function createTestSim(seed = 10001): Sim {
@@ -24,20 +24,27 @@ describe('createSim', () => {
     expect(sim.state.nextId).toBe(1);
   });
 
-  it('11.3: exposes the level id, the seed and the loadout of the run', () => {
+  it('11.3: exposes the level id, the seed, the loadout and the card cooldowns', () => {
     const sim = createTestSim(10001);
 
     expect(sim.state.levelId).toBe('test_level');
     expect(sim.state.seed).toBe(10001);
     expect(sim.state.loadout).toEqual(testLoadout);
     expect(sim.state.rng.state).toBe(10001);
+    expect(sim.state.cardCooldownEndTicks).toEqual([0]);
   });
 
   it('3.3: starts with the level starting Essence and with auto-collect off', () => {
-    const sim = createSim({ id: 'other_level', startEssence: 200 }, [], 1);
+    const sim = createSim(createTestLevel({ startEssence: 200 }), [], 1);
 
     expect(sim.state.essence).toBe(200);
     expect(sim.state.autoCollect).toBe(false);
+  });
+
+  it('3.3: Essence starts from the level startEssence (default fixture: 150)', () => {
+    const sim = createSim(createTestLevel(), testLoadout, 10001);
+
+    expect(sim.state.essence).toBe(150);
   });
 
   it('11.3: step advances exactly one tick and returns the events of that tick', () => {
