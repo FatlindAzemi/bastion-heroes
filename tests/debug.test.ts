@@ -200,3 +200,70 @@ describe('debug level boot (issue #27)', () => {
     }
   });
 });
+
+describe('debug model screenshots (issue #66)', () => {
+  it('accepts a ?cards= loadout override without touching the default debug loadout', () => {
+    expect(parseDebugUrl('?level=w1-l01&cards=glowshroom_monk,sparkbolt_gremlin')).toEqual({
+      kind: 'level',
+      levelId: 'w1_l01',
+      seed: 10001,
+      tick: 0,
+      cards: ['glowshroom_monk', 'sparkbolt_gremlin'],
+    });
+    expect(parseDebugUrl('?level=w1-l01&cards=').kind).toBe('error');
+    expect(parseDebugUrl('?level=w1-l01&cards=not_a_defender').kind).toBe('error');
+  });
+
+  it('accepts ?place= auto-placements and rejects malformed or out-of-grid entries', () => {
+    expect(parseDebugUrl('?level=w1-l01&place=glowshroom_monk:2,1;sparkbolt_gremlin:2,4')).toEqual({
+      kind: 'level',
+      levelId: 'w1_l01',
+      seed: 10001,
+      tick: 0,
+      placements: [
+        { defenderId: 'glowshroom_monk', lane: 2, col: 1 },
+        { defenderId: 'sparkbolt_gremlin', lane: 2, col: 4 },
+      ],
+    });
+    for (const search of [
+      '?level=w1-l01&place=glowshroom_monk',
+      '?level=w1-l01&place=glowshroom_monk:2',
+      '?level=w1-l01&place=not_a_defender:2,1',
+      '?level=w1-l01&place=glowshroom_monk:9,1',
+      '?level=w1-l01&place=',
+    ]) {
+      expect(parseDebugUrl(search).kind, search).toBe('error');
+    }
+  });
+
+  it('places the debug defenders before the fast-forward, so a deep tick shows them', () => {
+    const level = debugLevel();
+    const parsed = parseDebugUrl(
+      '?level=w1-l01&cards=glowshroom_monk,sparkbolt_gremlin&place=glowshroom_monk:2,1;sparkbolt_gremlin:2,4',
+    );
+    if (parsed.kind !== 'level') {
+      throw new Error('expected a level debug request');
+    }
+    const sim = createSim(level, createDebugLoadout(level, parsed.cards), parsed.seed);
+    for (const placement of parsed.placements ?? []) {
+      sim.enqueue({
+        type: 'place',
+        defenderId: placement.defenderId,
+        lane: placement.lane,
+        col: placement.col,
+      });
+    }
+    fastForward(sim, 900);
+    expect(sim.state.defenders.map((defender) => defender.defenderId).sort()).toEqual([
+      'glowshroom_monk',
+      'sparkbolt_gremlin',
+    ]);
+    // The first Gloomling wave has spawned by tick 900 (spec 7.2 row 1).
+    expect(sim.state.enemies.length).toBeGreaterThan(0);
+  });
+
+  it('keeps the debug loadout untouched when no cards override is given', () => {
+    const level = debugLevel();
+    expect(createDebugLoadout(level)).toEqual([{ defenderId: 'sparkbolt_gremlin', level: 1 }]);
+  });
+});
