@@ -40,15 +40,15 @@ test('defender models: Rune Archer and Pyro Fox render in W1-L01', async ({ page
   await expect(page.getByRole('status', { name: /Essence/ })).toBeVisible({ timeout: 5000 });
   await page.waitForTimeout(900);
 
-  const clipCounts = new Map<string, number>();
-  for (const log of modelLogs) {
-    const match = /models: loaded (\S+) \((\d+) clips\)/.exec(log);
-    if (match !== null) {
-      clipCounts.set(match[1] ?? '', Number(match[2]));
-    }
+  // The async GLB decode/swap can finish after the HTTP response, so poll per model id.
+  for (const id of MODEL_IDS) {
+    await expect
+      .poll(
+        () => modelLogs.filter((log) => log.includes(`models: loaded ${id} (3 clips)`)).length,
+        { timeout: 15_000 },
+      )
+      .toBe(1);
   }
-  expect(clipCounts.get('rune_archer')).toBe(3);
-  expect(clipCounts.get('pyro_fox')).toBe(3);
 
   const overlay = page.locator('#debug-overlay');
   await expect(overlay).toContainText(/defenders 2/);
