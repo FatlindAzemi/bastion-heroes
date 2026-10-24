@@ -57,6 +57,21 @@ test('style pilot: W1-L01 renders the monk, gremlin and gloomling models', async
       )
       .toBe(1);
   }
+  // All three models loaded with their spec 12.5 clip sets (identity, attack/eat, etc.).
+  // The loader loads every committed model; #70 added the two M2 enemies, so the
+  // style-pilot level now logs the three pilot models plus the two enemy models.
+  const clipCounts = new Map<string, number>();
+  for (const log of modelLogs) {
+    const match = /models: loaded (\S+) \((\d+) clips\)/.exec(log);
+    if (match !== null) {
+      clipCounts.set(match[1] ?? '', Number(match[2]));
+    }
+  }
+  expect(clipCounts.get('glowshroom_monk')).toBe(3);
+  expect(clipCounts.get('sparkbolt_gremlin')).toBe(3);
+  expect(clipCounts.get('gloomling')).toBe(2);
+  expect(clipCounts.get('pothead')).toBe(2);
+  expect(clipCounts.get('shieldbearer')).toBe(2);
 
   const overlay = page.locator('#debug-overlay');
   await expect(overlay).toContainText(/draw calls \d+/);
