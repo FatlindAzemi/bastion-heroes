@@ -42,13 +42,16 @@ for (const enemyCase of CASES) {
     // Let the async model load swap the placeholders and the mixers tick a few frames.
     await page.waitForTimeout(900);
 
-    // The enemy model loaded with its spec 12.5 clip set (walk + eat).
-    expect(modelLogs.filter((log) => log.includes(`models: loaded ${enemyCase.id} `))).toHaveLength(
-      1,
-    );
-    expect(
-      modelLogs.filter((log) => log.includes(`models: loaded ${enemyCase.id} (2 clips)`)),
-    ).toHaveLength(1);
+    // The enemy model loaded with its spec 12.5 clip set (walk + eat). The async GLB
+    // decode/swap can finish after the HTTP response, so poll per model id.
+    await expect
+      .poll(
+        () =>
+          modelLogs.filter((log) => log.includes(`models: loaded ${enemyCase.id} (2 clips)`))
+            .length,
+        { timeout: 15_000 },
+      )
+      .toBe(1);
 
     const overlay = page.locator('#debug-overlay');
     await expect(overlay).toContainText(/draw calls \d+/);
