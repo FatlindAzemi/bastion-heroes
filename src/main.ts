@@ -9,6 +9,15 @@ function boot(): void {
     throw new Error('Boot failed: #app element is missing from index.html');
   }
   const renderer = createRenderer(root);
+
+  // TODO(#27): remove the greybox preview route when the debug URL lands.
+  if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('greybox')) {
+    void import('./render/greyboxPreview').then(({ startGreyboxPreview }) => {
+      startGreyboxPreview(renderer);
+    });
+    return;
+  }
+
   mountUi(root);
   startRenderLoop(() => {
     renderer.draw();
