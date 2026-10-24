@@ -3,12 +3,11 @@
  *
  * Decision #58 (default option B): `@types/node` is not in the approved package
  * table of spec 10.2 and `tsconfig.json` restricts `types` to `vite/client`, so
- * the small API surface the balancing bot needs is declared by hand here. Keep
- * this file small: add a declaration only when a tool really calls the API, and
- * widen it together with a note in the pull request when option A replaces it.
+ * the small API surface the tools need is declared by hand here. Keep this file
+ * small: add a declaration only when a tool really calls the API, and widen it
+ * together with a note in the pull request when option A replaces it.
  *
- * The balancing bot (spec 16.2-16.4) needs: CLI arguments, the exit code, stdout,
- * the working directory, writing the report files and worker threads.
+ * Used by: the balancing bot (spec 16.2-16.4) and the asset pipeline (spec 12).
  */
 
 /** The Node.js process global. */
@@ -17,9 +16,13 @@ declare const process: {
   argv: string[];
   /** Setting it makes `tsx` exit with this code once the script finishes. */
   exitCode?: number;
-  /** Standard output; the report summary is written with `write`. */
+  /** Standard output; progress and summaries are written with `write`. */
   stdout: { write(text: string): void };
-  /** Current working directory, used to resolve the report folder. */
+  /** Standard error; failures and the BLENDER_PATH hint are written here. */
+  stderr: { write(text: string): void };
+  /** Environment variables; BLENDER_PATH is read from here (spec 12.2). */
+  readonly env: Readonly<Record<string, string | undefined>>;
+  /** Current working directory; the npm scripts run from the repository root. */
   cwd(): string;
 };
 
@@ -28,6 +31,12 @@ declare module 'node:fs' {
   export function mkdirSync(path: string, options: { recursive: true }): void;
   /** Writes a UTF-8 text file, replacing it when it exists. */
   export function writeFileSync(path: string, data: string, encoding: 'utf8'): void;
+  /** Lists a directory's entry names (files and folders). */
+  export function readdirSync(path: string): string[];
+  /** Returns a file's metadata; only `size` (bytes) is used. */
+  export function statSync(path: string): { size: number };
+  /** True when the path exists, used to tolerate an empty output folder. */
+  export function existsSync(path: string): boolean;
 }
 
 declare module 'node:path' {
@@ -35,6 +44,22 @@ declare module 'node:path' {
   export function resolve(...segments: string[]): string;
   /** Joins path segments with the platform separator. */
   export function join(...segments: string[]): string;
+}
+
+declare module 'node:child_process' {
+  /** Result of a child process that has already finished. */
+  export interface SpawnSyncReturns {
+    /** Exit status, or null when the process was killed by a signal. */
+    status: number | null;
+    /** Set when the process could not be spawned at all. */
+    error?: Error;
+  }
+  /** Spawns a child process, waits for it and returns its status (spec 12.2). */
+  export function spawnSync(
+    command: string,
+    args: readonly string[],
+    options: { stdio: 'inherit' },
+  ): SpawnSyncReturns;
 }
 
 declare module 'node:worker_threads' {

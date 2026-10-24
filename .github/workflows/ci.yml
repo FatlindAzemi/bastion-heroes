@@ -40,6 +40,9 @@ jobs:
       - name: Run checks (typecheck, lint, unit tests, validate-data)
         run: npm run check
 
+      - name: Check model budgets and clips (spec 12.7)
+        run: npm run assets:check
+
       - name: Run end-to-end tests
         run: npm run e2e
 
