@@ -89,6 +89,95 @@ export const EnemyDef = z.object({
 /** A parsed and validated enemy definition (spec 11.5). */
 export type EnemyDef = z.infer<typeof EnemyDef>;
 
+/** The damage-type vs armor-type multipliers of the 3x3 combat table (spec 4.1). */
+const damageAgainstArmor = z.object({
+  light: z.number().positive(),
+  armored: z.number().positive(),
+  spectral: z.number().positive(),
+});
+
+/**
+ * Global gameplay rules and defaults (spec section 3 intro: "Every number below
+ * is a default stored in src/data/rules.ts"; combat numbers from section 4).
+ * Sim, render and UI code import these values instead of hardcoding balance
+ * numbers (spec 1.1 rule 7). Later milestones add their own groups.
+ */
+export const RulesDef = z.object({
+  grid: z.object({
+    laneCount: z.number().int().positive(),
+    columnCount: z.number().int().positive(),
+    tileSize: z.number().positive(),
+    baseLineX: z.number(),
+    enemySpawnX: z.number(),
+  }),
+  tick: z.object({
+    tickRate: z.number().int().positive(),
+    gameSpeeds: z.array(z.number().positive()).min(1),
+  }),
+  essence: z.object({
+    startingEssence: z.number().int().nonnegative(),
+    skyDropAmount: z.number().int().positive(),
+    skyDropIntervalS: z.number().positive(),
+    firstSkyDropDelayS: z.number().nonnegative(),
+    skyDropFallTimeS: z.number().positive(),
+    orbLifetimeS: z.number().positive(),
+    orbCollectFlightTimeS: z.number().nonnegative(),
+    maxEssence: z.number().int().positive(),
+    autoCollectDelayS: z.number().nonnegative(),
+  }),
+  placement: z.object({
+    defenderActivationDelayS: z.number().nonnegative(),
+  }),
+  merge: z.object({
+    star2HealthMultiplier: z.number().positive(),
+    star2DamageMultiplier: z.number().positive(),
+    star3HealthMultiplier: z.number().positive(),
+    star3DamageMultiplier: z.number().positive(),
+    star2Scale: z.number().positive(),
+    star3Scale: z.number().positive(),
+    producerStar2IntervalDivisor: z.number().positive(),
+    producerStar3IntervalDivisor: z.number().positive(),
+  }),
+  blocking: z.object({
+    blockDistance: z.number().positive(),
+  }),
+  trap: z.object({
+    trapStartX: z.number(),
+    trapEndX: z.number(),
+    trapSpeedTilesPerS: z.number().positive(),
+    trapBossDamage: z.number().int().positive(),
+  }),
+  loss: z.object({
+    lossLineX: z.number(),
+  }),
+  waves: z.object({
+    firstWaveDelayS: z.number().nonnegative(),
+    earlyClearDelayS: z.number().nonnegative(),
+    bigWaveWarningS: z.number().nonnegative(),
+    defaultWaveDurationS: z.number().positive(),
+    defaultSpawnGapS: z.number().positive(),
+  }),
+  rating: z.object({
+    threeStarMaxDefendersLost: z.number().int().nonnegative(),
+  }),
+  combat: z.object({
+    damageMultipliers: z.object({
+      pierce: damageAgainstArmor,
+      blast: damageAgainstArmor,
+      arcane: damageAgainstArmor,
+    }),
+    cardLevelMultiplierPerLevel: z.number().positive(),
+    minimumDamage: z.number().int().positive(),
+    straightProjectileSpeedTilesPerS: z.number().positive(),
+    meleeRangeTiles: z.number().positive(),
+    lobFlightTimeS: z.number().positive(),
+    targetingBehindOffsetTiles: z.number().positive(),
+  }),
+});
+
+/** A parsed and validated rules definition (spec 3, 4). */
+export type RulesDef = z.infer<typeof RulesDef>;
+
 /** Tile terrain types (spec 3.1). */
 const terrainType = z.enum(['normal', 'water', 'lava', 'rock', 'highGround']);
 

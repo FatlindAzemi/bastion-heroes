@@ -8,6 +8,7 @@ import { glowshroomMonk } from './defenders/glowshroom_monk';
 import { ironGranny } from './defenders/iron_granny';
 import { sparkboltGremlin } from './defenders/sparkbolt_gremlin';
 import { gloomling } from './enemies/gloomling';
+import { rules } from './rules';
 
 /** Builds an id -> definition record; duplicate ids fail the tests in `tests/data/`. */
 function byId<T extends { id: string }>(defs: readonly T[]): Readonly<Record<string, T>> {
@@ -32,4 +33,7 @@ export const enemyById = byId(enemies);
 /** Level definitions by id (spec 11.2). */
 export const levelById = byId(levels);
 
-export type { DefenderDef, EnemyDef, LevelDef };
+/** Global gameplay rules and defaults (spec 3, 4): the one source of balance numbers. */
+export { rules };
+
+export type { DefenderDef, EnemyDef, LevelDef, RulesDef } from './schemas';
