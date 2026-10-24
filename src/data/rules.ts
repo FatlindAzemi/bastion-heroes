@@ -78,4 +78,12 @@ export const rules: RulesDef = {
     poison: { maxHealthRatio: 0.02, intervalS: 1, durationS: 4, maxStacks: 3 },
     knockback: { durationS: 0.2 },
   },
+  // 4.6: elemental combos (trigger effects, radii, damage and the per-enemy cooldown).
+  combos: {
+    sameComboCooldownS: 2,
+    steam: { burstDamage: 60, burstDamageType: 'blast', radiusTiles: 1, stunDurationS: 0.5 },
+    shatter: { damageMultiplier: 2 },
+    toxic: { radiusTiles: 1, poisonStacks: 1 },
+    chain: { jumpDamage: 40, jumpDamageType: 'arcane', radiusTiles: 2 },
+  },
 };

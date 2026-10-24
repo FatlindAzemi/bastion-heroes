@@ -211,6 +211,26 @@ export const RulesDef = z.object({
     }),
     knockback: z.object({ durationS: z.number().positive() }),
   }),
+  /** Section 4.6: the elemental combos (trigger effects, radii, damage and cooldown). */
+  combos: z.object({
+    sameComboCooldownS: z.number().positive(),
+    steam: z.object({
+      burstDamage: z.number().int().positive(),
+      burstDamageType: z.literal('blast'),
+      radiusTiles: z.number().positive(),
+      stunDurationS: z.number().positive(),
+    }),
+    shatter: z.object({ damageMultiplier: z.number().positive() }),
+    toxic: z.object({
+      radiusTiles: z.number().positive(),
+      poisonStacks: z.number().int().positive(),
+    }),
+    chain: z.object({
+      jumpDamage: z.number().int().positive(),
+      jumpDamageType: z.literal('arcane'),
+      radiusTiles: z.number().positive(),
+    }),
+  }),
 });
 
 /** A parsed and validated rules definition (spec 3, 4). */

@@ -74,6 +74,7 @@ function spawnEnemy(sim: Sim, lane: number, x: number, hp = 200): EnemyState {
     blockedByDefenderId: null,
     nextBiteTick: null,
     statuses: [],
+    comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
   };
   state.enemies.push(enemy);
   return enemy;
@@ -111,6 +112,7 @@ function makeEnemy(id: number, x: number, lane = 0): EnemyState {
     blockedByDefenderId: null,
     nextBiteTick: null,
     statuses: [],
+    comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
   };
 }
 

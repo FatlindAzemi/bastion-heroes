@@ -147,6 +147,7 @@ describe('placement', () => {
       blockedByDefenderId: null,
       nextBiteTick: null,
       statuses: [],
+      comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
     });
 
     sim.enqueue(place(SPARKBOLT, 0, 0));

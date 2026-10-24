@@ -5,6 +5,7 @@ import { spawnProjectile } from '../combat/projectiles';
 import { findTarget } from '../combat/targeting';
 import { tileCenterX } from '../grid';
 import type { AttackStatus } from '../combat/status';
+import type { ElementKind } from '../types';
 import type { DefenderState, SimEvent, SimState } from '../types';
 import { beginDefenderAttack } from '../combat/status';
 import { collectAuraDamageBuffs } from './aura';
@@ -58,6 +59,7 @@ export function attackWithDiagonal(
     null,
     null,
     attackStatus,
+    defenderDef.element,
   );
   if (defender.lane > 0) {
     fireLane(
@@ -71,6 +73,7 @@ export function attackWithDiagonal(
       defender.lane - 1,
       switchAtX,
       attackStatus,
+      defenderDef.element,
     );
   }
   if (defender.lane < rules.grid.laneCount - 1) {
@@ -85,6 +88,7 @@ export function attackWithDiagonal(
       defender.lane + 1,
       switchAtX,
       attackStatus,
+      defenderDef.element,
     );
   }
   return true;
@@ -102,6 +106,7 @@ function fireLane(
   targetLane: number | null,
   switchAtX: number | null,
   attackStatus: AttackStatus | null,
+  element: ElementKind,
 ): void {
   spawnProjectile(
     state,
@@ -116,6 +121,7 @@ function fireLane(
       targetLane,
       switchAtX,
       status: attackStatus,
+      element,
     },
     events,
   );

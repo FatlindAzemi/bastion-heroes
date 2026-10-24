@@ -78,6 +78,11 @@ export function hasStatus(enemy: EnemyState, kind: StatusKind): boolean {
   return findStatus(enemy, kind) !== undefined;
 }
 
+/** Removes one status completely (used by the Steam and Shatter combos of 4.6). */
+export function removeStatus(enemy: EnemyState, kind: StatusKind): void {
+  enemy.statuses = enemy.statuses.filter((status) => status.kind !== kind);
+}
+
 /** Freeze and stun stop movement and attacks (spec 4.5). */
 export function isEnemyIncapacitated(enemy: EnemyState): boolean {
   return hasStatus(enemy, 'freeze') || hasStatus(enemy, 'stun');

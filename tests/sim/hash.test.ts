@@ -41,6 +41,7 @@ const baseEnemy: EnemyState = {
   blockedByDefenderId: null,
   nextBiteTick: null,
   statuses: [],
+  comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
 };
 
 const baseProjectile: ProjectileState = {
@@ -61,6 +62,7 @@ const baseProjectile: ProjectileState = {
   statusKind: null,
   statusDurationS: 0,
   statusStacks: 1,
+  element: 'none',
 };
 
 const baseOrb: OrbState = {
@@ -326,6 +328,13 @@ const mutationCases: MutationCase[] = [
     },
   },
   {
+    name: 'an enemy combo cooldown',
+    mutate: (state) => {
+      state.enemies.push({ ...baseEnemy });
+      state.enemies[0]!.comboCooldowns.steam = 120;
+    },
+  },
+  {
     name: 'a projectile',
     mutate: (state) => {
       state.projectiles.push({ ...baseProjectile });
@@ -401,6 +410,13 @@ const mutationCases: MutationCase[] = [
       state.projectiles[0]!.statusKind = 'burn';
       state.projectiles[0]!.statusDurationS = 3;
       state.projectiles[0]!.statusStacks = 1;
+    },
+  },
+  {
+    name: 'the projectile element',
+    mutate: (state) => {
+      state.projectiles.push({ ...baseProjectile });
+      state.projectiles[0]!.element = 'fire';
     },
   },
   {

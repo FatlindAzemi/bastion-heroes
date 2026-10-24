@@ -54,6 +54,7 @@ export function attackWithLob(
       damageType,
       hitsFlying: false,
       status: attackStatus,
+      element: defenderDef.element,
       targetId: target.id,
       landTick: state.tick + ticksFromSeconds(rules.combat.lobFlightTimeS),
     },
