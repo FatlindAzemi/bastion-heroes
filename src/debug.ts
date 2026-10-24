@@ -25,8 +25,10 @@ export interface DebugLevelRequest {
   readonly tick: number;
   /** Debug-only loadout override (`?cards=id,id`), used for model screenshots. */
   readonly cards?: readonly string[];
-  /** Debug-only auto-placements (`?place=id:lane,col;...`), applied before the fast-forward. */
+  /** Debug-only auto-placements (`?place=id:lane,col;...`), applied after the fast-forward. */
   readonly placements?: readonly DebugPlacement[];
+  /** Debug-only auto-collect (`?autocollect=1`) so sky drops fund the screenshot loadout. */
+  readonly autoCollect?: boolean;
 }
 
 /**
@@ -167,6 +169,7 @@ export function parseDebugUrl(search: string): DebugUrlResult {
     tick,
     ...(cards.length > 0 ? { cards } : {}),
     ...(placements.length > 0 ? { placements } : {}),
+    ...(parameters.get('autocollect') === '1' ? { autoCollect: true } : {}),
   };
 }
 

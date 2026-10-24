@@ -202,6 +202,16 @@ describe('debug level boot (issue #27)', () => {
 });
 
 describe('debug model screenshots (issue #66)', () => {
+  it('accepts the ?autocollect=1 screenshot helper', () => {
+    expect(parseDebugUrl('?level=w1-l01&autocollect=1')).toEqual({
+      kind: 'level',
+      levelId: 'w1_l01',
+      seed: 10001,
+      tick: 0,
+      autoCollect: true,
+    });
+  });
+
   it('accepts a ?cards= loadout override without touching the default debug loadout', () => {
     expect(parseDebugUrl('?level=w1-l01&cards=glowshroom_monk,sparkbolt_gremlin')).toEqual({
       kind: 'level',
@@ -236,15 +246,17 @@ describe('debug model screenshots (issue #66)', () => {
     }
   });
 
-  it('places the debug defenders before the fast-forward, so a deep tick shows them', () => {
+  it('places the debug defenders after the fast-forward, so a deep tick is affordable', () => {
     const level = debugLevel();
     const parsed = parseDebugUrl(
-      '?level=w1-l01&cards=glowshroom_monk,sparkbolt_gremlin&place=glowshroom_monk:2,1;sparkbolt_gremlin:2,4',
+      '?level=w1-l01&cards=glowshroom_monk,sparkbolt_gremlin&place=glowshroom_monk:2,1;sparkbolt_gremlin:2,4&autocollect=1',
     );
     if (parsed.kind !== 'level') {
       throw new Error('expected a level debug request');
     }
     const sim = createSim(level, createDebugLoadout(level, parsed.cards), parsed.seed);
+    sim.enqueue({ type: 'setAutoCollect', on: true });
+    fastForward(sim, 900);
     for (const placement of parsed.placements ?? []) {
       sim.enqueue({
         type: 'place',
@@ -253,7 +265,7 @@ describe('debug model screenshots (issue #66)', () => {
         col: placement.col,
       });
     }
-    fastForward(sim, 900);
+    fastForward(sim, 1);
     expect(sim.state.defenders.map((defender) => defender.defenderId).sort()).toEqual([
       'glowshroom_monk',
       'sparkbolt_gremlin',

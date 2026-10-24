@@ -7,7 +7,7 @@ import { expect, test } from '@playwright/test';
 
 const PILOT_URL =
   '/?level=w1-l01&seed=10001&tick=900&perf=1' +
-  '&cards=glowshroom_monk,sparkbolt_gremlin' +
+  '&cards=glowshroom_monk,sparkbolt_gremlin&autocollect=1' +
   '&place=glowshroom_monk:2,1;sparkbolt_gremlin:2,4';
 
 const MODEL_IDS = ['glowshroom_monk', 'sparkbolt_gremlin', 'gloomling'];
@@ -63,10 +63,11 @@ test('style pilot: W1-L01 renders the monk, gremlin and gloomling models', async
   expect(pageErrors, 'uncaught page errors').toEqual([]);
 });
 
-// The Gloomling close-up: no shooter in the loadout, so the first Gloomling reaches the
-// Monk by tick 1700 (56.7 s) and is large enough to review its shape and glowing eyes.
+// The Gloomling close-up: no shooter in the loadout, so by tick 3000 (100 s) the first
+// Gloomling is close to the Monk and large enough to review its shape and glowing eyes.
 const GLOOMLING_URL =
-  '/?level=w1-l01&seed=10001&tick=1700&perf=1' + '&cards=glowshroom_monk&place=glowshroom_monk:2,1';
+  '/?level=w1-l01&seed=10001&tick=3000&perf=1' +
+  '&cards=glowshroom_monk&place=glowshroom_monk:2,1&autocollect=1';
 
 test('style pilot: the Gloomling walks up to the Monk in W1-L01', async ({ page }) => {
   const consoleErrors: string[] = [];

@@ -124,9 +124,18 @@ function startLevelRun(
   tick: number,
   loadout: readonly LoadoutEntry[],
   placements: readonly DebugPlacement[] = [],
+  autoCollect = false,
 ): void {
   const sim = createSim(level, [...loadout], seed);
-  // Debug-only (issue #66): place defenders at tick 0 so a deep tick already shows the models.
+  if (autoCollect) {
+    // Debug-only (issue #66): let the fast-forward collect sky drops so the screenshot
+    // loadout is affordable at a deep tick (spec 3.3 auto-collect).
+    sim.enqueue({ type: 'setAutoCollect', on: true });
+  }
+  renderer.showLevel(level);
+  fastForward(sim, tick, (events) => renderer.handleEvents(events));
+  // Debug-only (issue #66): place defenders after the fast-forward, so a deep tick has
+  // accumulated enough Essence for the screenshot loadout.
   for (const placement of placements) {
     sim.enqueue({
       type: 'place',
@@ -135,8 +144,6 @@ function startLevelRun(
       col: placement.col,
     });
   }
-  renderer.showLevel(level);
-  fastForward(sim, tick, (events) => renderer.handleEvents(events));
 
   let hud: HudHandle | null = null;
   const levelRenderer = {
@@ -178,6 +185,7 @@ function startDebugLevel(
     request.tick,
     createDebugLoadout(level, request.cards),
     request.placements ?? [],
+    request.autoCollect === true,
   );
 }
 
