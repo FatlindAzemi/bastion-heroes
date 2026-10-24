@@ -1,6 +1,9 @@
-import { defenderById, rules } from './data';
+import { defenderById, levelById, rules } from './data';
+import { LevelDef } from './data/schemas';
+import { createDebugLoadout, fastForward, parseDebugUrl, type DebugLevelRequest } from './debug';
 import { startGameLoop, startRenderLoop, type GameLoop } from './loop';
-import { createRenderer } from './render';
+import { createRenderer, type GameRenderer } from './render';
+import { createSim } from './sim';
 import type { Command, SimEvent, SimState } from './sim/types';
 import {
   mountHud,
@@ -76,41 +79,73 @@ function createHudActions(sim: HudSim, loop: GameLoop): HudActions {
   };
 }
 
+/** Shows a readable debug-URL error panel instead of crashing the client (issue #27). */
+function showDebugError(root: HTMLElement, message: string): void {
+  console.error(message);
+  const panel = document.createElement('div');
+  panel.setAttribute('role', 'alert');
+  panel.style.cssText =
+    'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;' +
+    'padding:24px;box-sizing:border-box;background:#1b1b2f;color:#f4fbff;' +
+    'font-family:monospace;font-size:18px;text-align:center;z-index:99;';
+  panel.textContent = message;
+  root.appendChild(panel);
+}
+
+/**
+ * Boots the debug level run of issue #27: real sim, greybox renderer, HUD and the
+ * fixed-tick loop. The sim is fast-forwarded `tick` steps before the loop starts,
+ * so the first rendered frame already shows the requested tick (spec 13.7).
+ */
+function startDebugLevel(
+  root: HTMLElement,
+  renderer: GameRenderer,
+  request: DebugLevelRequest,
+): void {
+  const levelDefinition = levelById[request.levelId];
+  if (levelDefinition === undefined) {
+    showDebugError(root, `Debug URL: unknown level "${request.levelId}".`);
+    return;
+  }
+  const level = LevelDef.parse(levelDefinition);
+  const sim = createSim(level, createDebugLoadout(level), request.seed);
+  renderer.showLevel(level);
+  fastForward(sim, request.tick, (events) => renderer.handleEvents(events));
+
+  let hud: HudHandle | null = null;
+  const levelRenderer = {
+    handleEvents: (events: readonly SimEvent[]): void => {
+      renderer.handleEvents(events);
+      hud?.handleEvents(mapHudEvents(events));
+    },
+    draw: (state: Readonly<SimState>, alpha: number): void => {
+      renderer.draw(state, alpha);
+    },
+  };
+  const loop = startGameLoop({ sim, renderer: levelRenderer });
+  hud = mountHud(root, {
+    readState: () => readHudState(sim, loop),
+    actions: createHudActions(sim, loop),
+    pointerToWorld: renderer.pointerToWorld,
+  });
+}
+
 /** Boots the game client: a full-screen 3D canvas under the Preact UI overlay. */
 function boot(): void {
   const root = document.querySelector<HTMLElement>('#app');
   if (root === null) {
     throw new Error('Boot failed: #app element is missing from index.html');
   }
-  const renderer = createRenderer(root);
-
-  // TODO(#27): remove the greybox preview route when the debug URL lands. It drives the
-  // real fixed-tick loop and HUD, so both paths are exercised in the browser. #27 mounts
-  // the same HUD for a real level: createSim(...) + renderer.showLevel(level) + the loop
-  // below + mountHud(root, { readState, actions, pointerToWorld: renderer.pointerToWorld }).
-  if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('greybox')) {
-    void import('./render/greyboxPreview').then(({ showGreyboxPreview }) => {
-      const sim = showGreyboxPreview(renderer);
-      let hud: HudHandle | null = null;
-      const levelRenderer = {
-        handleEvents: (events: readonly SimEvent[]): void => {
-          renderer.handleEvents(events);
-          hud?.handleEvents(mapHudEvents(events));
-        },
-        draw: (state: Readonly<SimState>, alpha: number): void => {
-          renderer.draw(state, alpha);
-        },
-      };
-      const loop = startGameLoop({ sim, renderer: levelRenderer });
-      hud = mountHud(root, {
-        readState: () => readHudState(sim, loop),
-        actions: createHudActions(sim, loop),
-        pointerToWorld: renderer.pointerToWorld,
-      });
-    });
+  const debugUrl = parseDebugUrl(window.location.search);
+  if (debugUrl.kind === 'error') {
+    showDebugError(root, debugUrl.message);
     return;
   }
-
+  const renderer = createRenderer(root);
+  if (debugUrl.kind === 'level') {
+    startDebugLevel(root, renderer, debugUrl);
+    return;
+  }
   mountUi(root);
   startRenderLoop(() => {
     renderer.draw();
