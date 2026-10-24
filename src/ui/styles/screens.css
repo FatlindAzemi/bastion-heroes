@@ -1,0 +1,603 @@
+/*
+ * Scouting and Loadout screens (spec 3.12, 11.8; issue #49). They mount over the
+ * canvas as an opaque 9.8-styled Preact backdrop: Lilita One titles, Nunito body
+ * text, 16 px button radius with a 6 px bottom edge, >= 48 px touch targets and
+ * safe-area padding. The menu diorama behind them is the M4 replacement entry.
+ */
+
+.screens-root {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px))
+    calc(12px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 12% -10%, rgba(63, 169, 245, 0.32) 0%, rgba(63, 169, 245, 0) 55%),
+    radial-gradient(ellipse at 100% 110%, rgba(166, 77, 255, 0.28) 0%, rgba(166, 77, 255, 0) 60%),
+    linear-gradient(152deg, #26385f 0%, #1b1b2f 52%, #2b2140 100%);
+  color: #ffffff;
+  font-family: var(--font-body);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.screen__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 1120px);
+  height: 100%;
+  min-height: 0;
+  margin: 0 auto;
+}
+
+.screen__header {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+}
+
+.screen__eyebrow {
+  margin: 0;
+  color: #9fd8ff;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+/* Spec 9.8: white fill, 3 px #1B1B2F outline and a soft drop shadow. */
+.screen__title {
+  margin: 0;
+  color: #ffffff;
+  font-family: var(--font-title);
+  font-size: clamp(26px, 4.4vw, 44px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  text-shadow:
+    3px 0 0 var(--color-shadow),
+    -3px 0 0 var(--color-shadow),
+    0 3px 0 var(--color-shadow),
+    0 -3px 0 var(--color-shadow),
+    2px 2px 0 var(--color-shadow),
+    -2px -2px 0 var(--color-shadow),
+    2px -2px 0 var(--color-shadow),
+    -2px 2px 0 var(--color-shadow),
+    0 6px 10px rgba(0, 0, 0, 0.35);
+}
+
+.screen__section-title {
+  margin: 0;
+  color: #cfe3ff;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.screen__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.screen__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.screen__actions--end {
+  justify-content: flex-end;
+}
+
+.screen__actions-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- Buttons (spec 9.8: radius 16, 6 px bottom edge, 4 px press travel) ---------- */
+
+.screen-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 112px;
+  min-height: 52px;
+  padding: 0 22px;
+  border: 3px solid var(--color-shadow);
+  border-radius: 16px;
+  color: #ffffff;
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.36);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
+}
+
+.screen-button--primary {
+  min-width: 150px;
+  background: var(--color-primary-green);
+}
+
+.screen-button--secondary {
+  background: var(--color-secondary-blue);
+}
+
+.screen-button:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.36);
+}
+
+.screen-button:disabled {
+  opacity: 0.42;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.22);
+  cursor: not-allowed;
+}
+
+.screen-button:focus-visible,
+.loadout-slot:focus-visible,
+.defender-card:focus-visible {
+  outline: 3px solid var(--color-buy-yellow);
+  outline-offset: 2px;
+}
+
+/* ---------- Scout screen ---------- */
+
+.scout-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scout-fact {
+  padding: 4px 12px;
+  border: 2px solid rgba(159, 216, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(27, 27, 47, 0.55);
+  color: #dcecff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.scout-report {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+
+.scout-enemy-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+  min-height: 0;
+  margin: 0;
+  padding: 2px 2px 2px 0;
+  overflow-y: auto;
+  list-style: none;
+  align-content: start;
+}
+
+.scout-enemy {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(27, 27, 47, 0.6);
+}
+
+.scout-enemy__icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(27, 27, 47, 0.9);
+  border-radius: 14px;
+  color: #ffffff;
+  font-family: var(--font-title);
+  font-size: 22px;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.scout-enemy__icon[data-armor='light'] {
+  background: linear-gradient(160deg, #7ed957 0%, #3f8f2f 100%);
+}
+
+.scout-enemy__icon[data-armor='armored'] {
+  background: linear-gradient(160deg, #f6a13a 0%, #a8601a 100%);
+}
+
+.scout-enemy__icon[data-armor='spectral'] {
+  background: linear-gradient(160deg, #a64dff 0%, #5c2399 100%);
+}
+
+.scout-enemy__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scout-enemy__name {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.scout-enemy__tip {
+  color: #dbe7f5;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* ---------- Loadout screen ---------- */
+
+.loadout-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(248px, 320px);
+  gap: 12px;
+}
+
+.loadout-collection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+
+.collection-grid {
+  display: grid;
+  grid-auto-rows: 96px;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 8px;
+  min-height: 0;
+  padding-right: 2px;
+  overflow-y: auto;
+  align-content: start;
+}
+
+/* Greybox collection card: rarity frame, faction portrait placeholder, cost and role/damage badge. */
+.defender-card {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 3px solid var(--color-secondary-blue);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--color-shadow);
+  color: #ffffff;
+  font-family: var(--font-body);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.32);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.defender-card:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.defender-card--selected {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 3px var(--color-buy-yellow),
+    0 9px 14px rgba(0, 0, 0, 0.42);
+}
+
+.defender-card__portrait {
+  position: absolute;
+  inset: 3px 3px 34px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.defender-card__blob {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  width: 30px;
+  height: 42px;
+  transform: translateX(-50%);
+  border: 2px solid rgba(27, 27, 47, 0.8);
+  border-radius: 14px 14px 10px 10px;
+  background: rgba(27, 27, 47, 0.55);
+}
+
+.defender-card__rarity {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  z-index: 3;
+  max-width: calc(100% - 8px);
+  padding: 1px 6px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(27, 27, 47, 0.8);
+  color: #f4fbff;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.defender-card__badge {
+  position: absolute;
+  bottom: 36px;
+  left: 50%;
+  z-index: 3;
+  max-width: calc(100% - 8px);
+  padding: 1px 5px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(27, 27, 47, 0.82);
+  color: #d7ecff;
+  font-size: 7.5px;
+  font-weight: 800;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.defender-card__name {
+  position: absolute;
+  right: 3px;
+  bottom: 20px;
+  left: 3px;
+  z-index: 3;
+  display: -webkit-box;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 8.5px;
+  font-weight: 800;
+  line-height: 1.05;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.defender-card__cost {
+  position: absolute;
+  bottom: 3px;
+  left: 4px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(27, 27, 47, 0.92);
+  font-family: var(--font-title);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.defender-card__essence-icon {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #f4fbff 0%, #3bf0c8 70%);
+}
+
+.defender-card__level {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  z-index: 3;
+  color: #cfe3ff;
+  font-family: var(--font-title);
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.loadout-slots-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px 10px 10px;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(27, 27, 47, 0.55);
+  overflow-y: auto;
+}
+
+.loadout-slots-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.loadout-slots-panel__count {
+  color: #9fd8ff;
+  font-family: var(--font-title);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.loadout-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  align-content: start;
+}
+
+.loadout-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 78px;
+  padding: 6px 4px;
+  border: 2px dashed rgba(244, 251, 255, 0.32);
+  border-radius: 14px;
+  background: rgba(27, 27, 47, 0.45);
+  color: #ffffff;
+  font-family: var(--font-body);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.loadout-slot[data-filled='true'] {
+  border-style: solid;
+  background: rgba(63, 169, 245, 0.16);
+}
+
+.loadout-slot:disabled {
+  cursor: default;
+}
+
+.loadout-slot__empty {
+  color: rgba(244, 251, 255, 0.45);
+  font-family: var(--font-title);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.loadout-slot__portrait {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(27, 27, 47, 0.9);
+  border-radius: 10px;
+}
+
+.loadout-slot__name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loadout-slot__cost {
+  color: #f4fbff;
+  font-family: var(--font-title);
+  font-size: 12px;
+  line-height: 1.1;
+}
+
+.loadout-note {
+  margin: 0;
+  padding: 6px 8px;
+  border: 2px solid rgba(255, 204, 0, 0.55);
+  border-radius: 10px;
+  background: rgba(255, 204, 0, 0.12);
+  color: #ffe9a8;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.loadout-note--hint {
+  border-color: rgba(159, 216, 255, 0.4);
+  background: rgba(63, 169, 245, 0.12);
+  color: #d7ecff;
+}
+
+/* Tablets and desktop: larger cards and slots, still inside the 1120 px column. */
+@media (min-height: 600px) {
+  .scout-body {
+    justify-content: center;
+  }
+
+  .loadout-layout {
+    align-content: center;
+  }
+
+  .collection-grid {
+    grid-auto-rows: 132px;
+    grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+  }
+
+  .loadout-slots-panel {
+    align-self: start;
+  }
+
+  .loadout-slot {
+    min-height: 112px;
+  }
+
+  .scout-enemy {
+    padding: 10px 12px;
+  }
+
+  .scout-enemy__icon {
+    width: 50px;
+    height: 50px;
+    font-size: 25px;
+  }
+
+  .scout-enemy__name {
+    font-size: 15px;
+  }
+
+  .scout-enemy__tip {
+    font-size: 12.5px;
+  }
+
+  .defender-card__name {
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-button,
+  .defender-card {
+    transition: none;
+  }
+}

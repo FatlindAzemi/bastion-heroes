@@ -4,14 +4,16 @@ import { createDebugLoadout, fastForward, parseDebugUrl, type DebugLevelRequest 
 import { startGameLoop, startRenderLoop, type GameLoop } from './loop';
 import { createRenderer, type GameRenderer } from './render';
 import { createSim } from './sim';
-import type { Command, SimEvent, SimState } from './sim/types';
+import type { Command, LoadoutEntry, SimEvent, SimState } from './sim/types';
 import {
   mountHud,
+  mountScoutFlow,
   mountUi,
   type HudActions,
   type HudEvent,
   type HudHandle,
   type HudStateView,
+  type ScoutFlowHandle,
 } from './ui';
 
 /** The sim surface the HUD bridge reads and drives (spec 11.3). */
@@ -92,25 +94,33 @@ function showDebugError(root: HTMLElement, message: string): void {
   root.appendChild(panel);
 }
 
-/**
- * Boots the debug level run of issue #27: real sim, greybox renderer, HUD and the
- * fixed-tick loop. The sim is fast-forwarded `tick` steps before the loop starts,
- * so the first rendered frame already shows the requested tick (spec 13.7).
- */
-function startDebugLevel(
-  root: HTMLElement,
-  renderer: GameRenderer,
-  request: DebugLevelRequest,
-): void {
+/** Parses the registered level definition of a validated request (spec 7.1). */
+function parseRequestedLevel(request: DebugLevelRequest): LevelDef | null {
   const levelDefinition = levelById[request.levelId];
   if (levelDefinition === undefined) {
-    showDebugError(root, `Debug URL: unknown level "${request.levelId}".`);
-    return;
+    return null;
   }
-  const level = LevelDef.parse(levelDefinition);
-  const sim = createSim(level, createDebugLoadout(level), request.seed);
+  return LevelDef.parse(levelDefinition);
+}
+
+/**
+ * Starts one level run (issue #27, issue #49): the real sim, greybox renderer,
+ * HUD and the fixed-tick loop. The sim is fast-forwarded `tick` steps before the
+ * loop starts, so the first rendered frame already shows the requested tick
+ * (spec 13.7). The direct debug URL and the "Fight!" button of the Scouting ->
+ * Loadout flow both use this path, so renderer, HUD and loop behavior are equal.
+ */
+function startLevelRun(
+  root: HTMLElement,
+  renderer: GameRenderer,
+  level: LevelDef,
+  seed: number,
+  tick: number,
+  loadout: readonly LoadoutEntry[],
+): void {
+  const sim = createSim(level, [...loadout], seed);
   renderer.showLevel(level);
-  fastForward(sim, request.tick, (events) => renderer.handleEvents(events));
+  fastForward(sim, tick, (events) => renderer.handleEvents(events));
 
   let hud: HudHandle | null = null;
   const levelRenderer = {
@@ -130,6 +140,53 @@ function startDebugLevel(
   });
 }
 
+/**
+ * Boots the direct debug level run of issue #27 (spec 13.7): the fixed tutorial
+ * loadout, or the first available defenders on a free-loadout level.
+ */
+function startDebugLevel(
+  root: HTMLElement,
+  renderer: GameRenderer,
+  request: DebugLevelRequest,
+): void {
+  const level = parseRequestedLevel(request);
+  if (level === null) {
+    showDebugError(root, `Debug URL: unknown level "${request.levelId}".`);
+    return;
+  }
+  startLevelRun(root, renderer, level, request.seed, request.tick, createDebugLoadout(level));
+}
+
+/**
+ * Opens the additive Scouting -> Loadout entry of issue #49 for
+ * `?level=<id>&scout=1`. "Fight!" removes the screens and starts the level through
+ * `startLevelRun` with the chosen 6 cards, so the spec 13.7 direct-start contract
+ * and its e2e/perf runs stay untouched.
+ */
+function startScoutFlow(
+  root: HTMLElement,
+  renderer: GameRenderer,
+  request: DebugLevelRequest,
+): void {
+  const level = parseRequestedLevel(request);
+  if (level === null) {
+    showDebugError(root, `Debug URL: unknown level "${request.levelId}".`);
+    return;
+  }
+  let flow: ScoutFlowHandle | null = null;
+  flow = mountScoutFlow(root, {
+    level,
+    onFight: (chosenLoadout) => {
+      flow?.dispose();
+      const loadout: LoadoutEntry[] = chosenLoadout.map((choice) => ({
+        defenderId: choice.defenderId,
+        level: choice.cardLevel,
+      }));
+      startLevelRun(root, renderer, level, request.seed, request.tick, loadout);
+    },
+  });
+}
+
 /** Boots the game client: a full-screen 3D canvas under the Preact UI overlay. */
 function boot(): void {
   const root = document.querySelector<HTMLElement>('#app');
@@ -144,6 +201,10 @@ function boot(): void {
   const renderer = createRenderer(root);
   if (debugUrl.kind === 'level') {
     startDebugLevel(root, renderer, debugUrl);
+    return;
+  }
+  if (debugUrl.kind === 'scout') {
+    startScoutFlow(root, renderer, debugUrl);
     return;
   }
   mountUi(root);
