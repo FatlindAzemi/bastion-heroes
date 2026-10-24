@@ -39,10 +39,15 @@ describe('data registry (spec 11.2, 11.5)', () => {
     expect(Object.keys(levelById).sort()).toEqual(levels.map((level) => level.id).sort());
   });
 
-  it('14 row 1.2: the M1 data set is the three defenders and the gloomling', () => {
+  it('5.1/6.1: the M2 data set has the eight defenders and the M1 enemy roster so far', () => {
     expect(defenders.map((defender) => defender.id)).toEqual([
+      'boomcap_brewer',
+      'frost_witch',
       'glowshroom_monk',
       'iron_granny',
+      'pyro_fox',
+      'rune_archer',
+      'snowpup_yeti',
       'sparkbolt_gremlin',
     ]);
     expect(enemies.map((enemy) => enemy.id)).toEqual(['gloomling']);

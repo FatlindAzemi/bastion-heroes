@@ -4,8 +4,13 @@
  * (spec 1.1 rule 7).
  */
 import type { DefenderDef, EnemyDef, LevelDef } from './schemas';
+import { boomcapBrewer } from './defenders/boomcap_brewer';
+import { frostWitch } from './defenders/frost_witch';
 import { glowshroomMonk } from './defenders/glowshroom_monk';
 import { ironGranny } from './defenders/iron_granny';
+import { pyroFox } from './defenders/pyro_fox';
+import { runeArcher } from './defenders/rune_archer';
+import { snowpupYeti } from './defenders/snowpup_yeti';
 import { sparkboltGremlin } from './defenders/sparkbolt_gremlin';
 import { gloomling } from './enemies/gloomling';
 import { w1_l01 } from './levels/w1_l01';
@@ -16,8 +21,17 @@ function byId<T extends { id: string }>(defs: readonly T[]): Readonly<Record<str
   return Object.fromEntries(defs.map((def) => [def.id, def] as const));
 }
 
-/** Every defender definition, ordered by id (the M1 set of spec 14 row 1.2). */
-export const defenders: readonly DefenderDef[] = [glowshroomMonk, ironGranny, sparkboltGremlin];
+/** Every defender definition, ordered by id (the M2 roster of spec 5.1). */
+export const defenders: readonly DefenderDef[] = [
+  boomcapBrewer,
+  frostWitch,
+  glowshroomMonk,
+  ironGranny,
+  pyroFox,
+  runeArcher,
+  snowpupYeti,
+  sparkboltGremlin,
+];
 
 /** Every enemy definition, ordered by id (the M1 set of spec 14 row 1.2). */
 export const enemies: readonly EnemyDef[] = [gloomling];
