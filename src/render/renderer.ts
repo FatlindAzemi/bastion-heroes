@@ -154,6 +154,14 @@ export function createRenderer(container: HTMLElement): GameRenderer {
       levelScene?.dispose();
       levelScene = createLevelScene(options);
       resize();
+      console.log(
+        'CAMDBG ' +
+          JSON.stringify({
+            pos: levelScene.camera.position.toArray(),
+            fov: levelScene.camera.fov,
+            aspect: levelScene.camera.aspect,
+          }),
+      );
       return levelScene;
     },
     pointerToWorld: (clientX, clientY) => {
