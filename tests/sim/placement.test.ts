@@ -132,7 +132,15 @@ describe('placement', () => {
 
   it('3.4: enemies standing on the tile do not block placement', () => {
     const sim = createTestSim();
-    sim.state.enemies.push({ id: 900, enemyId: 'gloomling', lane: 0, x: 0.5 });
+    sim.state.enemies.push({
+      id: 900,
+      enemyId: 'gloomling',
+      lane: 0,
+      x: 0.5,
+      hp: 200,
+      maxHp: 200,
+      waveIndex: 0,
+    });
 
     sim.enqueue(place(SPARKBOLT, 0, 0));
     const events = sim.step();

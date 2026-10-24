@@ -2,14 +2,15 @@ import { collectOrb, updateEssence } from './essence';
 import { initialCardCooldownEndTicks, placeDefender, shovelDefender } from './placement';
 import { createRng } from './rng';
 import type { Command, LevelDef, LoadoutEntry, Sim, SimEvent, SimState } from './types';
+import { initialWaveState, updateWaves } from './waves';
 
 /**
  * Creates the simulation for one level run (spec 11.3).
  *
  * The state starts at tick 0 with empty entity lists, the id counter at 1, the
- * level's starting Essence, ready/cooldown card timers and a mulberry32
- * generator seeded with `seed`. `step()` advances exactly one 1/30 s tick in the
- * fixed phase order of spec 11.3.
+ * level's starting Essence, ready/cooldown card timers, the wave schedule and a
+ * mulberry32 generator seeded with `seed`. `step()` advances exactly one 1/30 s
+ * tick in the fixed phase order of spec 11.3.
  */
 export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number): Sim {
   const state: SimState = {
@@ -26,6 +27,7 @@ export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number
     enemies: [],
     projectiles: [],
     orbs: [],
+    wave: initialWaveState(level),
   };
 
   const commandQueue: Command[] = [];
@@ -56,12 +58,8 @@ export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number
     }
   }
 
-  // The phases below are the fixed tick order of spec 11.3. Essence is
-  // implemented in issue #19; the remaining phases arrive with #20-#22.
-  function spawnWaves(): void {
-    // Issue #20 (spec 3.10).
-  }
-
+  // The phases below are the fixed tick order of spec 11.3. Waves (#20) and
+  // Essence (#19) are implemented; the remaining phases arrive with #21-#22.
   function updateDefenders(): void {
     // Issue #21 (spec 3.4, 4.4: defenders act sorted by id).
   }
@@ -95,7 +93,7 @@ export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number
     const events: SimEvent[] = [];
 
     applyQueuedCommands(events); // 1) queued commands, in order
-    spawnWaves(); // 2) waves spawn
+    updateWaves(state, level, events); // 2) waves spawn
     updateEssence(state, level, events); // 3) Essence and orbs
     updateDefenders(); // 4) defenders act, sorted by id
     updateProjectiles(); // 5) projectiles move and hit
