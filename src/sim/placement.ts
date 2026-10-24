@@ -1,5 +1,5 @@
 import { defenderById, rules } from '../data';
-import type { LevelDef } from '../data';
+import type { DefenderDef, LevelDef } from '../data';
 import { isPlaceableTile } from './grid';
 import type { Command, DefenderState, LoadoutEntry, SimEvent, SimState } from './types';
 
@@ -40,6 +40,17 @@ export function initialCardCooldownEndTicks(loadout: readonly LoadoutEntry[]): n
     }
     return ticksFromSeconds(defender.cooldownS);
   });
+}
+
+/**
+ * Tick of the first producer orb of a placed defender, or null when it does not
+ * produce. The first orb comes `firstOrbDelayS` after placement (spec 5.2).
+ */
+function initialNextOrbTick(defender: DefenderDef, placedTick: number): number | null {
+  if (defender.pattern !== 'producer' || defender.firstOrbDelayS === undefined) {
+    return null;
+  }
+  return placedTick + ticksFromSeconds(defender.firstOrbDelayS);
 }
 
 /** Finds the defender standing on a tile, if any (spec 3.4, 3.7). */
@@ -108,6 +119,7 @@ export function placeDefender(
     maxHp: defender.hp,
     cardLevel: card.level,
     activeAtTick: state.tick + ACTIVATION_DELAY_TICKS,
+    nextOrbTick: initialNextOrbTick(defender, state.tick),
   });
   events.push({
     type: 'defenderPlaced',

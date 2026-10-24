@@ -1,3 +1,4 @@
+import { collectOrb, updateEssence } from './essence';
 import { initialCardCooldownEndTicks, placeDefender, shovelDefender } from './placement';
 import { createRng } from './rng';
 import type { Command, LevelDef, LoadoutEntry, Sim, SimEvent, SimState } from './types';
@@ -46,23 +47,19 @@ export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number
       case 'shovel':
         shovelDefender(state, command, events);
         break;
+      case 'collectOrb':
+        collectOrb(state, command, events);
+        break;
       case 'setAutoCollect':
         state.autoCollect = command.on;
-        break;
-      case 'collectOrb':
-        // Orb collection is implemented in issue #19 (spec 3.3).
         break;
     }
   }
 
-  // The phases below are the fixed tick order of spec 11.3. Each later M1 issue
-  // fills in its phase; the order of the calls is what matters.
+  // The phases below are the fixed tick order of spec 11.3. Essence is
+  // implemented in issue #19; the remaining phases arrive with #20-#22.
   function spawnWaves(): void {
     // Issue #20 (spec 3.10).
-  }
-
-  function updateEssence(): void {
-    // Issue #19 (spec 3.3).
   }
 
   function updateDefenders(): void {
@@ -99,7 +96,7 @@ export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number
 
     applyQueuedCommands(events); // 1) queued commands, in order
     spawnWaves(); // 2) waves spawn
-    updateEssence(); // 3) Essence and orbs
+    updateEssence(state, level, events); // 3) Essence and orbs
     updateDefenders(); // 4) defenders act, sorted by id
     updateProjectiles(); // 5) projectiles move and hit
     updateStatusEffects(); // 6) status effects tick
