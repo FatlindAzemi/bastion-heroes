@@ -12,6 +12,7 @@
 
 import { CapsuleGeometry, Group, Mesh, MeshToonMaterial } from 'three';
 
+import { enemyById } from '../data';
 import { rules } from '../data/rules';
 import { starModelScale } from '../sim/stars';
 import type { DefenderState, EnemyState } from '../sim/types';
@@ -35,6 +36,18 @@ const CAPSULE_CENTER_Y = CAPSULE_RADIUS + CAPSULE_LENGTH / 2;
 
 /** Blob shadow width of spec 9.2 (0.7 units), shared by every unit. */
 const BLOB_SHADOW_WIDTH = 0.7;
+
+/** Fly height of a flying enemy in world units (spec 6.2: the Bat Swarm flies at 1.5). */
+const FLYING_HEIGHT = 1.5;
+
+/**
+ * Render height of an enemy above its lane plane (spec 6.2). Flying enemies hover at
+ * 1.5 units; every other enemy and all defenders stay on the ground. Data-driven from
+ * `EnemyDef.isFlying` so the renderer never hardcodes enemy ids.
+ */
+export function enemyRenderHeight(enemyId: string): number {
+  return enemyById[enemyId]?.isFlying === true ? FLYING_HEIGHT : 0;
+}
 
 /** Hit flash duration of spec 9.2 (0.08 s). */
 const HIT_FLASH_MS = 80;
@@ -153,7 +166,10 @@ export function createUnitLayer(parent: Group): UnitLayer {
     const shadow = createBlobShadow(BLOB_SHADOW_WIDTH, BLOB_SHADOW_WIDTH);
     root.add(shadow);
     parent.add(root);
-    objects.add(id, root, x, 0, z);
+    const height = kind === 'enemy' ? enemyRenderHeight(modelId) : 0;
+    // The blob shadow stays on the ground below a flying enemy (spec 9.2).
+    shadow.position.y = 0.012 - height;
+    objects.add(id, root, x, height, z);
     const record: UnitRecord = {
       root,
       kind,
@@ -285,8 +301,9 @@ export function createUnitLayer(parent: Group): UnitLayer {
         seen.add(enemy.id);
         const x = simXToWorldX(enemy.x);
         const z = laneToWorldZ(enemy.lane);
+        const height = enemyRenderHeight(enemy.enemyId);
         if (objects.has(enemy.id)) {
-          objects.moveTo(enemy.id, x, 0, z);
+          objects.moveTo(enemy.id, x, height, z);
         } else {
           addUnit(enemy.id, 'enemy', enemy.enemyId, x, z, 1);
         }
