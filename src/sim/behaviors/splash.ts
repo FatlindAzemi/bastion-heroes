@@ -8,18 +8,13 @@ import { ticksFromSeconds } from '../placement';
 import type { DefenderState, SimEvent, SimState } from '../types';
 import { beginDefenderAttack } from '../combat/status';
 import { collectAuraDamageBuffs } from './aura';
-
-/** The splash radius of a defender: the data value, replaced by the ★3 value in star3Params. */
-function splashRadiusOf(defender: DefenderState, defenderDef: DefenderDef): number | null {
-  const star3Radius = defender.stars === 3 ? defenderDef.star3Params?.['splashRadius'] : undefined;
-  return star3Radius ?? defenderDef.splashRadius ?? null;
-}
+import { star3SplashRadius } from './star3';
 
 /**
  * One `splash` attack (spec 4.3): like `lob`, and the impact deals full damage to
  * the target and `rules.combat.splashSecondaryDamageRatio` (50 %) to every enemy
- * within `splashRadius` tiles of the impact. The radius comes from the defender
- * data (0.8 for the Boomcap Brewer, 1.2 at ★3).
+ * within the splash radius. The radius comes from the defender data (0.8 for the
+ * Boomcap Brewer) or from its ★3 `splash_radius_up` bonus (1.2, spec 5.2).
  */
 export function attackWithSplash(
   state: SimState,
@@ -28,7 +23,7 @@ export function attackWithSplash(
   events: SimEvent[],
 ): boolean {
   const damageType = defenderDef.damageType;
-  const splashRadius = splashRadiusOf(defender, defenderDef);
+  const splashRadius = star3SplashRadius(defender, defenderDef);
   if (damageType === undefined || splashRadius === null) {
     return false;
   }
