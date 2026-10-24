@@ -1,4 +1,4 @@
-import { startRenderLoop } from './loop';
+import { startGameLoop, startRenderLoop } from './loop';
 import { createRenderer } from './render';
 import { mountUi } from './ui';
 
@@ -10,10 +10,12 @@ function boot(): void {
   }
   const renderer = createRenderer(root);
 
-  // TODO(#27): remove the greybox preview route when the debug URL lands.
+  // TODO(#27): remove the greybox preview route when the debug URL lands. It drives the
+  // same fixed-tick loop as a real level, so the loop path is exercised in the browser.
   if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('greybox')) {
-    void import('./render/greyboxPreview').then(({ startGreyboxPreview }) => {
-      startGreyboxPreview(renderer);
+    void import('./render/greyboxPreview').then(({ showGreyboxPreview }) => {
+      const sim = showGreyboxPreview(renderer);
+      startGameLoop({ sim, renderer });
     });
     return;
   }
