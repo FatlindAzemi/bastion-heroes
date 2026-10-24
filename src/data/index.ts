@@ -8,6 +8,7 @@ import { glowshroomMonk } from './defenders/glowshroom_monk';
 import { ironGranny } from './defenders/iron_granny';
 import { sparkboltGremlin } from './defenders/sparkbolt_gremlin';
 import { gloomling } from './enemies/gloomling';
+import { w1_l01 } from './levels/w1_l01';
 import { rules } from './rules';
 
 /** Builds an id -> definition record; duplicate ids fail the tests in `tests/data/`. */
@@ -21,8 +22,8 @@ export const defenders: readonly DefenderDef[] = [glowshroomMonk, ironGranny, sp
 /** Every enemy definition, ordered by id (the M1 set of spec 14 row 1.2). */
 export const enemies: readonly EnemyDef[] = [gloomling];
 
-/** Every level definition. The first level arrives with issue #27 (spec 7.1). */
-export const levels: readonly LevelDef[] = [];
+/** Every level definition, ordered by id (W1-L01 is the M1 level; spec 7.2). */
+export const levels: readonly LevelDef[] = [w1_l01];
 
 /** Defender definitions by id (spec 11.2). */
 export const defenderById = byId(defenders);
