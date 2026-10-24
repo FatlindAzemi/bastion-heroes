@@ -1,5 +1,5 @@
 {
-  "description": "W1-L01 full result run: scripted auto-play until the level ends (won, 3 stars at tick 2375).",
+  "description": "W1-L01 full result run: scripted auto-play until the level ends (won, 3 stars at tick 4706).",
   "levelId": "w1_l01",
   "seed": 10001,
   "loadout": [
@@ -27,7 +27,7 @@
       }
     },
     {
-      "tick": 421,
+      "tick": 1141,
       "cmd": {
         "type": "place",
         "defenderId": "sparkbolt_gremlin",
@@ -36,7 +36,7 @@
       }
     },
     {
-      "tick": 1381,
+      "tick": 2101,
       "cmd": {
         "type": "place",
         "defenderId": "sparkbolt_gremlin",
@@ -45,51 +45,92 @@
       }
     },
     {
-      "tick": 2341,
+      "tick": 3061,
       "cmd": {
         "type": "place",
         "defenderId": "sparkbolt_gremlin",
         "lane": 2,
         "col": 3
       }
+    },
+    {
+      "tick": 4261,
+      "cmd": {
+        "type": "place",
+        "defenderId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 4
+      }
     }
   ],
   "expected": {
     "status": "won",
     "stars": 3,
-    "finalTick": 2375,
+    "finalTick": 4706,
     "hashes": [
       {
         "tick": 300,
-        "hash": "1e4daa73"
+        "hash": "15dbafc3"
       },
       {
         "tick": 600,
-        "hash": "a23eb17d"
+        "hash": "a3216783"
       },
       {
         "tick": 900,
-        "hash": "ca8497e7"
+        "hash": "bcd5704a"
       },
       {
         "tick": 1200,
-        "hash": "d0f5bacb"
+        "hash": "a83f03cf"
       },
       {
         "tick": 1500,
-        "hash": "3110d7c6"
+        "hash": "67d140bc"
       },
       {
         "tick": 1800,
-        "hash": "559b33c4"
+        "hash": "eb198546"
       },
       {
         "tick": 2100,
-        "hash": "f32a1d48"
+        "hash": "a7819061"
       },
       {
-        "tick": 2375,
-        "hash": "74898d23"
+        "tick": 2400,
+        "hash": "811fc581"
+      },
+      {
+        "tick": 2700,
+        "hash": "0736c24a"
+      },
+      {
+        "tick": 3000,
+        "hash": "597dff9e"
+      },
+      {
+        "tick": 3300,
+        "hash": "7f41288c"
+      },
+      {
+        "tick": 3600,
+        "hash": "378db496"
+      },
+      {
+        "tick": 3900,
+        "hash": "205b4a7a"
+      },
+      {
+        "tick": 4200,
+        "hash": "ddf2edc5"
+      },
+      {
+        "tick": 4500,
+        "hash": "39b3e8db"
+      },
+      {
+        "tick": 4706,
+        "hash": "d33d0300"
       }
     ]
   }

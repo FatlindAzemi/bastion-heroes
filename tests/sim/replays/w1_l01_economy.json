@@ -27,7 +27,7 @@
       }
     },
     {
-      "tick": 421,
+      "tick": 1141,
       "cmd": {
         "type": "place",
         "defenderId": "sparkbolt_gremlin",
@@ -43,19 +43,19 @@
     "hashes": [
       {
         "tick": 300,
-        "hash": "1e4daa73"
+        "hash": "15dbafc3"
       },
       {
         "tick": 600,
-        "hash": "a23eb17d"
+        "hash": "a3216783"
       },
       {
         "tick": 900,
-        "hash": "ca8497e7"
+        "hash": "bcd5704a"
       },
       {
         "tick": 1200,
-        "hash": "d0f5bacb"
+        "hash": "a83f03cf"
       }
     ]
   }

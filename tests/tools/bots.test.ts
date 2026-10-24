@@ -59,19 +59,30 @@ function decide(level: LevelDef, sim: Sim, botId: Parameters<typeof decideComman
 }
 
 describe('16.2 bot loadouts', () => {
-  it('16.2: the recommended loadout has one counter per armour, a producer and a wall', () => {
+  it('16.2: the recommended loadout has one counter per armour, a producer and a fill', () => {
     const level = levelWithWaves([[spawn('gloomling'), spawn('pothead'), spawn('shade_wisp')]]);
     const ids = loadoutDefenderIds(level, 'recommended', 0);
+    const oneOf = (options: string[]): boolean => options.some((id) => ids.includes(id));
 
     expect(ids).toHaveLength(6);
-    expect(ids).toEqual(
-      expect.arrayContaining([
-        'sparkbolt_gremlin',
-        'boomcap_brewer',
-        'rune_archer',
-        'glowshroom_monk',
-        'iron_granny',
-      ]),
+    expect(new Set(ids).size).toBe(6);
+    expect(ids).toContain('glowshroom_monk');
+    expect(oneOf(['sparkbolt_gremlin', 'snowpup_yeti'])).toBe(true);
+    expect(oneOf(['boomcap_brewer', 'pyro_fox'])).toBe(true);
+    expect(oneOf(['rune_archer', 'frost_witch'])).toBe(true);
+  });
+
+  it('16.2: the recommended loadout tie-breaks vary with the run seed', () => {
+    const level = levelWithWaves([[spawn('gloomling'), spawn('pothead'), spawn('shade_wisp')]]);
+    const loadouts = new Set(
+      Array.from({ length: 8 }, (_, runSeed) =>
+        loadoutDefenderIds(level, 'recommended', runSeed).join(','),
+      ),
+    );
+
+    expect(loadouts.size).toBeGreaterThan(1);
+    expect(loadoutDefenderIds(level, 'recommended', 3)).toEqual(
+      loadoutDefenderIds(level, 'recommended', 3),
     );
   });
 
@@ -125,7 +136,7 @@ describe('16.2 priority list', () => {
   it('16.2 rule 2: an enemy within 2 tiles of the base gets the cheapest attacker in column 0', () => {
     const level = levelWithWaves([[spawn('gloomling')]]);
     const sim = createSim(level, [card('sparkbolt_gremlin'), card('snowpup_yeti')], level.seed);
-    stepUntil(sim, () => sim.state.enemies.some((enemy) => enemy.lane === 2 && enemy.x <= 2));
+    stepUntil(sim, () => sim.state.enemies.some((enemy) => enemy.lane === 2 && enemy.x <= 2), 6000);
     alignToDecisionTick(sim);
 
     expect(decide(level, sim, 'recommended')).toEqual([

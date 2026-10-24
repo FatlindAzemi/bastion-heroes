@@ -7,9 +7,9 @@ import type { EnemyDef } from '../schemas';
 export const gloomling: EnemyDef = {
   id: 'gloomling',
   name: 'Gloomling',
-  hp: 200,
+  hp: 3000,
   armor: 'light',
-  speed: 0.22,
+  speed: 0.11,
   biteDamage: 50,
   biteIntervalS: 0.5,
   isFlying: false,

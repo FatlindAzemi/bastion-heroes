@@ -203,7 +203,7 @@ describe('sky drops and orb lifecycle', () => {
 describe('producer orbs', () => {
   it('5.2: glowshroom_monk drops its first orb 7.0 s after placement', () => {
     const { sim, defender } = placeProducer();
-    const firstOrbTick = ticksFromSeconds(7);
+    const firstOrbTick = ticksFromSeconds(5);
     expect(defender.nextOrbTick).toBe(firstOrbTick);
 
     advanceToTick(sim, firstOrbTick);
@@ -214,7 +214,7 @@ describe('producer orbs', () => {
     expect(sim.state.orbs[0]).toMatchObject({
       lane: 1,
       x: 2.5,
-      value: 25,
+      value: 70,
       spawnTick: firstOrbTick,
       landTick: firstOrbTick + FALL_TICKS,
       expiresAtTick: firstOrbTick + FALL_TICKS + LIFETIME_TICKS,
@@ -230,14 +230,14 @@ describe('producer orbs', () => {
     advanceToTick(sim, firstOrbTick);
     advance(sim, 1);
 
-    const nextOrbTick = firstOrbTick + ticksFromSeconds(24);
+    const nextOrbTick = firstOrbTick + ticksFromSeconds(14);
     expect(defender.nextOrbTick).toBe(nextOrbTick);
 
     advanceToTick(sim, nextOrbTick);
     const events = advance(sim, 1);
     expect(events.filter((event) => event.type === 'orbSpawned')).toHaveLength(1);
     expect(sim.state.orbs.map((orb) => orb.spawnTick)).toEqual([nextOrbTick]);
-    expect(sim.state.orbs[0]).toMatchObject({ lane: 1, x: 2.5, value: 25 });
+    expect(sim.state.orbs[0]).toMatchObject({ lane: 1, x: 2.5, value: 70 });
   });
 
   it('3.4: producers only drop orbs after their 0.5 s drop', () => {

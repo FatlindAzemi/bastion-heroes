@@ -47,7 +47,7 @@ describe('placement', () => {
     expect(events).toEqual([
       { type: 'defenderPlaced', id: 1, defenderId: SPARKBOLT, lane: 0, col: 0, stars: 1 },
     ]);
-    expect(sim.state.essence).toBe(100);
+    expect(sim.state.essence).toBe(50);
     expect(sim.state.nextId).toBe(2);
     expect(sim.state.defenders).toEqual([
       {
@@ -56,8 +56,8 @@ describe('placement', () => {
         lane: 0,
         col: 0,
         stars: 1,
-        hp: 300,
-        maxHp: 300,
+        hp: 4200,
+        maxHp: 4200,
         cardLevel: 1,
         activeAtTick: ACTIVATION_DELAY_TICKS,
         nextOrbTick: null,
@@ -170,7 +170,7 @@ describe('placement', () => {
     sim.step();
 
     // hp = baseHp * L * S with L = 1 + 0.08 * 2 = 1.16 and S = 1 (spec 4.2).
-    expect(sim.state.defenders[0]).toMatchObject({ cardLevel: 3, hp: 348, maxHp: 348 });
+    expect(sim.state.defenders[0]).toMatchObject({ cardLevel: 3, hp: 4872, maxHp: 4872 });
   });
 
   it('3.5: placing starts the cooldown for cooldownS and blocks the card until then', () => {
@@ -211,8 +211,8 @@ describe('placement', () => {
 
     sim.enqueue(place(IRON_GRANNY, 0, 0));
     expect(sim.step()[0]).toMatchObject({ type: 'defenderPlaced', id: 1 });
-    expect(sim.state.essence).toBe(50);
-    expect(sim.state.defenders[0]).toMatchObject({ defenderId: IRON_GRANNY, hp: 4000 });
+    expect(sim.state.essence).toBe(25);
+    expect(sim.state.defenders[0]).toMatchObject({ defenderId: IRON_GRANNY, hp: 10000 });
   });
 
   it('3.7: shovel removes the defender instantly with no refund and no cooldown', () => {

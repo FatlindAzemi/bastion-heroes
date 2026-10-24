@@ -95,11 +95,11 @@ describe('merge (spec 3.6)', () => {
 
     expect(events).toEqual([{ type: 'defenderMerged', id: defender.id, stars: 2 }]);
     expect(sim.state.defenders).toHaveLength(1);
-    expect(sim.state.essence).toBe(999 - 2 * 100);
+    expect(sim.state.essence).toBe(999 - 2 * 150);
     expect(sim.state.cardCooldownEndTicks[0]).toBe(2 * SPARKBOLT_COOLDOWN_TICKS);
     expect(defender.stars).toBe(2);
     // ★2 = health × 1.6 (spec 3.6, 4.2), rounded to whole health.
-    expect(defender.maxHp).toBe(Math.round(300 * rules.merge.star2HealthMultiplier));
+    expect(defender.maxHp).toBe(Math.round(4200 * rules.merge.star2HealthMultiplier));
     expect(defender.hp).toBe(defender.maxHp);
   });
 
@@ -110,9 +110,9 @@ describe('merge (spec 3.6)', () => {
 
     expect(defender.stars).toBe(3);
     expect(sim.state.defenders).toHaveLength(1);
-    expect(defender.maxHp).toBe(Math.round(300 * rules.merge.star3HealthMultiplier));
+    expect(defender.maxHp).toBe(Math.round(4200 * rules.merge.star3HealthMultiplier));
     expect(defender.hp).toBe(defender.maxHp);
-    expect(sim.state.essence).toBe(999 - 3 * 100);
+    expect(sim.state.essence).toBe(999 - 3 * 150);
   });
 
   it('3.6: placing on a ★3 tile is rejected with tileOccupied and changes nothing', () => {
@@ -133,7 +133,7 @@ describe('merge (spec 3.6)', () => {
   });
 
   it('3.6: a merge pays the full cost and starts the full cooldown like a placement', () => {
-    const sim = createTestSim({ startEssence: 200 });
+    const sim = createTestSim({ startEssence: 300 });
     sim.enqueue(place(SPARKBOLT, 0, 0));
     sim.step();
     advanceTo(sim, SPARKBOLT_COOLDOWN_TICKS);
@@ -164,14 +164,14 @@ describe('merge (spec 3.6)', () => {
     sim.step();
     const defender = firstDefender(sim);
     const cardLevelFactor = 1 + rules.combat.cardLevelMultiplierPerLevel * 2;
-    expect(defender.maxHp).toBe(Math.round(300 * cardLevelFactor));
+    expect(defender.maxHp).toBe(Math.round(4200 * cardLevelFactor));
 
     advanceTo(sim, SPARKBOLT_COOLDOWN_TICKS);
     sim.enqueue(place(SPARKBOLT, 0, 0));
     sim.step();
 
     expect(defender.maxHp).toBe(
-      Math.round(300 * cardLevelFactor * rules.merge.star2HealthMultiplier),
+      Math.round(4200 * cardLevelFactor * rules.merge.star2HealthMultiplier),
     );
     expect(defender.hp).toBe(defender.maxHp);
   });
@@ -204,7 +204,7 @@ describe('merge (spec 3.6)', () => {
     sim.step();
 
     const projectile = sim.state.projectiles[0];
-    expect(projectile?.damage).toBe(20 * rules.merge.star2DamageMultiplier);
+    expect(projectile?.damage).toBe(85 * rules.merge.star2DamageMultiplier);
   });
 
   it('3.6: an Aurora-like defender with maxStars 1 cannot merge (documented no-merge seam)', () => {
@@ -249,10 +249,10 @@ describe('merge (spec 3.6)', () => {
 // Spec 3.6: producer intervals get faster at ★2/★3 and a pending orb timer is rebased on merge.
 describe('producer merge (spec 3.6)', () => {
   const COOLDOWN_TICKS = Math.round(7.5 * rules.tick.tickRate);
-  const FIRST_ORB_TICKS = Math.round(7 * rules.tick.tickRate);
-  const BASE_INTERVAL_TICKS = Math.round(24 * rules.tick.tickRate);
+  const FIRST_ORB_TICKS = Math.round(5 * rules.tick.tickRate);
+  const BASE_INTERVAL_TICKS = Math.round(14 * rules.tick.tickRate);
   const STAR2_INTERVAL_TICKS = Math.round(
-    (24 / rules.merge.producerStar2IntervalDivisor) * rules.tick.tickRate,
+    (14 / rules.merge.producerStar2IntervalDivisor) * rules.tick.tickRate,
   );
 
   it('3.6: ★2 divides the producer interval by 1.5 and rebases the pending orb timer', () => {
@@ -281,7 +281,7 @@ describe('producer merge (spec 3.6)', () => {
       sim.step();
     }
     const spawned = sim.state.orbs.find((orb) => orb.spawnTick === rebasedTick);
-    expect(spawned?.value).toBe(25);
+    expect(spawned?.value).toBe(70);
     expect(defender.nextOrbTick).toBe(rebasedTick + STAR2_INTERVAL_TICKS);
   });
 
@@ -305,7 +305,7 @@ describe('producer merge (spec 3.6)', () => {
     expect(sim.state.orbs.some((orb) => orb.spawnTick === nextOrbTick)).toBe(true);
     expect(defender.nextOrbTick).toBe(
       nextOrbTick +
-        Math.round((24 / rules.merge.producerStar3IntervalDivisor) * rules.tick.tickRate),
+        Math.round((14 / rules.merge.producerStar3IntervalDivisor) * rules.tick.tickRate),
     );
   });
 });

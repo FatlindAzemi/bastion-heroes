@@ -360,13 +360,17 @@ export function buildLevelReport(level: LevelDef, runs: readonly RunResult[]): L
     levelName: level.name,
     world: level.world,
     number: level.number,
+    freeLoadout: level.fixedLoadout === null,
     bots,
     targets: evaluateLevelTargets(level, bots),
   };
 }
 
-/** Builds the world card-diversity rows and the overall target (spec 16.3). */
-function buildCardDiversity(levels: readonly LevelReport[]): CardDiversityRow[] {
+/** Sums the defender win counts and the winning runs of a set of levels. */
+function sumRecommendedWins(levels: readonly LevelReport[]): {
+  totalWins: number;
+  winCounts: Map<string, number>;
+} {
   const winCounts = new Map<string, number>();
   let totalWins = 0;
   for (const level of levels) {
@@ -379,19 +383,36 @@ function buildCardDiversity(levels: readonly LevelReport[]): CardDiversityRow[] 
       winCounts.set(defenderId, (winCounts.get(defenderId) ?? 0) + wins);
     }
   }
+  return { totalWins, winCounts };
+}
+
+/**
+ * Builds the world card-diversity rows (spec 16.3, decision #81 option A): the
+ * target share counts only free-loadout levels (W1-L05-L10), while the raw
+ * all-level share is kept next to it so the fixed tutorial loadouts stay visible.
+ */
+function buildCardDiversity(levels: readonly LevelReport[]): CardDiversityRow[] {
+  const free = sumRecommendedWins(levels.filter((level) => level.freeLoadout));
+  const all = sumRecommendedWins(levels);
+  const defenderIds = new Set<string>([...free.winCounts.keys(), ...all.winCounts.keys()]);
   const rows: CardDiversityRow[] = [];
-  for (const [defenderId, wins] of winCounts) {
+  for (const defenderId of defenderIds) {
     const defenderDef = defenderById[defenderId];
-    const exempt = defenderDef?.role === 'producer';
-    const winShare = totalWins === 0 ? 0 : wins / totalWins;
+    const wins = free.winCounts.get(defenderId) ?? 0;
+    const allLevelsWins = all.winCounts.get(defenderId) ?? 0;
+    const winShare = free.totalWins === 0 ? 0 : wins / free.totalWins;
     rows.push({
       defenderId,
       name: defenderDef?.name ?? defenderId,
       role: defenderDef?.role ?? 'unknown',
       wins,
       winShare,
-      exempt,
-      pass: exempt || atMost(winShare, CARD_DIVERSITY_LIMIT),
+      allLevelsWins,
+      allLevelsWinShare: all.totalWins === 0 ? 0 : allLevelsWins / all.totalWins,
+      exempt: defenderDef?.role === 'producer',
+      pass:
+        defenderDef?.role === 'producer' ||
+        (free.totalWins > 0 && atMost(winShare, CARD_DIVERSITY_LIMIT)),
     });
   }
   return rows.sort(
@@ -404,7 +425,7 @@ function evaluateCardDiversity(
   rows: readonly CardDiversityRow[],
   totalWins: number,
 ): TargetEvaluation {
-  const evaluated = rows.filter((row) => !row.exempt);
+  const evaluated = rows.filter((row) => !row.exempt && row.wins > 0);
   if (totalWins === 0) {
     return {
       id: 'card-diversity',
@@ -412,7 +433,7 @@ function evaluateCardDiversity(
       scope: 'world',
       levelId: null,
       botId: 'recommended',
-      value: 'no wins',
+      value: 'no free-loadout wins',
       requirement: `≤ ${formatPercent(CARD_DIVERSITY_LIMIT)} per non-producer`,
       pass: false,
       severity: 1,
@@ -437,9 +458,12 @@ function evaluateCardDiversity(
   };
 }
 
-/** Counts the recommended wins of the whole world for the diversity target (spec 16.3). */
+/** Counts the recommended wins on free-loadout levels for the diversity target (spec 16.3). */
 function recommendedWins(levels: readonly LevelReport[]): number {
   return levels.reduce((sum, level) => {
+    if (!level.freeLoadout) {
+      return sum;
+    }
     const recommended = level.bots.find((metrics) => metrics.botId === 'recommended');
     return sum + (recommended?.wins ?? 0);
   }, 0);
@@ -566,17 +590,26 @@ function worldTargetTable(report: WorldReport): string[] {
   return lines;
 }
 
-/** The card-diversity table of the world (spec 16.3). */
+/** The card-diversity table of the world (spec 16.3, decision #81 option A). */
 function cardDiversityTable(report: WorldReport): string[] {
-  const totalWins = report.botSummary.find((metrics) => metrics.botId === 'recommended')?.wins ?? 0;
+  const freeWins = report.levels
+    .filter((level) => level.freeLoadout)
+    .reduce(
+      (sum, level) =>
+        sum + (level.bots.find((metrics) => metrics.botId === 'recommended')?.wins ?? 0),
+      0,
+    );
   const lines = [
-    `| Defender | Role | Wins | Share of ${totalWins} recommended wins | Result |`,
-    '| --- | --- | --- | --- | --- |',
+    'The 16.3 target counts only free-loadout levels (W1-L05-L10, decision #81 option A); the all-level share is unchanged raw information.',
+    '',
+    `| Defender | Role | Free-level wins | Share of ${freeWins} free-level wins (target) | All-level share (info) | Result |`,
+    '| --- | --- | --- | --- | --- | --- |',
   ];
   for (const row of report.cardDiversity) {
     const result = row.exempt ? 'exempt (producer)' : row.pass ? '✔' : '❌';
     lines.push(
-      `| ${row.name} | ${row.role} | ${row.wins} | ${formatPercent(row.winShare)} | ${result} |`,
+      `| ${row.name} | ${row.role} | ${row.wins} | ${formatPercent(row.winShare)} | ` +
+        `${formatPercent(row.allLevelsWinShare)} | ${result} |`,
     );
   }
   return lines;

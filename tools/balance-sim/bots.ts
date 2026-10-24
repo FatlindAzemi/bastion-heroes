@@ -100,7 +100,7 @@ const FILL_ROLE_PRIORITY: Readonly<Record<DefenderDef['role'], number>> = {
   producer: 5,
 };
 
-/** Seed offsets that keep the random loadout and the random in-level actions independent. */
+/** Seed offsets that keep the random loadout and the in-level tie-breaks independent (spec 16.2). */
 const RANDOM_LOADOUT_SEED_OFFSET = 0;
 const RANDOM_ACTION_SEED_OFFSET = 1_000_003;
 
@@ -142,9 +142,28 @@ function recommendedCardLevel(world: number): number {
   return CARD_LEVEL_BY_WORLD[world] ?? 1;
 }
 
-/** Active lanes in ascending order, the deterministic tie-break for every bot rule. */
+/** Active lanes in ascending order, the deterministic base order for every bot rule. */
 function activeLanes(level: LevelDef): number[] {
   return [...level.activeLanes].sort((first, second) => first - second);
+}
+
+/**
+ * Shuffles the active lanes with the run-seeded rng: the spec 16.2 tie-break for
+ * decisions where several lanes are equally good (the fixed lane order is not a
+ * meaningful choice).
+ */
+function shuffledLanes(level: LevelDef, rng: Rng): number[] {
+  const lanes = activeLanes(level);
+  for (let index = lanes.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(rng.next() * (index + 1));
+    const current = lanes[index];
+    const swap = lanes[swapIndex];
+    if (current !== undefined && swap !== undefined) {
+      lanes[index] = swap;
+      lanes[swapIndex] = current;
+    }
+  }
+  return lanes;
 }
 
 /** The defender standing on a tile, if any (spec 3.4). */
@@ -223,22 +242,69 @@ function compareAttackers(first: DefenderDef, second: DefenderDef): number {
   return first.id.localeCompare(second.id);
 }
 
-/** The best counter for one enemy armour: highest multiplier, then highest dps, then cheapest (3.12/4.1). */
-function bestCounter(armor: ArmorType): DefenderDef | undefined {
+/** Picks one item of an equal-choice set with the run-seeded rng (spec 16.2 tie-break). */
+function pickTied<T>(items: readonly T[], rng: Rng | null): T | undefined {
+  if (items.length === 0) {
+    return undefined;
+  }
+  if (rng === null) {
+    return items[0];
+  }
+  return items[Math.min(items.length - 1, Math.floor(rng.next() * items.length))];
+}
+
+/** Shuffles a copy of the list with the run-seeded rng (spec 16.2 tie-break). */
+function shuffleWithRng<T>(items: readonly T[], rng: Rng | null): T[] {
+  const result = [...items];
+  if (rng === null) {
+    return result;
+  }
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(rng.next() * (index + 1));
+    const current = result[index];
+    const swap = result[swapIndex];
+    if (current !== undefined && swap !== undefined) {
+      result[index] = swap;
+      result[swapIndex] = current;
+    }
+  }
+  return result;
+}
+
+/**
+ * The best counter for one enemy armour: highest multiplier first. All owned cards
+ * have the same level in this tool, so the remaining tie is broken with the run
+ * seed (spec 16.2: each run varies the bot's own tie-breaks).
+ */
+function bestCounter(armor: ArmorType, rng: Rng | null): DefenderDef | undefined {
   const candidates = defenders.filter(
     (defenderDef) => isAttacker(defenderDef) && armorMultiplier(defenderDef, armor) > 1,
   );
-  return candidates.sort((first, second) => {
-    const difference = armorMultiplier(second, armor) - armorMultiplier(first, armor);
-    return difference !== 0 ? difference : compareAttackers(first, second);
-  })[0];
+  if (candidates.length === 0) {
+    return undefined;
+  }
+  const bestMultiplier = Math.max(
+    ...candidates.map((candidate) => armorMultiplier(candidate, armor)),
+  );
+  const tied = candidates
+    .filter((candidate) => armorMultiplier(candidate, armor) === bestMultiplier)
+    .sort(compareAttackers);
+  return pickTied(tied, rng);
 }
 
-/** The spec 3.12 Recommended button loadout: counters per armour, a producer, then fill. */
-export function recommendedDefenderIds(level: LevelDef, slots: number): string[] {
+/**
+ * The spec 3.12 Recommended button loadout: counters per armour, a producer, then
+ * fill with the highest-level cards. All owned cards are level 1 in World 1, so
+ * both the counter ties and the fill slots are run-seeded tie-breaks (spec 16.2).
+ */
+export function recommendedDefenderIds(
+  level: LevelDef,
+  slots: number,
+  rng: Rng | null = null,
+): string[] {
   const selected: string[] = [];
   for (const armor of enemyArmorsInLevel(level)) {
-    const counter = bestCounter(armor);
+    const counter = bestCounter(armor, rng);
     if (counter !== undefined && !selected.includes(counter.id)) {
       selected.push(counter.id);
     }
@@ -247,12 +313,16 @@ export function recommendedDefenderIds(level: LevelDef, slots: number): string[]
   if (producer !== undefined && !selected.includes(producer.id) && selected.length < slots) {
     selected.push(producer.id);
   }
-  const remaining = defenders
-    .filter((defenderDef) => !selected.includes(defenderDef.id))
-    .sort((first, second) => {
+  const remaining = shuffleWithRng(
+    defenders.filter((defenderDef) => !selected.includes(defenderDef.id)),
+    rng,
+  );
+  if (rng === null) {
+    remaining.sort((first, second) => {
       const roleDifference = FILL_ROLE_PRIORITY[first.role] - FILL_ROLE_PRIORITY[second.role];
       return roleDifference !== 0 ? roleDifference : compareAttackers(first, second);
     });
+  }
   for (const defenderDef of remaining) {
     if (selected.length >= slots) {
       break;
@@ -310,7 +380,7 @@ export function loadoutDefenderIds(level: LevelDef, botId: BotId, runSeed: numbe
   if (botId === 'commons') {
     return commonsDefenderIds().slice(0, slots);
   }
-  return recommendedDefenderIds(level, slots);
+  return recommendedDefenderIds(level, slots, createRng(RANDOM_LOADOUT_SEED_OFFSET + runSeed));
 }
 
 /** The loadout entries of one bot run: ids plus the card level of spec 8.3/16.2. */
@@ -328,8 +398,17 @@ export interface BotContext {
   level: LevelDef;
   state: Readonly<SimState>;
   botId: BotId;
-  /** Generator of the random variant; null for the priority-list bots. */
+  /**
+   * Run-seeded generator of the bot's tie-breaks (spec 16.2: each run varies the
+   * bot's own decisions with a run seed). Null in unit tests for deterministic
+   * fixtures; the priority rules then use the ascending lane order.
+   */
   rng: Rng | null;
+}
+
+/** The decision context of one tick: the context plus the lane order of this decision. */
+interface DecisionContext extends BotContext {
+  decisionLanes: readonly number[];
 }
 
 /** Collects every orb on the field, rule 1 of the priority list (spec 16.2). */
@@ -355,9 +434,9 @@ function totalProducers(state: Readonly<SimState>): number {
 }
 
 /** Rule 2: the cheapest affordable attacker in column 0 of an undefended endangered lane. */
-function emergencyPlacement(context: BotContext): Command | null | undefined {
+function emergencyPlacement(context: DecisionContext): Command | null | undefined {
   const baseLine = rules.grid.baseLineX;
-  const lane = activeLanes(context.level).find((laneIndex) => {
+  const lane = context.decisionLanes.find((laneIndex) => {
     const enemiesInLane = context.state.enemies.filter(
       (enemy) => enemy.lane === laneIndex && enemy.x <= baseLine + EMERGENCY_DISTANCE_TILES,
     );
@@ -390,7 +469,7 @@ function emergencyPlacement(context: BotContext): Command | null | undefined {
 }
 
 /** Rule 3: build producers in the lane with the fewest producers, columns 0 then 1. */
-function economyPlacement(context: BotContext): Command | undefined {
+function economyPlacement(context: DecisionContext): Command | undefined {
   if (context.state.tick / rules.tick.tickRate >= ECONOMY_WINDOW_SECONDS) {
     return undefined;
   }
@@ -400,7 +479,7 @@ function economyPlacement(context: BotContext): Command | undefined {
   const producers = loadoutDefenders(context.state)
     .filter((defenderDef) => defenderDef.role === 'producer')
     .sort((first, second) => first.cost - second.cost);
-  const lanes = activeLanes(context.level);
+  const lanes = context.decisionLanes;
   const lane = lanes.reduce<number | undefined>((best, laneIndex) => {
     if (best === undefined) {
       return laneIndex;
@@ -533,8 +612,8 @@ function laneThreat(context: BotContext, lane: number): LaneThreat | undefined {
 }
 
 /** The 16.2 coverage rule: reinforce a lane whose attacker dps is below the incoming threat. */
-function coveragePlacement(context: BotContext): Command | undefined {
-  for (const lane of activeLanes(context.level)) {
+function coveragePlacement(context: DecisionContext): Command | undefined {
+  for (const lane of context.decisionLanes) {
     const threat = laneThreat(context, lane);
     if (threat === undefined) {
       continue;
@@ -565,14 +644,14 @@ function coveragePlacement(context: BotContext): Command | undefined {
 }
 
 /** The 16.2 wall rule: a wall in column 6 against a tank or a group of four enemies. */
-function wallPlacement(context: BotContext): Command | undefined {
+function wallPlacement(context: DecisionContext): Command | undefined {
   const walls = loadoutDefenders(context.state)
     .filter((defenderDef) => defenderDef.role === 'wall')
     .sort((first, second) => first.cost - second.cost);
   if (walls.length === 0) {
     return undefined;
   }
-  for (const lane of activeLanes(context.level)) {
+  for (const lane of context.decisionLanes) {
     const laneEnemies = context.state.enemies.filter((enemy) => enemy.lane === lane);
     const hasWall = context.state.defenders.some((defender) => {
       if (defender.lane !== lane) {
@@ -602,14 +681,14 @@ function maxStarsOf(defenderDef: DefenderDef): number {
 }
 
 /** The lane with the most living enemy health, the target of the merge rule (spec 16.2). */
-function laneWithMostEnemyHealth(context: BotContext): number | undefined {
+function laneWithMostEnemyHealth(context: DecisionContext): number | undefined {
   const healthByLane = new Map<number, number>();
   for (const enemy of context.state.enemies) {
     healthByLane.set(enemy.lane, (healthByLane.get(enemy.lane) ?? 0) + enemy.hp);
   }
   let targetLane: number | undefined;
   let targetHealth = 0;
-  for (const lane of activeLanes(context.level)) {
+  for (const lane of context.decisionLanes) {
     const laneHealth = healthByLane.get(lane) ?? 0;
     if (laneHealth > targetHealth) {
       targetHealth = laneHealth;
@@ -635,7 +714,7 @@ function mergeableAttacker(state: Readonly<SimState>, lane: number): DefenderSta
 }
 
 /** The 16.2 merge rule: merge an attacker in the lane with the most enemy health. */
-function mergePlacement(context: BotContext): Command | undefined {
+function mergePlacement(context: DecisionContext): Command | undefined {
   const targetLane = laneWithMostEnemyHealth(context);
   if (targetLane === undefined) {
     return undefined;
@@ -662,7 +741,7 @@ const PRIORITY_RULES = [
   coveragePlacement,
   wallPlacement,
   mergePlacement,
-] as const;
+] as const satisfies readonly ((context: DecisionContext) => Command | null | undefined)[];
 
 /** The random variant: collect orbs, then place a random affordable card every 3 s (spec 16.2). */
 function randomDecisions(context: BotContext): Command[] {
@@ -707,8 +786,13 @@ export function decideCommands(context: BotContext): Command[] {
   if (orbCommands.length > 0) {
     return orbCommands;
   }
+  const decisionContext: DecisionContext = {
+    ...context,
+    decisionLanes:
+      context.rng === null ? activeLanes(context.level) : shuffledLanes(context.level, context.rng),
+  };
   for (const rule of PRIORITY_RULES) {
-    const command = rule(context);
+    const command = rule(decisionContext);
     if (command === null) {
       return [];
     }
@@ -751,7 +835,7 @@ function applyTickEvents(
 export function runBotRun(level: LevelDef, botId: BotId, runSeed: number): RunResult {
   const loadout = createLoadout(level, botId, runSeed);
   const sim = createSim(level, loadout, level.seed);
-  const rng = botId === 'random' ? createRng(RANDOM_ACTION_SEED_OFFSET + runSeed) : null;
+  const rng = createRng(RANDOM_ACTION_SEED_OFFSET + runSeed);
   const maxTicks = ticksFromSeconds(MAX_RUN_SECONDS);
   const placed = new Set<string>();
   const orbValues = new Map<number, number>();

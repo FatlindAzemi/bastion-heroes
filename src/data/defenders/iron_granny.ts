@@ -10,10 +10,10 @@ export const ironGranny: DefenderDef = {
   faction: 'forge',
   rarity: 'rare',
   role: 'wall',
-  cost: 50,
+  cost: 75,
   cooldownS: 30,
   startsReady: false,
-  hp: 4000,
+  hp: 10000,
   pattern: 'wall',
   // A wall does not attack (5.2): damage 0 and no attack interval.
   damage: 0,

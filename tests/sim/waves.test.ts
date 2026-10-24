@@ -316,12 +316,12 @@ describe('waves', () => {
     expect(sim.state.enemies[0]).toMatchObject({
       enemyId: 'gloomling',
       lane: 2,
-      hp: 200,
-      maxHp: 200,
+      hp: 3000,
+      maxHp: 3000,
       waveIndex: 0,
     });
     // Spawned at the spawn point in phase 2, then walked one tick in phase 7 (#21).
     expect(sim.state.enemies[0]?.x).toBeCloseTo(rules.grid.enemySpawnX - speedPerTick);
-    expect(gloomling?.hp).toBe(200);
+    expect(gloomling?.hp).toBe(3000);
   });
 });

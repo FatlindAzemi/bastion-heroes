@@ -14,7 +14,7 @@ export const rules: RulesDef = {
   // 3.3: Essence starting value, sky drops, orb lifetime, collection and maximum.
   essence: {
     startingEssence: 150,
-    skyDropAmount: 25,
+    skyDropAmount: 35,
     skyDropIntervalS: 8,
     firstSkyDropDelayS: 4,
     skyDropFallTimeS: 1,

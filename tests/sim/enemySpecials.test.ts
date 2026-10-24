@@ -145,11 +145,11 @@ describe('M2 enemy behaviors (spec 6.2)', () => {
     const enemy = spawnAt(sim, 'pothead', 0, 3);
     enemy.hp = 300;
     hitWithSparkbolt(sim, 0);
-    expect(enemy.hp).toBe(300 - 10); // 20 Pierce × 0.5 vs Armored
+    expect(enemy.hp).toBe(300 - 43); // 85 Pierce × 0.5 vs Armored
 
     enemy.hp = 200;
     hitWithSparkbolt(sim, 0);
-    expect(enemy.hp).toBe(200 - 25); // 20 Pierce × 1.25 vs Light
+    expect(enemy.hp).toBe(200 - 106); // 85 Pierce × 1.25 vs Light
   });
 
   it('6.2: pothead sets armorBroken once it is at or below 200 hp (renderer model swap)', () => {
@@ -166,12 +166,12 @@ describe('M2 enemy behaviors (spec 6.2)', () => {
   it('6.2: a straight projectile hits the Shieldbearer shield first, not the body', () => {
     const sim = createHarness();
     const enemy = spawnAt(sim, 'shieldbearer', 0, 3);
-    expect(enemy.shieldHp).toBe(600);
+    expect(enemy.shieldHp).toBe(1200);
 
     hitWithSparkbolt(sim, 0);
 
-    expect(enemy.shieldHp).toBe(600 - 10); // 20 Pierce × 0.5 vs the Armored shield
-    expect(enemy.hp).toBe(300);
+    expect(enemy.shieldHp).toBe(1200 - 43); // 85 Pierce × 0.5 vs the Armored shield
+    expect(enemy.hp).toBe(2000);
   });
 
   it('6.2: a diagonal projectile also hits the shield first', () => {
@@ -186,8 +186,8 @@ describe('M2 enemy behaviors (spec 6.2)', () => {
     attackWithDiagonal(sim.state as SimState, defender, diagonal, events);
     runProjectilesToEnd(sim);
 
-    expect(enemy.shieldHp).toBe(600 - 10);
-    expect(enemy.hp).toBe(300);
+    expect(enemy.shieldHp).toBe(1200 - 10);
+    expect(enemy.hp).toBe(2000);
   });
 
   it('6.2: when the shield breaks the body continues and takes Light-armor damage (overflow is lost)', () => {
@@ -197,10 +197,10 @@ describe('M2 enemy behaviors (spec 6.2)', () => {
 
     hitWithSparkbolt(sim, 0);
     expect(enemy.shieldHp).toBe(0);
-    expect(enemy.hp).toBe(300); // the 10-point hit breaks a 5-point shield, overflow is lost
+    expect(enemy.hp).toBe(2000); // the 43-point hit breaks a 5-point shield, overflow is lost
 
     hitWithSparkbolt(sim, 0);
-    expect(enemy.hp).toBe(300 - 25); // 20 Pierce × 1.25 vs the Light body
+    expect(enemy.hp).toBe(2000 - 106); // 85 Pierce × 1.25 vs the Light body
   });
 
   it('6.2: a piercing shot is stopped by the shield instead of passing through', () => {
@@ -239,8 +239,8 @@ describe('M2 enemy behaviors (spec 6.2)', () => {
     runProjectilesToEnd(sim);
 
     expect(state.projectiles).toEqual([]);
-    expect(enemy.shieldHp).toBe(600 - 10);
-    expect(enemy.hp).toBe(300);
+    expect(enemy.shieldHp).toBe(1200 - 10);
+    expect(enemy.hp).toBe(2000);
   });
 
   it('6.2: lob, splash and beam hit the Shieldbearer body directly, leaving the shield full', () => {
@@ -294,8 +294,8 @@ describe('M2 enemy behaviors (spec 6.2)', () => {
         runProjectilesToEnd(sim);
       }
 
-      expect(enemy.shieldHp).toBe(600);
-      expect(enemy.hp).toBe(300 - damage);
+      expect(enemy.shieldHp).toBe(1200);
+      expect(enemy.hp).toBe(2000 - damage);
     }
   });
 
@@ -321,8 +321,8 @@ describe('M2 enemy behaviors (spec 6.2)', () => {
     const events: SimEvent[] = [];
     updateTrapDefender(state, defender, snaptrap, events);
 
-    expect(enemy.shieldHp).toBe(600);
-    expect(enemy.hp).toBeLessThan(0);
+    expect(enemy.shieldHp).toBe(1200);
+    expect(enemy.hp).toBe(2000 - 1800);
   });
 
   it('6.2/4.1: shade_wisp has Spectral armor and is not flying', () => {
@@ -335,7 +335,7 @@ describe('M2 enemy behaviors (spec 6.2)', () => {
     expect(enemyArmor(enemy, wisp)).toBe('spectral');
 
     hitWithSparkbolt(sim, 0);
-    expect(enemy.hp).toBe(300 - 20); // Pierce is neutral (1.0) vs Spectral
+    expect(enemy.hp).toBe(2000 - 85); // Pierce is neutral (1.0) vs Spectral
   });
 
   it('6.2: bat_swarm flies, so ground straight shots cannot hit it', () => {
@@ -398,7 +398,7 @@ describe('M2 enemy behaviors (spec 6.2)', () => {
 describe('Gloom Priest (spec 6.2)', () => {
   const HEAL_INTERVAL_TICKS = 90;
 
-  it('6.2: heals every enemy within 1.5 tiles for 60 every 3 s, never itself', () => {
+  it('6.2: heals every enemy within 1.5 tiles for 80 every 3 s, never itself', () => {
     const sim = createHarness();
     const priest = spawnAt(sim, 'gloom_priest', 2, 5);
     const near = spawnAt(sim, 'gloomling', 2, 6);
@@ -413,8 +413,8 @@ describe('Gloom Priest (spec 6.2)', () => {
     expect(near.hp).toBe(100); // no pulse before the 3 s interval
 
     runEnemyPhaseAt(sim, HEAL_INTERVAL_TICKS);
-    expect(near.hp).toBe(160);
-    expect(adjacentLane.hp).toBe(160);
+    expect(near.hp).toBe(180);
+    expect(adjacentLane.hp).toBe(180);
     expect(far.hp).toBe(100);
     expect(priest.hp).toBe(300);
     expect(priest.nextHealTick).toBe(2 * HEAL_INTERVAL_TICKS);
@@ -440,13 +440,13 @@ describe('Gloom Priest (spec 6.2)', () => {
     runEnemyPhaseAt(sim, HEAL_INTERVAL_TICKS);
     runEnemyPhaseAt(sim, 2 * HEAL_INTERVAL_TICKS);
 
-    expect(near.hp).toBe(170);
+    expect(near.hp).toBe(210);
   });
 });
 
 // Spec 6.2: the Gloom Ogre smash and its one-time Gloomling throw.
 describe('Gloom Ogre (spec 6.2)', () => {
-  it('6.2: smashes a blocking defender for 200 every 1.0 s', () => {
+  it('6.2: smashes a blocking defender for 70 every 1.0 s', () => {
     const granny = defenderById['iron_granny'];
     if (granny === undefined) {
       throw new Error('expected the iron granny data');
@@ -456,14 +456,14 @@ describe('Gloom Ogre (spec 6.2)', () => {
     const wall = addDefender(sim, granny, 0, 0);
 
     runEnemyPhaseAt(sim, 0);
-    expect(wall.hp).toBe(granny.hp - 200);
+    expect(wall.hp).toBe(granny.hp - 70);
     expect(ogre.nextBiteTick).toBe(ticksFromSeconds(1));
 
     runEnemyPhaseAt(sim, ticksFromSeconds(1) - 1);
-    expect(wall.hp).toBe(granny.hp - 200);
+    expect(wall.hp).toBe(granny.hp - 70);
 
     runEnemyPhaseAt(sim, ticksFromSeconds(1));
-    expect(wall.hp).toBe(granny.hp - 400);
+    expect(wall.hp).toBe(granny.hp - 70 * 2);
   });
 
   it('6.2: at 50 % health it throws one Gloomling 3 tiles forward, behind the first defender', () => {
@@ -475,13 +475,13 @@ describe('Gloom Ogre (spec 6.2)', () => {
     const state = sim.state as SimState;
     addDefender(sim, granny, 0, 2);
     const ogre = spawnAt(sim, 'gloom_ogre', 0, 3.05);
-    ogre.hp = 901;
+    ogre.hp = 751;
 
     runEnemyPhaseAt(sim, 0);
     expect(ogre.hasThrown).toBe(false);
     expect(state.enemies.filter((enemy) => enemy.enemyId === 'gloomling')).toHaveLength(0);
 
-    ogre.hp = 900;
+    ogre.hp = 750;
     const events = runEnemyPhaseAt(sim, 1);
 
     expect(ogre.hasThrown).toBe(true);

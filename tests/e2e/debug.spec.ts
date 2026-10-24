@@ -20,7 +20,7 @@ test('debug URL: boots W1-L01 at tick 900 with the HUD', async ({ page }) => {
   await expect(canvas).toBeVisible();
   // The HUD reads the real sim: starting Essence of W1-L01 and the fixed Sparkbolt Gremlin card.
   await expect(page.getByRole('status', { name: /Essence/ })).toBeVisible({ timeout: 5000 });
-  await expect(page.getByRole('button', { name: 'Sparkbolt Gremlin, 100 Essence' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sparkbolt Gremlin, 150 Essence' })).toBeVisible();
 
   await page.screenshot({ path: 'test-results/screens/debug-url-w1-l01-844x390.png' });
 
