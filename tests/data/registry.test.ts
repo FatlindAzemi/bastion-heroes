@@ -60,4 +60,19 @@ describe('data registry (spec 11.2, 11.5)', () => {
       'shieldbearer',
     ]);
   });
+
+  it('7.2: the registry lists all ten World 1 levels in order', () => {
+    expect(levels.map((level) => level.id)).toEqual([
+      'w1_l01',
+      'w1_l02',
+      'w1_l03',
+      'w1_l04',
+      'w1_l05',
+      'w1_l06',
+      'w1_l07',
+      'w1_l08',
+      'w1_l09',
+      'w1_l10',
+    ]);
+  });
 });

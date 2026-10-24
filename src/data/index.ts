@@ -20,6 +20,15 @@ import { pothead } from './enemies/pothead';
 import { shadeWisp } from './enemies/shade_wisp';
 import { shieldbearer } from './enemies/shieldbearer';
 import { w1_l01 } from './levels/w1_l01';
+import { w1_l02 } from './levels/w1_l02';
+import { w1_l03 } from './levels/w1_l03';
+import { w1_l04 } from './levels/w1_l04';
+import { w1_l05 } from './levels/w1_l05';
+import { w1_l06 } from './levels/w1_l06';
+import { w1_l07 } from './levels/w1_l07';
+import { w1_l08 } from './levels/w1_l08';
+import { w1_l09 } from './levels/w1_l09';
+import { w1_l10 } from './levels/w1_l10';
 import { rules } from './rules';
 
 /** Builds an id -> definition record; duplicate ids fail the tests in `tests/data/`. */
@@ -50,8 +59,19 @@ export const enemies: readonly EnemyDef[] = [
   shieldbearer,
 ];
 
-/** Every level definition, ordered by id (W1-L01 is the M1 level; spec 7.2). */
-export const levels: readonly LevelDef[] = [w1_l01];
+/** Every level definition, ordered by id (all ten World 1 levels; spec 7.2). */
+export const levels: readonly LevelDef[] = [
+  w1_l01,
+  w1_l02,
+  w1_l03,
+  w1_l04,
+  w1_l05,
+  w1_l06,
+  w1_l07,
+  w1_l08,
+  w1_l09,
+  w1_l10,
+];
 
 /** Defender definitions by id (spec 11.2). */
 export const defenderById = byId(defenders);

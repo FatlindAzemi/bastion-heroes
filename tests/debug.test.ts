@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { levelById } from '../src/data';
+import { levelById, levels } from '../src/data';
 import { LevelDef } from '../src/data/schemas';
 import { createDebugLoadout, fastForward, parseDebugUrl } from '../src/debug';
 import { createSim } from '../src/sim';
@@ -119,5 +119,30 @@ describe('debug level boot (issue #27)', () => {
     });
     expect(eventTypes.has('enemySpawned')).toBe(true);
     expect(eventTypes.has('orbSpawned')).toBe(true);
+  });
+
+  it('13.7/7.2: every registered World 1 level boots through its debug URL', () => {
+    for (const level of levels) {
+      const urlLevel = level.id.replace('_', '-');
+      const parsed = parseDebugUrl(`?level=${urlLevel}`);
+      expect(parsed, level.id).toEqual({
+        kind: 'level',
+        levelId: level.id,
+        seed: level.seed,
+        tick: 0,
+      });
+
+      const loadout = createDebugLoadout(LevelDef.parse(level));
+      expect(loadout, level.id).toHaveLength(level.loadoutSlots);
+      for (const entry of loadout) {
+        expect(entry.level).toBe(1);
+      }
+
+      // The debug boot path parses, creates the sim and fast-forwards before drawing.
+      const sim = createSim(LevelDef.parse(level), loadout, level.seed);
+      expect(() => fastForward(sim, 30), level.id).not.toThrow();
+      expect(sim.state.tick, level.id).toBe(30);
+      expect(sim.state.levelId, level.id).toBe(level.id);
+    }
   });
 });
