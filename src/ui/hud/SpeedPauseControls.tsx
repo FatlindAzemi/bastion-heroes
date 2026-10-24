@@ -1,3 +1,4 @@
+import { Icon } from '../components/Icon';
 import type { HudSpeed } from './types';
 
 /** Props of the speed toggle and pause buttons in the top right corner (spec 3.2, 9.8). */
@@ -9,8 +10,9 @@ export interface SpeedPauseControlsProps {
 }
 
 /**
- * Greybox speed toggle (1×/2×) and pause button, wired to the `GameLoop` control API
- * of #25 (spec 3.2). Pause opens the minimal resume overlay, not the M4 pause menu.
+ * Speed toggle (1×/2×) and pause/play button (spec 3.2, 9.8), wired to the
+ * `GameLoop` control API of #25. Pause opens the minimal resume overlay; the full
+ * pause menu (Restart/Settings/Quit) is milestone M4.
  */
 export function SpeedPauseControls({
   speed,
@@ -26,7 +28,8 @@ export function SpeedPauseControls({
         onClick={onToggleSpeed}
         aria-label={`Speed ${speed} times`}
       >
-        {speed}×
+        <Icon name="speed" class="hud-button__icon hud-button__icon--speed" />
+        <span class="hud-button__label hud-outlined-text">{speed}×</span>
       </button>
       <button
         type="button"
@@ -34,7 +37,7 @@ export function SpeedPauseControls({
         onClick={onTogglePause}
         aria-label={paused ? 'Resume' : 'Pause'}
       >
-        {paused ? '▶' : 'II'}
+        <Icon name={paused ? 'play' : 'pause'} class="hud-button__icon" />
       </button>
     </div>
   );

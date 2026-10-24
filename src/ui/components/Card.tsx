@@ -1,5 +1,7 @@
+import { Icon } from './Icon';
+import { CardPortrait } from './CardPortrait';
 import type { HudCardView } from '../hud/types';
-import { factionColor, rarityColor } from '../hud/factionStyles';
+import { rarityColor } from '../hud/factionStyles';
 
 /** Props of one loadout card in the card bar (spec 3.5, 9.8). */
 export interface CardProps {
@@ -10,9 +12,11 @@ export interface CardProps {
 }
 
 /**
- * Greybox loadout card: faction placeholder portrait, Essence cost badge, rarity frame
- * and the cooldown overlay that shrinks from top to bottom with the remaining seconds
- * (spec 3.5, 9.8). Final card art arrives with M3 issue 3.11.
+ * Final loadout card (spec 9.8 card visual): the M3 portrait on a rarity gradient
+ * inside the rarity frame, Essence cost with the orb icon in the bottom left, star
+ * pips at ★2/★3, and the cooldown overlay that shrinks from top to bottom with the
+ * remaining seconds (spec 3.5). The accessible name keeps the defender name and
+ * cost, which the Playwright e2e tests use.
  */
 export function Card({ card, selected, shaking, onSelect }: CardProps) {
   const cooldownPercent = Math.round(Math.min(Math.max(card.cooldownFraction, 0), 1) * 100);
@@ -24,11 +28,10 @@ export function Card({ card, selected, shaking, onSelect }: CardProps) {
   if (shaking) {
     classNames.push('hud-card--shake');
   }
-  const portraitBackground = [
-    'radial-gradient(circle at 50% 30%, rgba(244, 251, 255, 0.35) 0%, rgba(244, 251, 255, 0) 55%)',
-    'linear-gradient(160deg, rgba(27, 27, 47, 0.1) 0%, rgba(27, 27, 47, 0.55) 100%)',
-    factionColor(card.faction),
-  ].join(', ');
+  if (cooldownPercent > 0) {
+    classNames.push('hud-card--cooling');
+  }
+  const pipCount = card.stars >= 2 ? card.stars : 0;
   return (
     <button
       type="button"
@@ -38,16 +41,21 @@ export function Card({ card, selected, shaking, onSelect }: CardProps) {
       aria-pressed={selected}
       aria-label={`${card.name}, ${card.cost} Essence`}
     >
-      <span
+      <CardPortrait
+        defenderId={card.defenderId}
+        faction={card.faction}
+        rarity={card.rarity}
         class="hud-card__portrait"
-        style={{ background: portraitBackground }}
-        aria-hidden="true"
-      >
-        <span class="hud-card__blob" />
-      </span>
-      <span class="hud-card__name">{card.name}</span>
+      />
+      {pipCount > 0 ? (
+        <span class="hud-card__stars" aria-hidden="true">
+          {Array.from({ length: pipCount }, (_, index) => (
+            <Icon key={index} name="star" class="hud-card__star" />
+          ))}
+        </span>
+      ) : null}
       <span class="hud-card__cost" aria-hidden="true">
-        <span class="hud-card__essence-icon" />
+        <Icon name="essence" class="hud-card__essence-icon" />
         {card.cost}
       </span>
       {cooldownPercent > 0 ? (

@@ -1,8 +1,11 @@
+import { BossBar } from './BossBar';
 import { CardBar } from './CardBar';
 import { EssenceCounter } from './EssenceCounter';
+import { LevelProgress } from './LevelProgress';
 import { PausedOverlay } from './PausedOverlay';
 import { RejectionMessage } from './RejectionMessage';
 import { SpeedPauseControls } from './SpeedPauseControls';
+import { WaveBanner } from './WaveBanner';
 import type { HudBus, HudOptions } from './types';
 import { useAnimationRedraw, useInteraction } from './useInteraction';
 
@@ -12,13 +15,14 @@ export interface HudProps extends HudOptions {
 }
 
 /**
- * In-level greybox HUD of spec 9.8: Essence counter, card bar with the shovel, speed and
- * pause controls, a full-field tap layer and the rejected-command feedback. It only reads
- * the sim through `readState` and sends intents through `actions` (spec 11.3, 11.8).
+ * Final in-level HUD of spec 9.8: Essence counter, card bar with the shovel, speed and
+ * pause controls, level progress, wave banner, boss bar, a full-field tap layer and the
+ * rejected-command feedback. It only reads the sim through `readState` and sends intents
+ * through `actions` (spec 11.3, 11.8).
  */
-export function Hud({ bus, readState, actions, pointerToWorld }: HudProps) {
+export function Hud({ bus, readState, actions, pointerToWorld, initialBanner }: HudProps) {
   useAnimationRedraw();
-  const interaction = useInteraction({ bus, readState, actions, pointerToWorld });
+  const interaction = useInteraction({ bus, readState, actions, pointerToWorld, initialBanner });
   const view = readState();
   return (
     <div class="hud">
@@ -39,6 +43,9 @@ export function Hud({ bus, readState, actions, pointerToWorld }: HudProps) {
         onToggleSpeed={actions.toggleSpeed}
         onTogglePause={actions.togglePause}
       />
+      <LevelProgress progress={view.progress} />
+      {view.boss === null ? null : <BossBar boss={view.boss} />}
+      <WaveBanner banner={interaction.banner} />
       <RejectionMessage message={interaction.rejectionMessage} />
       {view.paused ? <PausedOverlay onResume={actions.togglePause} /> : null}
     </div>

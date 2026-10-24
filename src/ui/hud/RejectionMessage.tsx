@@ -10,7 +10,7 @@ export function RejectionMessage({ message }: RejectionMessageProps) {
   }
   return (
     <div class="hud-rejection" role="status">
-      {message}
+      <span class="hud-rejection__text hud-outlined-text">{message}</span>
     </div>
   );
 }

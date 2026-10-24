@@ -6,6 +6,7 @@ import type { HudBus, HudHandle, HudOptions } from './hud/types';
 import type { ScoutFlowHandle, ScoutFlowOptions } from './screens/types';
 import './styles/tokens.css';
 import './styles/global.css';
+import './styles/cards.css';
 import './styles/hud.css';
 import './styles/screens.css';
 
@@ -58,5 +59,13 @@ export function mountHud(container: HTMLElement, options: HudOptions): HudHandle
   };
 }
 
-export type { HudActions, HudEvent, HudHandle, HudOptions, HudStateView } from './hud/types';
+export type {
+  HudActions,
+  HudBannerKind,
+  HudBossView,
+  HudEvent,
+  HudHandle,
+  HudOptions,
+  HudStateView,
+} from './hud/types';
 export type { LoadoutChoice, ScoutFlowHandle, ScoutFlowOptions } from './screens/types';

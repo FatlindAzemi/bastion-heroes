@@ -1,4 +1,4 @@
-import { defenderById, levelById, rules } from './data';
+import { defenderById, enemyById, levelById, rules } from './data';
 import { LevelDef } from './data/schemas';
 import {
   createDebugLoadout,
@@ -16,11 +16,15 @@ import {
   mountScoutFlow,
   mountUi,
   type HudActions,
+  type HudBannerKind,
+  type HudBossView,
   type HudEvent,
   type HudHandle,
   type HudStateView,
   type ScoutFlowHandle,
 } from './ui';
+import { highestCardStars } from './ui/hud/cardStars';
+import { levelProgressView } from './ui/hud/levelProgressView';
 
 /** The sim surface the HUD bridge reads and drives (spec 11.3). */
 interface HudSim {
@@ -28,19 +32,36 @@ interface HudSim {
   enqueue(command: Command): void;
 }
 
-/** Maps the sim's rejected-command events to the HUD feedback events (spec 3.4). */
+/** How many ticks before the debug tick a wave banner still counts as visible (spec 3.10, 9.8). */
+const BANNER_WINDOW_TICKS = Math.round(3 * rules.tick.tickRate);
+
+/** Maps the sim events the HUD shows to the HUD's own event types (spec 3.4, 3.10). */
 function mapHudEvents(events: readonly SimEvent[]): HudEvent[] {
   const hudEvents: HudEvent[] = [];
   for (const event of events) {
     if (event.type === 'commandRejected') {
       hudEvents.push({ type: 'commandRejected', reason: event.reason });
+    } else if (event.type === 'waveBanner') {
+      hudEvents.push({ type: 'waveBanner', kind: event.kind });
     }
   }
   return hudEvents;
 }
 
-/** Projects one sim state into the HUD view types (spec 3.5, 9.8). */
-function readHudState(sim: HudSim, loop: GameLoop): HudStateView {
+/** Boss bar view while a boss enemy is on the field; null in every other case (spec 6.3, 9.8). */
+function readBossView(levelEnemies: Readonly<SimState>['enemies']): HudBossView | null {
+  for (const enemy of levelEnemies) {
+    const definition = enemyById[enemy.enemyId];
+    if (definition?.isBoss === true) {
+      const healthFraction = enemy.maxHp > 0 ? enemy.hp / enemy.maxHp : 0;
+      return { name: definition.name, healthFraction, phaseMarkers: [0.66, 0.33] };
+    }
+  }
+  return null;
+}
+
+/** Projects one sim state into the HUD view types (spec 3.5, 6.3, 9.8). */
+function readHudState(sim: HudSim, loop: GameLoop, level: LevelDef): HudStateView {
   const state = sim.state;
   const tickSeconds = 1 / rules.tick.tickRate;
   const cards = state.loadout.map((entry, index) => {
@@ -55,6 +76,7 @@ function readHudState(sim: HudSim, loop: GameLoop): HudStateView {
       cost: definition?.cost ?? 0,
       cooldownRemainingSeconds: remainingTicks * tickSeconds,
       cooldownFraction: Math.min(remainingTicks / totalTicks, 1),
+      stars: highestCardStars(state.defenders, entry.defenderId),
     };
   });
   return {
@@ -66,6 +88,12 @@ function readHudState(sim: HudSim, loop: GameLoop): HudStateView {
       col: defender.col,
     })),
     orbs: state.orbs.map((orb) => ({ id: orb.id, lane: orb.lane, x: orb.x })),
+    progress: levelProgressView(
+      level.waves.map((wave) => wave.flag),
+      state.wave.index,
+      state.status,
+    ),
+    boss: readBossView(state.enemies),
     paused: loop.isPaused(),
     speed: loop.getSpeed(),
   };
@@ -109,12 +137,46 @@ function parseRequestedLevel(request: DebugLevelRequest): LevelDef | null {
   return LevelDef.parse(levelDefinition);
 }
 
+/** The fast-forward result the HUD needs from the skipped ticks (spec 13.7 screenshots). */
+interface FastForwardSummary {
+  readonly initialBanner: HudBannerKind | null;
+}
+
 /**
- * Starts one level run (issue #27, issue #49): the real sim, greybox renderer,
- * HUD and the fixed-tick loop. The sim is fast-forwarded `tick` steps before the
- * loop starts, so the first rendered frame already shows the requested tick
- * (spec 13.7). The direct debug URL and the "Fight!" button of the Scouting ->
- * Loadout flow both use this path, so renderer, HUD and loop behavior are equal.
+ * Fast-forwards the sim `tick` steps through the renderer and remembers whether a
+ * wave banner of the last 3 s is still on screen at the requested tick, so a
+ * `?tick=` screenshot shows the banner exactly as the live HUD would (spec 3.10).
+ */
+function fastForwardWithBanner(
+  sim: ReturnType<typeof createSim>,
+  tick: number,
+  renderer: GameRenderer,
+): FastForwardSummary {
+  let lastBannerKind: HudBannerKind | null = null;
+  let lastBannerTick = 0;
+  let processedTicks = 0;
+  fastForward(sim, tick, (events) => {
+    processedTicks += 1;
+    for (const event of events) {
+      if (event.type === 'waveBanner') {
+        lastBannerKind = event.kind;
+        lastBannerTick = processedTicks;
+      }
+    }
+    renderer.handleEvents(events);
+  });
+  if (lastBannerKind === null || processedTicks - lastBannerTick > BANNER_WINDOW_TICKS) {
+    return { initialBanner: null };
+  }
+  return { initialBanner: lastBannerKind };
+}
+
+/**
+ * Starts one level run (issue #27, issue #49): the real sim, renderer, HUD and the
+ * fixed-tick loop. The sim is fast-forwarded `tick` steps before the loop starts, so
+ * the first rendered frame already shows the requested tick (spec 13.7). The direct
+ * debug URL and the "Fight!" button of the Scouting -> Loadout flow both use this path,
+ * so renderer, HUD and loop behavior are equal.
  */
 function startLevelRun(
   root: HTMLElement,
@@ -133,7 +195,7 @@ function startLevelRun(
     sim.enqueue({ type: 'setAutoCollect', on: true });
   }
   renderer.showLevel(level);
-  fastForward(sim, tick, (events) => renderer.handleEvents(events));
+  const { initialBanner } = fastForwardWithBanner(sim, tick, renderer);
   // Debug-only (issue #66): place defenders after the fast-forward, so a deep tick has
   // accumulated enough Essence for the screenshot loadout.
   for (const placement of placements) {
@@ -157,9 +219,10 @@ function startLevelRun(
   };
   const loop = startGameLoop({ sim, renderer: levelRenderer });
   hud = mountHud(root, {
-    readState: () => readHudState(sim, loop),
+    readState: () => readHudState(sim, loop, level),
     actions: createHudActions(sim, loop),
     pointerToWorld: renderer.pointerToWorld,
+    initialBanner,
   });
 }
 

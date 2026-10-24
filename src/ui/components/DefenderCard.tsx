@@ -1,9 +1,12 @@
 /**
- * Shared collection card for the Loadout screen (spec 3.12, 9.8): placeholder
- * faction portrait, rarity frame, Essence cost badge and the role/damage badge.
- * Final portraits arrive with M3 issue 3.11; this is the greybox stand-in.
+ * Shared collection card for the Loadout screen (spec 3.12, 9.8): the M3 portrait on
+ * the rarity gradient, rarity frame, Essence cost badge with the orb icon and the
+ * role/damage badge. The same portrait and cost treatment is used by the in-level
+ * card bar, so the two views stay visually consistent (issue #76).
  */
-import { factionColor, rarityColor } from '../hud/factionStyles';
+import { CardPortrait } from './CardPortrait';
+import { Icon } from './Icon';
+import { rarityColor } from '../hud/factionStyles';
 import type { CollectionCardView } from '../screens/types';
 
 /** Readable role names of the card badge (spec 5.1). */
@@ -40,17 +43,12 @@ function badgeLabel(card: CollectionCardView): string {
   return `${role} · ${DAMAGE_LABELS[card.damageType] ?? card.damageType}`;
 }
 
-/** Greybox collection card with a rarity frame, cost badge and role/damage badge (spec 9.8). */
+/** Collection card with a rarity frame, portrait, cost badge and role/damage badge (spec 9.8). */
 export function DefenderCard({ card, selected, disabled, onSelect }: DefenderCardProps) {
   const classNames = ['defender-card'];
   if (selected) {
     classNames.push('defender-card--selected');
   }
-  const portraitBackground = [
-    'radial-gradient(circle at 50% 28%, rgba(244, 251, 255, 0.4) 0%, rgba(244, 251, 255, 0) 58%)',
-    'linear-gradient(160deg, rgba(27, 27, 47, 0.08) 0%, rgba(27, 27, 47, 0.6) 100%)',
-    factionColor(card.faction),
-  ].join(', ');
   return (
     <button
       type="button"
@@ -62,9 +60,12 @@ export function DefenderCard({ card, selected, disabled, onSelect }: DefenderCar
       aria-label={`${card.name}, ${card.cost} Essence`}
       data-testid="collection-card"
     >
-      <span class="defender-card__portrait" style={{ background: portraitBackground }}>
-        <span class="defender-card__blob" aria-hidden="true" />
-      </span>
+      <CardPortrait
+        defenderId={card.defenderId}
+        faction={card.faction}
+        rarity={card.rarity}
+        class="defender-card__portrait"
+      />
       <span class="defender-card__rarity" aria-hidden="true">
         {card.rarity}
       </span>
@@ -72,8 +73,8 @@ export function DefenderCard({ card, selected, disabled, onSelect }: DefenderCar
         {badgeLabel(card)}
       </span>
       <span class="defender-card__name">{card.name}</span>
-      <span class="defender-card__cost" aria-hidden="true">
-        <span class="defender-card__essence-icon" />
+      <span class="defender-card__cost essence-badge" aria-hidden="true">
+        <Icon name="essence" class="defender-card__essence-icon" />
         {card.cost}
       </span>
       <span class="defender-card__level" aria-hidden="true">
