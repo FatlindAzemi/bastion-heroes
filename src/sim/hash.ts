@@ -59,6 +59,10 @@ export function hashState(state: Readonly<SimState>): string {
         status.nextTickAt,
         status.knockbackTilesPerTick,
       ]),
+      enemy.comboCooldowns.steam,
+      enemy.comboCooldowns.shatter,
+      enemy.comboCooldowns.toxic,
+      enemy.comboCooldowns.chain,
     ]),
     projectiles: state.projectiles.map((projectile) => [
       projectile.id,
@@ -78,6 +82,7 @@ export function hashState(state: Readonly<SimState>): string {
       projectile.statusKind,
       projectile.statusDurationS,
       projectile.statusStacks,
+      projectile.element,
     ]),
     orbs: state.orbs.map((orb) => [
       orb.id,

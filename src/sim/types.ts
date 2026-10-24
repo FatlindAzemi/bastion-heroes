@@ -116,6 +116,20 @@ export interface DefenderState {
   attackCount: number;
 }
 
+/** A defender element of spec 4.6/5.2. */
+export type ElementKind = 'fire' | 'frost' | 'storm' | 'poison' | 'none';
+
+/** The four elemental combos of spec 4.6. */
+export type ComboId = 'steam' | 'shatter' | 'toxic' | 'chain';
+
+/** Per-enemy per-combo cooldown timers (spec 4.6: one trigger per combo every 2.0 s). */
+export interface ComboCooldownState {
+  steam: number;
+  shatter: number;
+  toxic: number;
+  chain: number;
+}
+
 /** The seven enemy status effects of spec 4.5. */
 export type StatusKind = 'slow' | 'freeze' | 'burn' | 'poison' | 'stun' | 'knockback' | 'wet';
 
@@ -147,6 +161,8 @@ export interface EnemyState {
   nextBiteTick: number | null;
   /** Active status effects, in application order (spec 4.5). */
   statuses: EnemyStatusState[];
+  /** Per-combo cooldown: the earliest tick at which this enemy may trigger each combo (spec 4.6). */
+  comboCooldowns: ComboCooldownState;
 }
 
 /**
@@ -184,6 +200,8 @@ export interface ProjectileState {
   statusDurationS: number;
   /** Poison stacks of the applied status (1 for every other status, spec 4.5). */
   statusStacks: number;
+  /** Element of the defender that fired it; the 4.6 combos match on it. */
+  element: ElementKind;
 }
 
 /**

@@ -1,5 +1,6 @@
 import { enemyById, rules } from '../../data';
 import type { DefenderDef } from '../../data';
+import { applyAfterHitCombos, applyShatter } from '../combat/combos';
 import { applyArmorMultiplier, calculatePreArmorDamage } from '../combat/damage';
 import { ticksFromSeconds } from '../placement';
 import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
@@ -56,10 +57,16 @@ export function updateTrapDefender(
     defender.stars,
     buffs,
   );
-  const amount = applyArmorMultiplier(preArmorDamage, damageType, triggerDef.armor);
+  const shatterMultiplier = applyShatter(state.tick, damageType, trigger, events);
+  const amount = applyArmorMultiplier(
+    preArmorDamage * shatterMultiplier,
+    damageType,
+    triggerDef.armor,
+  );
   trigger.hp -= amount;
   events.push({ type: 'attack', sourceId: defender.id, targetId: trigger.id });
   events.push({ type: 'hit', targetId: trigger.id, amount, damageType, crit: false });
+  applyAfterHitCombos(state, state.tick, defenderDef.element, damageType, trigger, events);
 
   defender.trapReadyAtTick = null;
   if (defender.stars === 3 && defenderDef.rearmS !== undefined && !defender.trapRearmed) {

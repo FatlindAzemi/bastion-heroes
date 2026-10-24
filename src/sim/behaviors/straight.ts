@@ -53,6 +53,7 @@ export function attackWithStraight(
       damageType,
       hitsFlying,
       status: attackStatus,
+      element: defenderDef.element,
     },
     events,
   );

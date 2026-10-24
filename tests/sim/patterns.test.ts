@@ -118,6 +118,7 @@ function addEnemy(sim: Sim, lane: number, x: number, hp = 200, enemyId = GLOOMLI
     blockedByDefenderId: null,
     nextBiteTick: null,
     statuses: [],
+    comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
   };
   state.nextId += 1;
   state.enemies.push(enemy);

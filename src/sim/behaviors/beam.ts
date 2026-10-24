@@ -1,6 +1,7 @@
 import { enemyById, rules } from '../../data';
 import type { DefenderDef } from '../../data';
 import { applyArmorMultiplier, calculatePreArmorDamage } from '../combat/damage';
+import { applyAfterHitCombos, applyShatter } from '../combat/combos';
 import { applyAttackStatus, beginDefenderAttack } from '../combat/status';
 import { ENEMY_SPAWN_X } from '../grid';
 import { tileCenterX } from '../grid';
@@ -47,10 +48,12 @@ export function attackWithBeam(
   const attackStatus = beginDefenderAttack(defender, defenderDef);
   events.push({ type: 'attack', sourceId: defender.id, targetId: primary?.id ?? null });
   for (const enemy of targets) {
-    hitWithBeam(enemy, preArmorDamage, damageType, events);
+    const shatterMultiplier = applyShatter(state.tick, damageType, enemy, events);
+    hitWithBeam(enemy, preArmorDamage * shatterMultiplier, damageType, events);
     if (attackStatus !== null) {
       applyAttackStatus(state.tick, enemy, attackStatus, events);
     }
+    applyAfterHitCombos(state, state.tick, defenderDef.element, damageType, enemy, events);
   }
   return true;
 }

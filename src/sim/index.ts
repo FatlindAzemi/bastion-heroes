@@ -30,8 +30,11 @@ export {
 } from './placement';
 export { createRng } from './rng';
 export type {
+  ComboCooldownState,
+  ComboId,
   Command,
   DefenderState,
+  ElementKind,
   EnemyState,
   EnemyStatusState,
   LevelDef,

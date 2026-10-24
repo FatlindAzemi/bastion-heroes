@@ -236,6 +236,7 @@ function spawnEnemy(
     blockedByDefenderId: null,
     nextBiteTick: null,
     statuses: [],
+    comboCooldowns: { steam: 0, shatter: 0, toxic: 0, chain: 0 },
   });
   events.push({ type: 'enemySpawned', id, enemyId: spawn.enemyId, lane: spawn.lane });
 }

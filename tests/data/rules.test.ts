@@ -114,4 +114,21 @@ describe('rules data (spec 3, 4)', () => {
     });
     expect(rules.status.knockback).toEqual({ durationS: 0.2 });
   });
+
+  it('4.6: combo values match the spec', () => {
+    expect(rules.combos.sameComboCooldownS).toBe(2);
+    expect(rules.combos.steam).toEqual({
+      burstDamage: 60,
+      burstDamageType: 'blast',
+      radiusTiles: 1,
+      stunDurationS: 0.5,
+    });
+    expect(rules.combos.shatter).toEqual({ damageMultiplier: 2 });
+    expect(rules.combos.toxic).toEqual({ radiusTiles: 1, poisonStacks: 1 });
+    expect(rules.combos.chain).toEqual({
+      jumpDamage: 40,
+      jumpDamageType: 'arcane',
+      radiusTiles: 2,
+    });
+  });
 });

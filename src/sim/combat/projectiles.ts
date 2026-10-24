@@ -1,6 +1,14 @@
 import { enemyById, rules } from '../../data';
 import { ENEMY_SPAWN_X } from '../grid';
-import type { DefenderState, EnemyState, ProjectileState, SimEvent, SimState } from '../types';
+import type {
+  DefenderState,
+  ElementKind,
+  EnemyState,
+  ProjectileState,
+  SimEvent,
+  SimState,
+} from '../types';
+import { applyAfterHitCombos, applyShatter } from './combos';
 import { applyArmorMultiplier, scaleDamage, type DamageType } from './damage';
 import { applyStatus, type AttackStatus } from './status';
 
@@ -26,6 +34,8 @@ export interface ProjectileOptions {
   switchAtX?: number | null;
   /** Status applied to every enemy this projectile damages (spec 4.5, 5.2). */
   status?: AttackStatus | null;
+  /** Element of the firing defender; the 4.6 combos match on it. */
+  element?: ElementKind;
 }
 
 /** Adds a projectile to the state, allocates its id and emits `projectileSpawned` (spec 11.3). */
@@ -53,6 +63,7 @@ export function spawnProjectile(
     statusKind: options.status?.kind ?? null,
     statusDurationS: options.status?.durationS ?? 0,
     statusStacks: options.status?.stacks ?? 1,
+    element: options.element ?? 'none',
   };
   state.nextId += 1;
   state.projectiles.push(projectile);
@@ -95,7 +106,7 @@ function findHitEnemy(
 
 /** Applies one rounded hit to an enemy, its status and the 11.3 hit event (spec 4.2, 4.5). */
 function applyHit(
-  tick: number,
+  state: SimState,
   enemy: EnemyState,
   projectile: ProjectileState,
   events: SimEvent[],
@@ -105,7 +116,11 @@ function applyHit(
   if (enemyDef === undefined) {
     return;
   }
-  const fullAmount = applyArmorMultiplier(projectile.damage, projectile.damageType, enemyDef.armor);
+  // Shatter doubles the hit and ends the Freeze (spec 4.6); the hit then lands.
+  const shatterMultiplier = applyShatter(state.tick, projectile.damageType, enemy, events);
+  const fullAmount =
+    applyArmorMultiplier(projectile.damage, projectile.damageType, enemyDef.armor) *
+    shatterMultiplier;
   const amount = ratio === 1 ? fullAmount : scaleDamage(fullAmount, ratio);
   enemy.hp -= amount;
   events.push({
@@ -117,7 +132,7 @@ function applyHit(
   });
   if (projectile.statusKind !== null) {
     applyStatus(
-      tick,
+      state.tick,
       enemy,
       {
         kind: projectile.statusKind,
@@ -127,6 +142,7 @@ function applyHit(
       events,
     );
   }
+  applyAfterHitCombos(state, state.tick, projectile.element, projectile.damageType, enemy, events);
 }
 
 /**
@@ -143,7 +159,7 @@ function resolveArcImpact(state: SimState, projectile: ProjectileState, events: 
     return;
   }
   const impactX = target.x;
-  applyHit(state.tick, target, projectile, events);
+  applyHit(state, target, projectile, events);
   const splashRadius = projectile.splashRadius;
   if (splashRadius === null) {
     return;
@@ -157,7 +173,7 @@ function resolveArcImpact(state: SimState, projectile: ProjectileState, events: 
     )
     .sort((first, second) => first.id - second.id);
   for (const enemy of splashTargets) {
-    applyHit(state.tick, enemy, projectile, events, rules.combat.splashSecondaryDamageRatio);
+    applyHit(state, enemy, projectile, events, rules.combat.splashSecondaryDamageRatio);
   }
 }
 
@@ -191,7 +207,7 @@ function updateMovingProjectile(
   }
   const hitEnemy = findHitEnemy(state.enemies, projectile, previousX);
   if (hitEnemy !== undefined) {
-    applyHit(state.tick, hitEnemy, projectile, events);
+    applyHit(state, hitEnemy, projectile, events);
     return true;
   }
   return projectile.x > ENEMY_SPAWN_X;
