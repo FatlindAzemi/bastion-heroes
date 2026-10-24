@@ -3,6 +3,7 @@ import { Color, DirectionalLight, Group, HemisphereLight, PerspectiveCamera, Sce
 import { rules } from '../data/rules';
 import type { SimEvent, SimState } from '../sim/types';
 import { fitLevelCamera } from './cameraFit';
+import { readDebugAnimationHold } from './debugAnimation';
 import { createEnvironmentLayer } from './environment';
 import { createGrid, type Grid, type LevelViewOptions } from './grid';
 import { GREYBOX_COLORS } from './greyboxPalette';
@@ -48,17 +49,20 @@ function applyEvents(
         units.spawnDefender(event.id, event.defenderId, event.lane, event.col, event.stars);
         break;
       case 'defenderMerged':
-        units.setStars(event.id, event.stars);
+        // Spec 9.6: a merge jumps 0.4 units, spins 360 degrees and grows to the new star scale.
+        units.merge(event.id, event.stars);
         break;
       case 'defenderRemoved':
-        units.remove(event.id);
+        // Spec 11.7: remove after the 0.4 s death animation, not on the removal event itself.
+        units.die(event.id);
         break;
       case 'enemySpawned':
         // Enemies enter at the spawn point right of the grid, inside the portal (spec 3.1).
         units.spawnEnemy(event.id, event.enemyId, event.lane, rules.grid.enemySpawnX);
         break;
       case 'enemyDied':
-        units.remove(event.id);
+        // Spec 11.7: the purple poof death animation runs before the object is removed.
+        units.die(event.id);
         break;
       case 'hit':
         // Spec 9.2: every hit flashes the struck unit white for 0.08 s.
@@ -75,8 +79,8 @@ function applyEvents(
         projectiles.remove(event.id);
         break;
       case 'orbSpawned':
-        // Spec 9.6: producers pulse their produce clip when an orb spawns.
-        units.playProduce();
+        // Spec 9.6: the producer on this tile pulses its produce clip when its orb spawns.
+        units.playProduceAt(event.lane, event.x);
         orbs.spawn(event.id, event.x, event.lane, ORB_HEIGHT);
         break;
       case 'orbCollected':
@@ -88,8 +92,8 @@ function applyEvents(
         units.playVictory();
         break;
       default:
-        // Attack, hit, status, combo, wave, trap and level events are VFX and audio (M3,
-        // spec 9.6/9.7); the greybox renderer ignores them.
+        // Status, combo, wave, trap and remaining level events are VFX and audio
+        // (issue #75, spec 9.7); the unit layer ignores them here.
         break;
     }
   }
@@ -134,7 +138,10 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
   const projectileGroup = new Group();
   const orbGroup = new Group();
   scene.add(unitGroup, projectileGroup, orbGroup);
-  const units = createUnitLayer(unitGroup);
+  const units = createUnitLayer(unitGroup, {
+    // Debug-only screenshot helper (`?debuganim=kind:progress`), issue #74.
+    debugAnimationHold: readDebugAnimationHold(window.location.search),
+  });
   const projectiles = createProjectileLayer(projectileGroup);
   const orbs = createOrbLayer(orbGroup);
 

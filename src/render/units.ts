@@ -1,22 +1,29 @@
 /**
- * Units layer (spec 11.7): the committed GLB models (style pilot #66, the M2
- * enemies #70), with the greybox capsule as the asynchronous-loading and
- * not-yet-modelled fallback.
+ * Units layer (spec 11.7): the committed GLB models (style pilot #66 and the model
+ * issues #67/#68/#70/#71 and later), with the greybox capsule as the asynchronous
+ * loading and not-yet-modelled fallback.
  *
- * Spawned units get the real model as soon as it is loaded: until then they show
- * a capsule in the same faction colour, then swap in place (no flicker, no loop
- * stall). Models play `idle` for defenders and `walk` for enemies, `attack`/`eat`
- * on the sim `attack` event, `produce` on an Essence orb spawn and `victory` when
- * the level is won (spec 9.6, 12.5).
+ * Two animation systems run on every unit:
+ * - Blender clips through `models.ts`: idle/walk loop, attack/eat on the sim
+ *   `attack` event, produce on a producer's orb spawn and victory on `levelWon`.
+ * - Procedural code animations of spec 9.6 (spawn drop + squash, hit squash,
+ *   death shrink + spin, merge jump + spin) plus the small dust/poof/star
+ *   particle bursts of `particles.ts`.
+ *
+ * The interpolation root only carries the sim position (spec 11.4); the visual
+ * child carries the star scale and the procedural transforms, so a spawn drop or
+ * death spin never fights the tick interpolation. The render loop does not
+ * allocate: the animation curves write into per-unit scratch objects and the
+ * particle system uses fixed buffers.
  */
 
 import { CapsuleGeometry, Group, Mesh, MeshToonMaterial } from 'three';
 
-import { enemyById } from '../data';
-import { rules } from '../data/rules';
+import { defenderById, enemyById, rules } from '../data';
 import { starModelScale } from '../sim/stars';
 import type { DefenderState, EnemyState } from '../sim/types';
 import { createBlobShadow } from './blobShadow';
+import { readDebugAnimationHold, type DebugAnimationHold } from './debugAnimation';
 import { defenderColor, enemyColor } from './greyboxPalette';
 import {
   createPilotModels,
@@ -25,6 +32,28 @@ import {
   type ModelInstance,
 } from './models';
 import { addOutline } from './outline';
+import { createParticleBursts, type ParticleBursts } from './particles';
+import {
+  animationProgress,
+  DEATH_DURATION_MS,
+  DEATH_POOF_FRACTION,
+  deathScale,
+  deathSpin,
+  eatTimeScale,
+  HIT_DURATION_MS,
+  hitScale,
+  MERGE_BURST_FRACTION,
+  MERGE_DURATION_MS,
+  mergeJumpY,
+  mergeScale,
+  mergeSpin,
+  SPAWN_DURATION_MS,
+  SPAWN_LANDING_FRACTION,
+  spawnOffsetY,
+  spawnScale,
+  walkPlaybackRate,
+  type ScalePair,
+} from './proceduralAnimations';
 import { createToonMaterial } from './toonMaterial';
 import { InterpolatedObjects } from './viewMap';
 import { columnToWorldX, laneToWorldZ, simXToWorldX } from './worldMapping';
@@ -49,40 +78,69 @@ export function enemyRenderHeight(enemyId: string): number {
   return enemyById[enemyId]?.isFlying === true ? FLYING_HEIGHT : 0;
 }
 
-/** Hit flash duration of spec 9.2 (0.08 s). */
-const HIT_FLASH_MS = 80;
-
 /** White flash colour mixed into the material emissive channel for 0.08 s (spec 9.2). */
 const HIT_FLASH_COLOR = 0xffffff;
 
-/** The pilot ids that have a real model in public/models/ (issue #66). */
-const PILOT_IDS = new Set<string>(PILOT_MODEL_IDS);
+/** The model ids that have a real GLB in public/models/ (issue #66 onwards). */
+const MODEL_IDS = new Set<string>(PILOT_MODEL_IDS);
 
-/** One spawned unit: the root that interpolates, and its current visual. */
+/** Tolerance when matching a producer orb spawn to the producer's tile (spec 3.3). */
+const PRODUCER_TILE_TOLERANCE = 0.05;
+
+/** One spawned unit: the interpolated root, the animated visual child and its state. */
 interface UnitRecord {
   readonly root: Group;
+  readonly visual: Group;
   readonly kind: 'defender' | 'enemy';
   readonly modelId: string;
+  readonly lane: number;
+  readonly col: number | null;
+  readonly shadow: Mesh;
+  readonly spawnScale: ScalePair;
+  readonly hitScale: ScalePair;
   capsule: Mesh | null;
   capsuleMaterial: MeshToonMaterial | null;
   capsuleOutline: Mesh | null;
-  shadow: Mesh | null;
   instance: ModelInstance | null;
   pendingModel: boolean;
+  stars: 1 | 2 | 3;
+  baseScale: number;
+  spawnStartMs: number;
+  spawnActive: boolean;
+  spawnBurstDone: boolean;
+  hitStartMs: number;
+  hitActive: boolean;
+  flashEndsAtMs: number;
+  mergeStartMs: number;
+  mergeActive: boolean;
+  mergeFromScale: number;
+  mergeBurstDone: boolean;
+  deathStartMs: number;
+  dying: boolean;
+  deathBurstDone: boolean;
+  deathComplete: boolean;
+  walkRate: number;
+}
+
+/** Options of the unit layer; the debug hold is only used by screenshot runs. */
+export interface UnitLayerOptions {
+  readonly debugAnimationHold?: DebugAnimationHold | null;
 }
 
 /** Unit models for defenders and enemies, driven by the sim events (spec 11.7). */
 export interface UnitLayer {
   spawnDefender(id: number, defenderId: string, lane: number, col: number, stars: 1 | 2 | 3): void;
   spawnEnemy(id: number, enemyId: string, lane: number, x: number): void;
-  setStars(id: number, stars: 1 | 2 | 3): void;
-  remove(id: number): void;
-  /** Flashes one unit white for 0.08 s (spec 9.2 hit flash). */
+  /** Starts the 0.5 s merge jump/spin/grow of a defender raising its star level (spec 9.6). */
+  merge(id: number, stars: 1 | 2 | 3): void;
+  /** Starts the 0.4 s death animation; the unit is removed when it ends (spec 9.6, 11.7). */
+  die(id: number): void;
+  /** Flashes one unit white for 0.08 s and squashes it for 0.15 s (spec 9.2, 9.6). */
   flash(id: number): void;
   /** Plays the attack clip of an attacker, or the eat clip of an enemy (spec 12.5). */
   playAttack(id: number): void;
-  /** Plays the produce clip of the producer units on an orb spawn (spec 9.6). */
-  playProduce(): void;
+  /** Plays the produce clip of the producer on this tile (spec 9.6). */
+  playProduceAt(lane: number, x: number): void;
   /** Plays the victory clip of every living defender (spec 9.6). */
   playVictory(): void;
   sync(defenders: readonly DefenderState[], enemies: readonly EnemyState[]): void;
@@ -90,23 +148,52 @@ export interface UnitLayer {
   dispose(): void;
 }
 
-/** Creates the model/capsule layer; the layer owns its group and cleans it up in `dispose`. */
-export function createUnitLayer(parent: Group): UnitLayer {
+/** Creates the model/procedural-animation layer; the layer owns its group and cleans it up. */
+export function createUnitLayer(parent: Group, options: UnitLayerOptions = {}): UnitLayer {
   const capsuleGeometry = new CapsuleGeometry(CAPSULE_RADIUS, CAPSULE_LENGTH, 4, 12);
   capsuleGeometry.translate(0, CAPSULE_CENTER_Y, 0);
   const models = createPilotModels();
+  const particles: ParticleBursts = createParticleBursts();
+  parent.add(particles.object);
   const objects = new InterpolatedObjects();
   const records = new Map<number, UnitRecord>();
-  const flashEndsAt = new Map<number, number>();
+  const removals: number[] = [];
+  const debugHold =
+    options.debugAnimationHold === undefined
+      ? readDebugAnimationHold(window.location.search)
+      : options.debugAnimationHold;
   let lastUpdateMs = performance.now();
   let disposed = false;
+
+  /** True when the screenshot debug hold controls this animation of this unit. */
+  function isHeld(kind: DebugAnimationHold['kind'], record: UnitRecord): boolean {
+    if (debugHold === null || debugHold.kind !== kind) {
+      return false;
+    }
+    // The spawn hold is for defender drop-in stills; frozen enemies would clutter them.
+    return kind !== 'spawn' || record.kind === 'defender';
+  }
+
+  /** Progress of one procedural animation, honouring the debug screenshot hold. */
+  function progressOf(
+    kind: DebugAnimationHold['kind'],
+    record: UnitRecord,
+    startMs: number,
+    durationMs: number,
+    nowMs: number,
+  ): number {
+    if (isHeld(kind, record)) {
+      return debugHold?.progress ?? 0;
+    }
+    return animationProgress(nowMs - startMs, durationMs);
+  }
 
   /** Removes the capsule fallback and frees its per-unit resources. */
   function removeCapsule(record: UnitRecord): void {
     if (record.capsule === null) {
       return;
     }
-    record.root.remove(record.capsule);
+    record.visual.remove(record.capsule);
     record.capsuleMaterial?.dispose();
     record.capsuleOutline?.geometry.dispose();
     record.capsule = null;
@@ -121,7 +208,7 @@ export function createUnitLayer(parent: Group): UnitLayer {
     const material = createToonMaterial(color);
     const mesh = new Mesh(capsuleGeometry, material);
     const outline = addOutline(mesh);
-    record.root.add(mesh);
+    record.visual.add(mesh);
     record.capsule = mesh;
     record.capsuleMaterial = material;
     record.capsuleOutline = outline;
@@ -139,19 +226,23 @@ export function createUnitLayer(parent: Group): UnitLayer {
     }
     removeCapsule(record);
     record.instance = instance;
-    record.root.add(instance.object);
+    record.visual.add(instance.object);
     instance.playBase(record.kind === 'enemy' ? 'walk' : 'idle');
+    instance.setBasePlaybackRate(record.walkRate);
     return true;
   }
 
-  /** Creates one unit root and its visual, using the model when it is loaded already. */
+  /** Creates one unit root, its visual child and the initial procedural state. */
   function addUnit(
     id: number,
     kind: 'defender' | 'enemy',
     modelId: string,
+    lane: number,
+    col: number | null,
     x: number,
     z: number,
     stars: 1 | 2 | 3,
+    walkRate: number,
   ): void {
     if (objects.has(id)) {
       return;
@@ -162,7 +253,9 @@ export function createUnitLayer(parent: Group): UnitLayer {
     if (kind === 'enemy') {
       root.rotation.y = Math.PI;
     }
-    root.scale.setScalar(starModelScale(stars));
+    const visual = new Group();
+    visual.name = `${kind}:${modelId}:visual`;
+    root.add(visual);
     const shadow = createBlobShadow(BLOB_SHADOW_WIDTH, BLOB_SHADOW_WIDTH);
     root.add(shadow);
     parent.add(root);
@@ -170,64 +263,191 @@ export function createUnitLayer(parent: Group): UnitLayer {
     // The blob shadow stays on the ground below a flying enemy (spec 9.2).
     shadow.position.y = 0.012 - height;
     objects.add(id, root, x, height, z);
+    const now = performance.now();
     const record: UnitRecord = {
       root,
+      visual,
       kind,
       modelId,
+      lane,
+      col,
+      shadow,
+      spawnScale: { xz: 1, y: 1 },
+      hitScale: { xz: 1, y: 1 },
       capsule: null,
       capsuleMaterial: null,
       capsuleOutline: null,
-      shadow,
       instance: null,
       pendingModel: false,
+      stars,
+      baseScale: starModelScale(stars),
+      spawnStartMs: now,
+      spawnActive: true,
+      spawnBurstDone: false,
+      hitStartMs: 0,
+      hitActive: false,
+      flashEndsAtMs: 0,
+      mergeStartMs: 0,
+      mergeActive: false,
+      mergeFromScale: starModelScale(stars),
+      mergeBurstDone: true,
+      deathStartMs: 0,
+      dying: false,
+      deathBurstDone: true,
+      deathComplete: false,
+      walkRate,
     };
     records.set(id, record);
-    const isPilot = PILOT_IDS.has(modelId);
-    if (isPilot && addModel(record)) {
+    const hasModel = MODEL_IDS.has(modelId);
+    if (hasModel && addModel(record)) {
       return;
     }
     addCapsule(record);
-    record.pendingModel = isPilot;
+    record.pendingModel = hasModel;
   }
 
-  /** Resets the flash of one unit. */
-  function clearFlash(id: number): void {
-    const record = records.get(id);
-    if (record?.instance != null) {
-      record.instance.setFlash(false);
+  /** Resets the white hit flash of one unit. */
+  function clearFlash(record: UnitRecord): void {
+    record.instance?.setFlash(false);
+    if (record.capsuleMaterial !== null) {
+      record.capsuleMaterial.emissive.setHex(0x000000);
+      record.capsuleMaterial.emissiveIntensity = 0;
     }
-    const material = record?.capsuleMaterial;
-    if (material != null) {
-      material.emissive.setHex(0x000000);
-      material.emissiveIntensity = 0;
-    }
-    flashEndsAt.delete(id);
+    record.flashEndsAtMs = 0;
   }
 
   /** Detaches and forgets one unit, freeing its per-unit resources. */
   function removeUnit(id: number): void {
     objects.remove(id);
     const record = records.get(id);
-    if (record !== undefined) {
-      parent.remove(record.root);
-      removeCapsule(record);
-      record.shadow?.geometry.dispose();
-      if (record.shadow !== null && !Array.isArray(record.shadow.material)) {
-        record.shadow.material.dispose();
-      }
-      record.instance?.dispose();
-      records.delete(id);
+    if (record === undefined) {
+      return;
     }
-    clearFlash(id);
+    parent.remove(record.root);
+    removeCapsule(record);
+    record.shadow.geometry.dispose();
+    if (!Array.isArray(record.shadow.material)) {
+      record.shadow.material.dispose();
+    }
+    record.instance?.dispose();
+    records.delete(id);
   }
 
-  /** Removes units whose sim entity disappeared without a removal event (spec 11.7 safety). */
+  /** Removes units whose sim entity disappeared, except the ones still dying (spec 11.7). */
   function removeMissing(seen: ReadonlySet<number>): void {
     for (const id of [...objects.ids()]) {
+      const record = records.get(id);
+      if (record?.dying === true) {
+        continue;
+      }
       if (!seen.has(id)) {
         removeUnit(id);
       }
     }
+  }
+
+  /** Current walk playback rate of an enemy from its data speed and statuses (spec 9.6). */
+  function enemyWalkRate(enemy: EnemyState): number {
+    const definition = enemyById[enemy.enemyId];
+    if (definition === undefined) {
+      return 1;
+    }
+    const frozen = enemy.statuses.some(
+      (status) => status.kind === 'freeze' || status.kind === 'stun',
+    );
+    if (frozen) {
+      return 0;
+    }
+    const slowed = enemy.statuses.some((status) => status.kind === 'slow');
+    const currentSpeed = slowed
+      ? definition.speed * rules.status.slow.moveSpeedMultiplier
+      : definition.speed;
+    return walkPlaybackRate(currentSpeed);
+  }
+
+  /** Applies the spec 9.6 procedural transforms of one unit for the current frame. */
+  function applyProceduralAnimation(record: UnitRecord, nowMs: number): void {
+    const spawnProgress = record.spawnActive
+      ? progressOf('spawn', record, record.spawnStartMs, SPAWN_DURATION_MS, nowMs)
+      : 0;
+    const hitProgress = record.hitActive
+      ? progressOf('hit', record, record.hitStartMs, HIT_DURATION_MS, nowMs)
+      : 0;
+    const mergeProgress = record.mergeActive
+      ? progressOf('merge', record, record.mergeStartMs, MERGE_DURATION_MS, nowMs)
+      : 0;
+    const deathProgress = record.dying
+      ? progressOf('death', record, record.deathStartMs, DEATH_DURATION_MS, nowMs)
+      : 0;
+
+    let scale = record.baseScale;
+    let scaleXZ = 1;
+    let scaleY = 1;
+    let offsetY = 0;
+    let spin = 0;
+
+    if (record.dying) {
+      scale *= deathScale(deathProgress);
+      spin = deathSpin(deathProgress);
+      if (!record.deathBurstDone && deathProgress >= DEATH_POOF_FRACTION) {
+        record.deathBurstDone = true;
+        particles.burst(
+          record.kind === 'enemy' ? 'death_enemy' : 'death_defender',
+          record.root.position.x,
+          record.root.position.y + 0.4,
+          record.root.position.z,
+        );
+      }
+      record.deathComplete = deathProgress >= 1;
+    } else {
+      if (record.mergeActive) {
+        scale = mergeScale(mergeProgress, record.mergeFromScale, record.baseScale);
+        offsetY += mergeJumpY(mergeProgress);
+        spin += mergeSpin(mergeProgress);
+        if (!record.mergeBurstDone && mergeProgress >= MERGE_BURST_FRACTION) {
+          record.mergeBurstDone = true;
+          particles.burst(
+            'merge_star',
+            record.root.position.x,
+            record.root.position.y + 0.6,
+            record.root.position.z,
+          );
+        }
+        if (mergeProgress >= 1) {
+          record.mergeActive = false;
+        }
+      }
+      if (record.spawnActive) {
+        spawnScale(spawnProgress, record.spawnScale);
+        scaleXZ *= record.spawnScale.xz;
+        scaleY *= record.spawnScale.y;
+        offsetY += spawnOffsetY(spawnProgress);
+        if (!record.spawnBurstDone && spawnProgress >= SPAWN_LANDING_FRACTION) {
+          record.spawnBurstDone = true;
+          particles.burst(
+            'spawn_dust',
+            record.root.position.x,
+            record.root.position.y + 0.05,
+            record.root.position.z,
+          );
+        }
+        if (spawnProgress >= 1) {
+          record.spawnActive = false;
+        }
+      }
+      if (record.hitActive) {
+        hitScale(hitProgress, record.hitScale);
+        scaleXZ *= record.hitScale.xz;
+        scaleY *= record.hitScale.y;
+        if (hitProgress >= 1) {
+          record.hitActive = false;
+        }
+      }
+    }
+
+    record.visual.scale.set(scale * scaleXZ, scale * scaleY, scale * scaleXZ);
+    record.visual.position.y = offsetY;
+    record.visual.rotation.y = spin;
   }
 
   // Models load asynchronously; swap every placeholder that is waiting for one.
@@ -244,19 +464,50 @@ export function createUnitLayer(parent: Group): UnitLayer {
 
   return {
     spawnDefender: (id, defenderId, lane, col, stars): void => {
-      addUnit(id, 'defender', defenderId, columnToWorldX(col), laneToWorldZ(lane), stars);
+      addUnit(
+        id,
+        'defender',
+        defenderId,
+        lane,
+        col,
+        columnToWorldX(col),
+        laneToWorldZ(lane),
+        stars,
+        1,
+      );
     },
     spawnEnemy: (id, enemyId, lane, x): void => {
-      addUnit(id, 'enemy', enemyId, simXToWorldX(x), laneToWorldZ(lane), 1);
+      const definition = enemyById[enemyId];
+      const walkRate = definition === undefined ? 1 : walkPlaybackRate(definition.speed);
+      addUnit(id, 'enemy', enemyId, lane, null, simXToWorldX(x), laneToWorldZ(lane), 1, walkRate);
     },
-    setStars: (id, stars): void => {
+    merge: (id, stars): void => {
       const record = records.get(id);
-      record?.root.scale.setScalar(starModelScale(stars));
+      if (record === undefined || record.dying) {
+        return;
+      }
+      record.mergeFromScale = record.baseScale;
+      record.stars = stars;
+      record.baseScale = starModelScale(stars);
+      record.mergeStartMs = performance.now();
+      record.mergeActive = true;
+      record.mergeBurstDone = false;
     },
-    remove: removeUnit,
+    die: (id): void => {
+      const record = records.get(id);
+      if (record === undefined || record.dying) {
+        return;
+      }
+      record.dying = true;
+      record.deathStartMs = performance.now();
+      record.deathBurstDone = false;
+      record.spawnActive = false;
+      record.hitActive = false;
+      clearFlash(record);
+    },
     flash: (id): void => {
       const record = records.get(id);
-      if (record === undefined) {
+      if (record === undefined || record.dying) {
         return;
       }
       if (record.instance !== null) {
@@ -265,22 +516,45 @@ export function createUnitLayer(parent: Group): UnitLayer {
         record.capsuleMaterial.emissive.setHex(HIT_FLASH_COLOR);
         record.capsuleMaterial.emissiveIntensity = 1;
       }
-      flashEndsAt.set(id, performance.now() + HIT_FLASH_MS);
+      const now = performance.now();
+      record.flashEndsAtMs = now + 80;
+      record.hitStartMs = now;
+      record.hitActive = true;
     },
     playAttack: (id): void => {
       const record = records.get(id);
-      record?.instance?.playOneShot(record.kind === 'enemy' ? 'eat' : 'attack');
+      if (record === undefined || record.instance === null) {
+        return;
+      }
+      if (record.kind === 'enemy') {
+        const definition = enemyById[record.modelId];
+        const interval = definition?.biteIntervalS;
+        const clipDuration = record.instance.clipDuration('eat');
+        const timeScale = interval === undefined ? 1 : eatTimeScale(interval, clipDuration);
+        record.instance.playOneShot('eat', timeScale);
+      } else {
+        record.instance.playOneShot('attack');
+      }
     },
-    playProduce: (): void => {
+    playProduceAt: (lane, x): void => {
       for (const record of records.values()) {
-        if (record.kind === 'defender') {
-          record.instance?.playOneShot('produce');
+        if (record.kind !== 'defender' || record.dying || record.instance === null) {
+          continue;
         }
+        const definition = defenderById[record.modelId];
+        if (definition?.pattern !== 'producer' || record.lane !== lane) {
+          continue;
+        }
+        if (Math.abs(record.root.position.x - x) > PRODUCER_TILE_TOLERANCE) {
+          continue;
+        }
+        record.instance.playOneShot('produce');
+        return;
       }
     },
     playVictory: (): void => {
       for (const record of records.values()) {
-        if (record.kind === 'defender') {
+        if (record.kind === 'defender' && !record.dying) {
           record.instance?.playOneShot('victory');
         }
       }
@@ -294,7 +568,17 @@ export function createUnitLayer(parent: Group): UnitLayer {
         if (objects.has(defender.id)) {
           objects.moveTo(defender.id, x, 0, z);
         } else {
-          addUnit(defender.id, 'defender', defender.defenderId, x, z, defender.stars);
+          addUnit(
+            defender.id,
+            'defender',
+            defender.defenderId,
+            defender.lane,
+            defender.col,
+            x,
+            z,
+            defender.stars,
+            1,
+          );
         }
       }
       for (const enemy of enemies) {
@@ -304,8 +588,24 @@ export function createUnitLayer(parent: Group): UnitLayer {
         const height = enemyRenderHeight(enemy.enemyId);
         if (objects.has(enemy.id)) {
           objects.moveTo(enemy.id, x, height, z);
+          const record = records.get(enemy.id);
+          const walkRate = enemyWalkRate(enemy);
+          if (record !== undefined && record.walkRate !== walkRate) {
+            record.walkRate = walkRate;
+            record.instance?.setBasePlaybackRate(walkRate);
+          }
         } else {
-          addUnit(enemy.id, 'enemy', enemy.enemyId, x, z, 1);
+          addUnit(
+            enemy.id,
+            'enemy',
+            enemy.enemyId,
+            enemy.lane,
+            null,
+            x,
+            z,
+            1,
+            enemyWalkRate(enemy),
+          );
         }
       }
       removeMissing(seen);
@@ -313,16 +613,23 @@ export function createUnitLayer(parent: Group): UnitLayer {
     apply: (alpha): void => {
       objects.apply(alpha);
       const now = performance.now();
-      const deltaSeconds = (now - lastUpdateMs) / 1000;
+      const deltaSeconds = Math.min(Math.max((now - lastUpdateMs) / 1000, 0), 0.1);
       lastUpdateMs = now;
-      for (const record of records.values()) {
+      removals.length = 0;
+      for (const [id, record] of records) {
         record.instance?.update(deltaSeconds);
-      }
-      for (const [id, endsAt] of flashEndsAt) {
-        if (now >= endsAt) {
-          clearFlash(id);
+        applyProceduralAnimation(record, now);
+        if (record.flashEndsAtMs > 0 && now >= record.flashEndsAtMs) {
+          clearFlash(record);
+        }
+        if (record.dying && record.deathComplete) {
+          removals.push(id);
         }
       }
+      for (const id of removals) {
+        removeUnit(id);
+      }
+      particles.update(deltaSeconds);
     },
     dispose: (): void => {
       disposed = true;
@@ -331,14 +638,15 @@ export function createUnitLayer(parent: Group): UnitLayer {
       for (const record of records.values()) {
         record.capsuleMaterial?.dispose();
         record.capsuleOutline?.geometry.dispose();
-        record.shadow?.geometry.dispose();
-        if (record.shadow !== null && !Array.isArray(record.shadow.material)) {
+        record.shadow.geometry.dispose();
+        if (!Array.isArray(record.shadow.material)) {
           record.shadow.material.dispose();
         }
         record.instance?.dispose();
       }
       records.clear();
-      flashEndsAt.clear();
+      removals.length = 0;
+      particles.dispose();
       models.dispose();
     },
   };
