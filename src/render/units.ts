@@ -125,6 +125,8 @@ interface UnitRecord {
 /** Options of the unit layer; the debug hold is only used by screenshot runs. */
 export interface UnitLayerOptions {
   readonly debugAnimationHold?: DebugAnimationHold | null;
+  /** Shared spec 9.7 particle system; when omitted the layer creates and updates its own. */
+  readonly particles?: ParticleBursts;
 }
 
 /** Unit models for defenders and enemies, driven by the sim events (spec 11.7). */
@@ -153,8 +155,11 @@ export function createUnitLayer(parent: Group, options: UnitLayerOptions = {}): 
   const capsuleGeometry = new CapsuleGeometry(CAPSULE_RADIUS, CAPSULE_LENGTH, 4, 12);
   capsuleGeometry.translate(0, CAPSULE_CENTER_Y, 0);
   const models = createPilotModels();
-  const particles: ParticleBursts = createParticleBursts();
-  parent.add(particles.object);
+  const ownsParticles = options.particles === undefined;
+  const particles: ParticleBursts = options.particles ?? createParticleBursts();
+  if (ownsParticles) {
+    parent.add(particles.object);
+  }
   const objects = new InterpolatedObjects();
   const records = new Map<number, UnitRecord>();
   const removals: number[] = [];
@@ -392,7 +397,7 @@ export function createUnitLayer(parent: Group, options: UnitLayerOptions = {}): 
       if (!record.deathBurstDone && deathProgress >= DEATH_POOF_FRACTION) {
         record.deathBurstDone = true;
         particles.burst(
-          record.kind === 'enemy' ? 'death_enemy' : 'death_defender',
+          record.kind === 'enemy' ? 'death_poof_enemy' : 'death_poof_defender',
           record.root.position.x,
           record.root.position.y + 0.4,
           record.root.position.z,
@@ -629,7 +634,9 @@ export function createUnitLayer(parent: Group, options: UnitLayerOptions = {}): 
       for (const id of removals) {
         removeUnit(id);
       }
-      particles.update(deltaSeconds);
+      if (ownsParticles) {
+        particles.update(deltaSeconds);
+      }
     },
     dispose: (): void => {
       disposed = true;
@@ -646,7 +653,9 @@ export function createUnitLayer(parent: Group, options: UnitLayerOptions = {}): 
       }
       records.clear();
       removals.length = 0;
-      particles.dispose();
+      if (ownsParticles) {
+        particles.dispose();
+      }
       models.dispose();
     },
   };

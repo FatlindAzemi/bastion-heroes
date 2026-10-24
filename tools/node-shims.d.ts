@@ -31,6 +31,8 @@ declare module 'node:fs' {
   export function mkdirSync(path: string, options: { recursive: true }): void;
   /** Writes a UTF-8 text file, replacing it when it exists. */
   export function writeFileSync(path: string, data: string, encoding: 'utf8'): void;
+  /** Writes a binary file (the generated particle sprite sheet, issue #75). */
+  export function writeFileSync(path: string, data: Uint8Array): void;
   /** Lists a directory's entry names (files and folders). */
   export function readdirSync(path: string): string[];
   /** Returns a file's metadata; only `size` (bytes) is used. */
@@ -81,4 +83,9 @@ declare module 'node:worker_threads' {
     postMessage(value: unknown): void;
     terminate(): Promise<number>;
   }
+}
+
+declare module 'node:zlib' {
+  /** Compresses bytes with the PNG-compression settings of the particle texture tool. */
+  export function deflateSync(data: Uint8Array, options?: { level?: number }): Uint8Array;
 }

@@ -58,6 +58,12 @@ export interface GameLoopOptions {
 export interface GameLoop {
   setSpeed(speed: GameSpeed): void;
   getSpeed(): GameSpeed;
+  /**
+   * Scales the simulation speed for a short juice moment (spec 9.7 slow motion:
+   * 0.3x for 0.6 s when the last enemy of the final wave dies). The HUD speed
+   * toggle still reports the 1x/2x setting; this multiplier only affects ticks.
+   */
+  setTimeScale(scale: number, durationMs?: number): void;
   pause(): void;
   resume(): void;
   togglePause(): void;
@@ -133,12 +139,18 @@ export function startGameLoop(options: GameLoopOptions): GameLoop {
   let accumulatorSeconds = 0;
   let lastTimeMs = performance.now();
   let frameRequest = 0;
+  let timeScale = 1;
+  let timeScaleEndsAtMs = 0;
 
   const loop: GameLoop = {
     setSpeed: (nextSpeed): void => {
       speed = nextSpeed;
     },
     getSpeed: (): GameSpeed => speed,
+    setTimeScale: (scale, durationMs): void => {
+      timeScale = Math.min(1, Math.max(0.05, scale));
+      timeScaleEndsAtMs = durationMs === undefined ? 0 : performance.now() + durationMs;
+    },
     pause: (): void => {
       paused = true;
     },
@@ -164,7 +176,11 @@ export function startGameLoop(options: GameLoopOptions): GameLoop {
     }
     const frameDeltaSeconds = (timeMs - lastTimeMs) / 1000;
     lastTimeMs = timeMs;
-    const advanced = advance(accumulatorSeconds, frameDeltaSeconds, paused ? 0 : speed);
+    if (timeScaleEndsAtMs !== 0 && performance.now() >= timeScaleEndsAtMs) {
+      timeScale = 1;
+      timeScaleEndsAtMs = 0;
+    }
+    const advanced = advance(accumulatorSeconds, frameDeltaSeconds, paused ? 0 : speed * timeScale);
     accumulatorSeconds = advanced.accumulatorSeconds;
     for (let tick = 0; tick < advanced.ticks; tick += 1) {
       renderer.handleEvents(sim.step());
