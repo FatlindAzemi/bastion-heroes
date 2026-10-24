@@ -29,7 +29,7 @@ def _character_collection():
     return bpy.data.collections[CHARACTER_COLLECTION]
 
 
-def _prepare(obj, name, swatch, bevel, smooth):
+def _prepare(obj, name, swatch, bevel, smooth, bevel_segments=DEFAULT_BEVEL_SEGMENTS):
     """Link a fresh primitive to the character collection and finish it."""
     obj.name = name
     obj.data.name = name
@@ -48,7 +48,7 @@ def _prepare(obj, name, swatch, bevel, smooth):
     if bevel > 0.0:
         modifier = obj.modifiers.new("bevel", "BEVEL")
         modifier.width = bevel
-        modifier.segments = DEFAULT_BEVEL_SEGMENTS
+        modifier.segments = bevel_segments
         modifier.limit_method = "ANGLE"
         modifier.angle_limit = math.radians(60.0)
         modifier.use_clamp_overlap = True
@@ -56,12 +56,12 @@ def _prepare(obj, name, swatch, bevel, smooth):
     return obj
 
 
-def blob(name, size, loc, swatch, bevel=0.08, rot=(0.0, 0.0, 0.0)):
+def blob(name, size, loc, swatch, bevel=0.08, rot=(0.0, 0.0, 0.0), bevel_segments=DEFAULT_BEVEL_SEGMENTS):
     """A rounded box; `size` is the full (x, y, z) extent of the body."""
     bpy.ops.mesh.primitive_cube_add(size=1.0, location=loc, rotation=rot)
     obj = bpy.context.object
     obj.scale = size
-    return _prepare(obj, name, swatch, bevel, smooth=False)
+    return _prepare(obj, name, swatch, bevel, smooth=False, bevel_segments=bevel_segments)
 
 
 def cylinder(name, radius, depth, loc, swatch, rot=(0.0, 0.0, 0.0), vertices=CYLINDER_SEGMENTS, bevel=0.0):
@@ -78,10 +78,12 @@ def cone(name, radius1, radius2, depth, loc, swatch, rot=(0.0, 0.0, 0.0), vertic
     return _prepare(bpy.context.object, name, swatch, bevel, smooth=False)
 
 
-def sphere(name, radius, loc, swatch, segments=SPHERE_SEGMENTS, rings=SPHERE_RINGS):
-    """A smooth low-poly sphere."""
+def sphere(name, radius, loc, swatch, segments=SPHERE_SEGMENTS, rings=SPHERE_RINGS, scale=(1.0, 1.0, 1.0)):
+    """A smooth low-poly sphere; `scale` squashes it into domes, ears and caps."""
     bpy.ops.mesh.primitive_uv_sphere_add(segments=segments, ring_count=rings, radius=radius, location=loc)
-    return _prepare(bpy.context.object, name, swatch, 0.0, smooth=True)
+    obj = bpy.context.object
+    obj.scale = scale
+    return _prepare(obj, name, swatch, 0.0, smooth=True)
 
 
 def capsule(name, radius, depth, loc, swatch, rot=(0.0, 0.0, 0.0), segments=CYLINDER_SEGMENTS):

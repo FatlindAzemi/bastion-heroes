@@ -65,6 +65,7 @@ def render_portrait(glb_path, model_id, webp_path=None, png_path=None):
     render.set_idle_pose(armature)
     scene = render.setup_render()
     render.setup_lights()
+    render.apply_toon_materials(meshes)
     bounds_min, bounds_max = render.evaluated_bounds(meshes)
     scene.camera = _portrait_camera(bounds_min, bounds_max)
     png_file = render.render_to(png)

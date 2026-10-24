@@ -35,8 +35,9 @@ function createHullGeometry(source: BufferGeometry): BufferGeometry {
  * vertices pushed 0.02 units along their normals. The outline is a child of the mesh,
  * so it follows every transform of the parent.
  */
-export function addOutline(mesh: Mesh): void {
+export function addOutline(mesh: Mesh): Mesh {
   const outline = new Mesh(createHullGeometry(mesh.geometry), outlineMaterial);
   outline.name = 'outline';
   mesh.add(outline);
+  return outline;
 }

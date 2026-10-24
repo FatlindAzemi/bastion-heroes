@@ -1,6 +1,12 @@
 import { defenderById, levelById, rules } from './data';
 import { LevelDef } from './data/schemas';
-import { createDebugLoadout, fastForward, parseDebugUrl, type DebugLevelRequest } from './debug';
+import {
+  createDebugLoadout,
+  fastForward,
+  parseDebugUrl,
+  type DebugLevelRequest,
+  type DebugPlacement,
+} from './debug';
 import { startGameLoop, startRenderLoop, type GameLoop } from './loop';
 import { createRenderer, type GameRenderer } from './render';
 import { createSim } from './sim';
@@ -117,10 +123,27 @@ function startLevelRun(
   seed: number,
   tick: number,
   loadout: readonly LoadoutEntry[],
+  placements: readonly DebugPlacement[] = [],
+  autoCollect = false,
 ): void {
   const sim = createSim(level, [...loadout], seed);
+  if (autoCollect) {
+    // Debug-only (issue #66): let the fast-forward collect sky drops so the screenshot
+    // loadout is affordable at a deep tick (spec 3.3 auto-collect).
+    sim.enqueue({ type: 'setAutoCollect', on: true });
+  }
   renderer.showLevel(level);
   fastForward(sim, tick, (events) => renderer.handleEvents(events));
+  // Debug-only (issue #66): place defenders after the fast-forward, so a deep tick has
+  // accumulated enough Essence for the screenshot loadout.
+  for (const placement of placements) {
+    sim.enqueue({
+      type: 'place',
+      defenderId: placement.defenderId,
+      lane: placement.lane,
+      col: placement.col,
+    });
+  }
 
   let hud: HudHandle | null = null;
   const levelRenderer = {
@@ -154,7 +177,16 @@ function startDebugLevel(
     showDebugError(root, `Debug URL: unknown level "${request.levelId}".`);
     return;
   }
-  startLevelRun(root, renderer, level, request.seed, request.tick, createDebugLoadout(level));
+  startLevelRun(
+    root,
+    renderer,
+    level,
+    request.seed,
+    request.tick,
+    createDebugLoadout(level, request.cards),
+    request.placements ?? [],
+    request.autoCollect === true,
+  );
 }
 
 /**

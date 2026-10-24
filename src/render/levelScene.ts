@@ -63,6 +63,10 @@ function applyEvents(
         // Spec 9.2: every hit flashes the struck unit white for 0.08 s.
         units.flash(event.targetId);
         break;
+      case 'attack':
+        // Spec 9.6/12.5: attackers play their attack clip, enemies their eat clip.
+        units.playAttack(event.sourceId);
+        break;
       case 'projectileSpawned':
         projectiles.spawn(event.id, event.kind, event.x, event.lane);
         break;
@@ -70,11 +74,17 @@ function applyEvents(
         projectiles.remove(event.id);
         break;
       case 'orbSpawned':
+        // Spec 9.6: producers pulse their produce clip when an orb spawns.
+        units.playProduce();
         orbs.spawn(event.id, event.x, event.lane, ORB_HEIGHT);
         break;
       case 'orbCollected':
       case 'orbExpired':
         orbs.remove(event.id);
+        break;
+      case 'levelWon':
+        // Spec 9.6: every living defender plays the victory clip.
+        units.playVictory();
         break;
       default:
         // Attack, hit, status, combo, wave, trap and level events are VFX and audio (M3,

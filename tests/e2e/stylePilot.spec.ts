@@ -1,0 +1,101 @@
+import { expect, test } from '@playwright/test';
+
+// Issue #66: the style pilot models render in the real game. The debug URL extension
+// (?cards= + ?place=) overrides the tutorial loadout and places the Glowshroom Monk and
+// Sparkbolt Gremlin at tick 0, so a deep tick shows all three pilot models at once
+// (the first Gloomling wave spawns at tick 600, spec 7.2 row 1).
+
+const PILOT_URL =
+  '/?level=w1-l01&seed=10001&tick=900&perf=1' +
+  '&cards=glowshroom_monk,sparkbolt_gremlin&autocollect=1' +
+  '&place=glowshroom_monk:2,1;sparkbolt_gremlin:2,4';
+
+const MODEL_IDS = ['glowshroom_monk', 'sparkbolt_gremlin', 'gloomling'];
+
+test('style pilot: W1-L01 renders the monk, gremlin and gloomling models', async ({ page }) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  const modelLogs: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      consoleErrors.push(message.text());
+    }
+    if (message.type() === 'log' && message.text().startsWith('models: loaded')) {
+      modelLogs.push(message.text());
+    }
+  });
+  page.on('pageerror', (error) => {
+    pageErrors.push(error.message);
+  });
+
+  const modelResponses = MODEL_IDS.map((id) =>
+    page.waitForResponse((response) => response.url().endsWith(`/models/${id}.glb`)),
+  );
+  await page.goto(PILOT_URL);
+  await Promise.all(modelResponses);
+
+  const canvas = page.locator('#app canvas');
+  await expect(canvas).toBeVisible();
+  // The debug loadout shows exactly the two placed cards.
+  await expect(page.locator('.hud-card')).toHaveCount(2);
+  await expect(page.getByRole('status', { name: /Essence/ })).toBeVisible({ timeout: 5000 });
+
+  // Let the async model load swap the placeholders and the mixers tick a few frames.
+  await page.waitForTimeout(900);
+  // All three models loaded with their spec 12.5 clip sets (identity, attack/eat, etc.).
+  expect(modelLogs).toHaveLength(3);
+  expect(modelLogs.filter((log) => /\b3 clips\b/.test(log))).toHaveLength(2);
+  expect(modelLogs.filter((log) => /\b2 clips\b/.test(log))).toHaveLength(1);
+
+  const overlay = page.locator('#debug-overlay');
+  await expect(overlay).toContainText(/draw calls \d+/);
+  await expect(overlay).toContainText(/enemies [1-9]\d*/);
+  await expect(overlay).toContainText(/defenders 2/);
+  const stats = (await overlay.textContent()) ?? '';
+  console.log(`STYLE_PILOT_STATS ${stats.replace(/\s+/g, ' ').trim()}`);
+
+  await page.screenshot({ path: 'test-results/screens/m3-style-pilot-844x390.png' });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'test-results/screens/m3-style-pilot-1280x720.png' });
+
+  expect(consoleErrors, 'browser console errors').toEqual([]);
+  expect(pageErrors, 'uncaught page errors').toEqual([]);
+});
+
+// The Gloomling close-up: no shooter in the loadout, so by tick 3000 (100 s) the first
+// Gloomling is close to the Monk and large enough to review its shape and glowing eyes.
+const GLOOMLING_URL =
+  '/?level=w1-l01&seed=10001&tick=3000&perf=1' +
+  '&cards=glowshroom_monk&place=glowshroom_monk:2,1&autocollect=1';
+
+test('style pilot: the Gloomling walks up to the Monk in W1-L01', async ({ page }) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      consoleErrors.push(message.text());
+    }
+  });
+  page.on('pageerror', (error) => {
+    pageErrors.push(error.message);
+  });
+
+  const modelResponses = MODEL_IDS.map((id) =>
+    page.waitForResponse((response) => response.url().endsWith(`/models/${id}.glb`)),
+  );
+  await page.goto(GLOOMLING_URL);
+  await Promise.all(modelResponses);
+  await expect(page.locator('#app canvas')).toBeVisible();
+  await page.waitForTimeout(900);
+
+  const overlay = page.locator('#debug-overlay');
+  await expect(overlay).toContainText(/enemies [1-9]\d*/);
+  await page.screenshot({ path: 'test-results/screens/m3-style-pilot-gloomling-844x390.png' });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'test-results/screens/m3-style-pilot-gloomling-1280x720.png' });
+
+  expect(consoleErrors, 'browser console errors').toEqual([]);
+  expect(pageErrors, 'uncaught page errors').toEqual([]);
+});
