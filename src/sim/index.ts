@@ -3,6 +3,7 @@
  * this module; the simulation never imports the renderer, the UI or the platform.
  */
 export { createSim } from './createSim';
+export { hashState } from './hash';
 export {
   BASE_LINE_X,
   COLUMN_COUNT,
@@ -38,6 +39,8 @@ export type {
   OrbState,
   PendingSpawn,
   ProjectileState,
+  Replay,
+  ReplayCommand,
   Rng,
   Sim,
   SimEvent,

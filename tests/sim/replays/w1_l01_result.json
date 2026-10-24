@@ -1,0 +1,96 @@
+{
+  "description": "W1-L01 full result run: scripted auto-play until the level ends (won, 3 stars at tick 2375).",
+  "levelId": "w1_l01",
+  "seed": 10001,
+  "loadout": [
+    {
+      "defenderId": "sparkbolt_gremlin",
+      "level": 1
+    }
+  ],
+  "endTick": 6000,
+  "commands": [
+    {
+      "tick": 0,
+      "cmd": {
+        "type": "setAutoCollect",
+        "on": true
+      }
+    },
+    {
+      "tick": 1,
+      "cmd": {
+        "type": "place",
+        "defenderId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 0
+      }
+    },
+    {
+      "tick": 421,
+      "cmd": {
+        "type": "place",
+        "defenderId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 1
+      }
+    },
+    {
+      "tick": 1381,
+      "cmd": {
+        "type": "place",
+        "defenderId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 2
+      }
+    },
+    {
+      "tick": 2341,
+      "cmd": {
+        "type": "place",
+        "defenderId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 3
+      }
+    }
+  ],
+  "expected": {
+    "status": "won",
+    "stars": 3,
+    "finalTick": 2375,
+    "hashes": [
+      {
+        "tick": 300,
+        "hash": "8da81ead"
+      },
+      {
+        "tick": 600,
+        "hash": "8e1ef243"
+      },
+      {
+        "tick": 900,
+        "hash": "d78580b1"
+      },
+      {
+        "tick": 1200,
+        "hash": "40376607"
+      },
+      {
+        "tick": 1500,
+        "hash": "0f7f9be0"
+      },
+      {
+        "tick": 1800,
+        "hash": "f79363ef"
+      },
+      {
+        "tick": 2100,
+        "hash": "413e5bda"
+      },
+      {
+        "tick": 2375,
+        "hash": "0fc0b33c"
+      }
+    ]
+  }
+}

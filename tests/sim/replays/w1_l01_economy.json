@@ -1,0 +1,62 @@
+{
+  "description": "W1-L01 economy run: auto-collect on and Sparkbolt Gremlin placed when affordable; exercises orbs, placement, shots and kills.",
+  "levelId": "w1_l01",
+  "seed": 10001,
+  "loadout": [
+    {
+      "defenderId": "sparkbolt_gremlin",
+      "level": 1
+    }
+  ],
+  "endTick": 1200,
+  "commands": [
+    {
+      "tick": 0,
+      "cmd": {
+        "type": "setAutoCollect",
+        "on": true
+      }
+    },
+    {
+      "tick": 1,
+      "cmd": {
+        "type": "place",
+        "defenderId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 0
+      }
+    },
+    {
+      "tick": 421,
+      "cmd": {
+        "type": "place",
+        "defenderId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 1
+      }
+    }
+  ],
+  "expected": {
+    "status": "playing",
+    "stars": 0,
+    "finalTick": 1200,
+    "hashes": [
+      {
+        "tick": 300,
+        "hash": "8da81ead"
+      },
+      {
+        "tick": 600,
+        "hash": "8e1ef243"
+      },
+      {
+        "tick": 900,
+        "hash": "d78580b1"
+      },
+      {
+        "tick": 1200,
+        "hash": "40376607"
+      }
+    ]
+  }
+}
