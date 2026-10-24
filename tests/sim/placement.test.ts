@@ -62,6 +62,8 @@ describe('placement', () => {
         activeAtTick: ACTIVATION_DELAY_TICKS,
         nextOrbTick: null,
         nextAttackTick: 0,
+        trapReadyAtTick: null,
+        trapRearmed: false,
       },
     ]);
   });

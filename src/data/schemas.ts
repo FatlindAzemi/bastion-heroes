@@ -46,6 +46,16 @@ export const DefenderDef = z.object({
   damageType: z.enum(['pierce', 'blast', 'arcane']).optional(),
   attackIntervalS: z.number().positive().optional(),
   range: z.number().positive().optional(),
+  /** Extension: splash impact radius in tiles (section 4.3, Boomcap Brewer 0.8 in 5.2). */
+  splashRadius: z.number().positive().optional(),
+  /** Extension: true when the pattern can hit flying enemies (section 4.4, 5.2 hitsFlying). */
+  hitsFlying: z.boolean().optional(),
+  /** Extension: the damage buff an aura defender gives the adjacent tiles (section 4.3/5.2). */
+  buff: z.object({ name: z.string(), damageRatio: z.number().positive() }).optional(),
+  /** Extension: seconds a trap defender needs to arm (section 4.3, Snaptrap Bertie 12 s in 5.2). */
+  armDelayS: z.number().positive().optional(),
+  /** Extension: seconds a ★3 trap needs to rearm (section 4.3, Snaptrap Bertie 20 s in 5.2). */
+  rearmS: z.number().positive().optional(),
   /** Extension: the Element column of section 5.2 (used by the combos of 4.6). */
   element: z.enum(['fire', 'frost', 'storm', 'poison', 'none']),
   statusOnHit: z
@@ -172,6 +182,10 @@ export const RulesDef = z.object({
     meleeRangeTiles: z.number().positive(),
     lobFlightTimeS: z.number().positive(),
     targetingBehindOffsetTiles: z.number().positive(),
+    /** Section 4.3 splash: 50 % of the hit damage to the other enemies in the radius. */
+    splashSecondaryDamageRatio: z.number().positive(),
+    /** Section 4.3 diagonal: the projectiles switch lane once, this many tiles after spawning. */
+    diagonalLaneSwitchTiles: z.number().positive(),
   }),
 });
 

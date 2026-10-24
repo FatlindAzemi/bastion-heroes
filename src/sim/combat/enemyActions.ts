@@ -1,4 +1,4 @@
-import { enemyById, rules } from '../../data';
+import { defenderById, enemyById, rules } from '../../data';
 import { tileCenterX } from '../grid';
 import { isDefenderActive, ticksFromSeconds } from '../placement';
 import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
@@ -11,6 +11,10 @@ import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
 function findBlockingDefender(state: SimState, enemy: EnemyState): DefenderState | undefined {
   let blocker: DefenderState | undefined;
   for (const defender of state.defenders) {
+    if (defenderById[defender.defenderId]?.pattern === 'trap') {
+      // Traps are invisible to enemies: they never block or get eaten (spec 4.3).
+      continue;
+    }
     if (defender.lane !== enemy.lane || !isDefenderActive(defender, state.tick)) {
       continue;
     }

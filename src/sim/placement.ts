@@ -121,6 +121,9 @@ export function placeDefender(
     activeAtTick: state.tick + ACTIVATION_DELAY_TICKS,
     nextOrbTick: initialNextOrbTick(defender, state.tick),
     nextAttackTick: 0,
+    trapReadyAtTick:
+      defender.pattern === 'trap' ? state.tick + ticksFromSeconds(defender.armDelayS ?? 0) : null,
+    trapRearmed: false,
   });
   events.push({
     type: 'defenderPlaced',
