@@ -70,13 +70,20 @@ export interface Rng {
   next(): number;
 }
 
-/** A defender standing on the grid (spec 11.3). Later issues extend it with health and timers. */
+/** A defender standing on the grid (spec 11.3, 3.4). */
 export interface DefenderState {
   id: number;
   defenderId: string;
   lane: number;
   col: number;
   stars: 1 | 2 | 3;
+  /** Current health. Base hp is set on placement; card-level/star scaling is #21. */
+  hp: number;
+  maxHp: number;
+  /** Card level of the loadout slot it was placed from (spec 4.2). */
+  cardLevel: number;
+  /** First tick at which the defender may act or be targeted, after its 0.5 s drop (spec 3.4). */
+  activeAtTick: number;
 }
 
 /** An enemy walking along a lane (spec 11.3). Later issues extend it with health and statuses. */
@@ -114,6 +121,11 @@ export interface SimState {
   readonly seed: number;
   /** The player's loadout for this level (spec 3.12). */
   readonly loadout: readonly LoadoutEntry[];
+  /**
+   * Absolute tick at which each loadout card becomes usable again, index-aligned
+   * with `loadout`. 0 means the card is ready (spec 3.5).
+   */
+  cardCooldownEndTicks: number[];
   /** Ticks elapsed since the level started; 1 tick = 1/30 s (spec 3.2). */
   tick: number;
   /** The only random source of the simulation (spec 3.2, 11.3). */
@@ -145,12 +157,7 @@ export interface Sim {
 }
 
 /**
- * Temporary structural view of a level definition (spec 7.1). The authoritative
- * `LevelDef` comes from the Zod schemas that issue #17 adds to `src/data/`; this
- * subset only covers what the skeleton needs.
- * TODO(#18): import the LevelDef type from src/data and delete this interface.
+ * The level definition lives in the data layer since issue #17 (spec 7.1, 11.5).
+ * The sim re-exports it here so that the rest of the simulation has one import path.
  */
-export interface LevelDef {
-  readonly id: string;
-  readonly startEssence: number;
-}
+export type { LevelDef } from '../data';
