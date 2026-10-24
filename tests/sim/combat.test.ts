@@ -38,7 +38,12 @@ function eventsOfType<Type extends SimEvent['type']>(
 /** Creates a combat sim with sky drops and wave spawns off so only combat uses ids. */
 function createCombatSim(): Sim {
   return createSim(
-    createTestLevel({ skyDrops: false, startEssence: 999, waves: [{ spawns: [] }] }),
+    createTestLevel({
+      skyDrops: false,
+      startEssence: 999,
+      firstWaveDelay: 60,
+      waves: [{ spawns: [] }],
+    }),
     LOADOUT.map((entry) => ({ ...entry })),
     10001,
   );

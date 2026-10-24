@@ -19,6 +19,8 @@ export function removeDeadEntities(state: SimState, events: SimEvent[]): void {
     const defender = state.defenders[index];
     if (defender !== undefined && defender.hp <= 0) {
       state.defenders.splice(index, 1);
+      // Only combat losses count for the 3-star rule; shovelled defenders do not (spec 3.11).
+      state.defendersLost += 1;
       events.push({ type: 'defenderRemoved', id: defender.id, reason: 'eaten' });
     }
   }

@@ -18,7 +18,11 @@ const AUTO_COLLECT_TICKS = ticksFromSeconds(rules.essence.autoCollectDelayS);
 
 /** Creates a sim; sky drops are off unless the test asks for them. */
 function createTestSim(options: TestLevelOptions = {}, loadout: LoadoutEntry[] = []): Sim {
-  return createSim(createTestLevel({ skyDrops: false, ...options }), loadout, 10001);
+  return createSim(
+    createTestLevel({ skyDrops: false, firstWaveDelay: 60, ...options }),
+    loadout,
+    10001,
+  );
 }
 
 /** Steps exactly `ticks` ticks and returns all events of those ticks. */

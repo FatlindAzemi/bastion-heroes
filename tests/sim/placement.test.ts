@@ -16,7 +16,7 @@ function createTestSim(
   loadout: LoadoutEntry[] = [{ defenderId: SPARKBOLT, level: 1 }],
 ): Sim {
   return createSim(
-    createTestLevel({ skyDrops: false, startEssence: 999, ...options }),
+    createTestLevel({ skyDrops: false, startEssence: 999, firstWaveDelay: 60, ...options }),
     loadout,
     10001,
   );
