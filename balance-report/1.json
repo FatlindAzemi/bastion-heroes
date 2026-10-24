@@ -1,0 +1,1782 @@
+{
+  "world": 1,
+  "runsPerLevel": 50,
+  "levels": [
+    {
+      "levelId": "w1_l01",
+      "levelName": "First Light",
+      "world": 1,
+      "number": 1,
+      "bots": [
+        {
+          "botId": "idle",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 112.36666666666666,
+          "averageEssenceSpentRatio": 0,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "random",
+          "runs": 50,
+          "wins": 49,
+          "winRate": 0.98,
+          "threeStarRate": 0.84,
+          "averageDurationSeconds": 86.36533333333334,
+          "averageEssenceSpentRatio": 0.8523002421307506,
+          "trapRate": 0.04081632653061224,
+          "timedOut": 0,
+          "defenderWinCounts": {
+            "sparkbolt_gremlin": 49
+          }
+        },
+        {
+          "botId": "commons",
+          "runs": 50,
+          "wins": 50,
+          "winRate": 1,
+          "threeStarRate": 1,
+          "averageDurationSeconds": 76.2,
+          "averageEssenceSpentRatio": 0.8,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {
+            "sparkbolt_gremlin": 50
+          }
+        },
+        {
+          "botId": "recommended",
+          "runs": 50,
+          "wins": 50,
+          "winRate": 1,
+          "threeStarRate": 1,
+          "averageDurationSeconds": 76.2,
+          "averageEssenceSpentRatio": 0.8,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {
+            "sparkbolt_gremlin": 50
+          }
+        },
+        {
+          "botId": "whale",
+          "runs": 50,
+          "wins": 50,
+          "winRate": 1,
+          "threeStarRate": 1,
+          "averageDurationSeconds": 68.96666666666667,
+          "averageEssenceSpentRatio": 0.8,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {
+            "sparkbolt_gremlin": 50
+          }
+        }
+      ],
+      "targets": [
+        {
+          "id": "commons-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l01",
+          "botId": "commons",
+          "value": "100.0%",
+          "requirement": "≥ 90.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l01",
+          "botId": "recommended",
+          "value": "100.0%",
+          "requirement": "≥ 95.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-three-star-rate",
+          "label": "3-star rate",
+          "scope": "level",
+          "levelId": "w1_l01",
+          "botId": "recommended",
+          "value": "100.0%",
+          "requirement": "40.0%-80.0%",
+          "pass": false,
+          "severity": 0.24999999999999994
+        },
+        {
+          "id": "recommended-duration",
+          "label": "level duration",
+          "scope": "level",
+          "levelId": "w1_l01",
+          "botId": "recommended",
+          "value": "1:16",
+          "requirement": "3:00-5:00",
+          "pass": false,
+          "severity": 0.5766666666666667
+        },
+        {
+          "id": "recommended-essence-spent",
+          "label": "Essence spent",
+          "scope": "level",
+          "levelId": "w1_l01",
+          "botId": "recommended",
+          "value": "80.0%",
+          "requirement": "≥ 70.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-trap-usage",
+          "label": "trap usage",
+          "scope": "level",
+          "levelId": "w1_l01",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "< 25.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "whale-time-vs-recommended",
+          "label": "average level time",
+          "scope": "level",
+          "levelId": "w1_l01",
+          "botId": "whale",
+          "value": "90.5%",
+          "requirement": "≥ 70.0% of recommended",
+          "pass": true,
+          "severity": 0
+        }
+      ]
+    },
+    {
+      "levelId": "w1_l02",
+      "levelName": "Village Path",
+      "world": 1,
+      "number": 2,
+      "bots": [
+        {
+          "botId": "idle",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 118.43333333333334,
+          "averageEssenceSpentRatio": 0,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "random",
+          "runs": 50,
+          "wins": 16,
+          "winRate": 0.32,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 153.10533333333333,
+          "averageEssenceSpentRatio": 0.9703577512776831,
+          "trapRate": 0.9375,
+          "timedOut": 0,
+          "defenderWinCounts": {
+            "sparkbolt_gremlin": 16,
+            "glowshroom_monk": 16
+          }
+        },
+        {
+          "botId": "commons",
+          "runs": 50,
+          "wins": 50,
+          "winRate": 1,
+          "threeStarRate": 1,
+          "averageDurationSeconds": 125.23333333333333,
+          "averageEssenceSpentRatio": 0.9333333333333333,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {
+            "glowshroom_monk": 50,
+            "sparkbolt_gremlin": 50
+          }
+        },
+        {
+          "botId": "recommended",
+          "runs": 50,
+          "wins": 50,
+          "winRate": 1,
+          "threeStarRate": 1,
+          "averageDurationSeconds": 125.23333333333333,
+          "averageEssenceSpentRatio": 0.9333333333333333,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {
+            "glowshroom_monk": 50,
+            "sparkbolt_gremlin": 50
+          }
+        },
+        {
+          "botId": "whale",
+          "runs": 50,
+          "wins": 50,
+          "winRate": 1,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 129.4,
+          "averageEssenceSpentRatio": 0.9333333333333333,
+          "trapRate": 1,
+          "timedOut": 0,
+          "defenderWinCounts": {
+            "glowshroom_monk": 50,
+            "sparkbolt_gremlin": 50
+          }
+        }
+      ],
+      "targets": [
+        {
+          "id": "idle-win-rate",
+          "label": "idle wins",
+          "scope": "level",
+          "levelId": "w1_l02",
+          "botId": "idle",
+          "value": "0.0%",
+          "requirement": "= 0.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "commons-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l02",
+          "botId": "commons",
+          "value": "100.0%",
+          "requirement": "≥ 90.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l02",
+          "botId": "recommended",
+          "value": "100.0%",
+          "requirement": "≥ 95.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-three-star-rate",
+          "label": "3-star rate",
+          "scope": "level",
+          "levelId": "w1_l02",
+          "botId": "recommended",
+          "value": "100.0%",
+          "requirement": "40.0%-80.0%",
+          "pass": false,
+          "severity": 0.24999999999999994
+        },
+        {
+          "id": "recommended-duration",
+          "label": "level duration",
+          "scope": "level",
+          "levelId": "w1_l02",
+          "botId": "recommended",
+          "value": "2:05",
+          "requirement": "3:00-5:00",
+          "pass": false,
+          "severity": 0.30425925925925923
+        },
+        {
+          "id": "recommended-essence-spent",
+          "label": "Essence spent",
+          "scope": "level",
+          "levelId": "w1_l02",
+          "botId": "recommended",
+          "value": "93.3%",
+          "requirement": "≥ 70.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-trap-usage",
+          "label": "trap usage",
+          "scope": "level",
+          "levelId": "w1_l02",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "< 25.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "whale-time-vs-recommended",
+          "label": "average level time",
+          "scope": "level",
+          "levelId": "w1_l02",
+          "botId": "whale",
+          "value": "103.3%",
+          "requirement": "≥ 70.0% of recommended",
+          "pass": true,
+          "severity": 0
+        }
+      ]
+    },
+    {
+      "levelId": "w1_l03",
+      "levelName": "Granny's Gate",
+      "world": 1,
+      "number": 3,
+      "bots": [
+        {
+          "botId": "idle",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 115,
+          "averageEssenceSpentRatio": 0,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "random",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 154.9406666666667,
+          "averageEssenceSpentRatio": 0.9705991812430219,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "commons",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 144,
+          "averageEssenceSpentRatio": 1,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "recommended",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 144,
+          "averageEssenceSpentRatio": 1,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "whale",
+          "runs": 50,
+          "wins": 50,
+          "winRate": 1,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 149.23333333333332,
+          "averageEssenceSpentRatio": 0.9545454545454546,
+          "trapRate": 1,
+          "timedOut": 0,
+          "defenderWinCounts": {
+            "glowshroom_monk": 50,
+            "sparkbolt_gremlin": 50
+          }
+        }
+      ],
+      "targets": [
+        {
+          "id": "idle-win-rate",
+          "label": "idle wins",
+          "scope": "level",
+          "levelId": "w1_l03",
+          "botId": "idle",
+          "value": "0.0%",
+          "requirement": "= 0.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "commons-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l03",
+          "botId": "commons",
+          "value": "0.0%",
+          "requirement": "≥ 90.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l03",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "≥ 95.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-three-star-rate",
+          "label": "3-star rate",
+          "scope": "level",
+          "levelId": "w1_l03",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "40.0%-80.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-duration",
+          "label": "level duration",
+          "scope": "level",
+          "levelId": "w1_l03",
+          "botId": "recommended",
+          "value": "2:24",
+          "requirement": "3:00-5:00",
+          "pass": false,
+          "severity": 0.2
+        },
+        {
+          "id": "recommended-essence-spent",
+          "label": "Essence spent",
+          "scope": "level",
+          "levelId": "w1_l03",
+          "botId": "recommended",
+          "value": "100.0%",
+          "requirement": "≥ 70.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-trap-usage",
+          "label": "trap usage",
+          "scope": "level",
+          "levelId": "w1_l03",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "< 25.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "whale-time-vs-recommended",
+          "label": "average level time",
+          "scope": "level",
+          "levelId": "w1_l03",
+          "botId": "whale",
+          "value": "103.6%",
+          "requirement": "≥ 70.0% of recommended",
+          "pass": true,
+          "severity": 0
+        }
+      ]
+    },
+    {
+      "levelId": "w1_l04",
+      "levelName": "Pots and Pans",
+      "world": 1,
+      "number": 4,
+      "bots": [
+        {
+          "botId": "idle",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 118,
+          "averageEssenceSpentRatio": 0,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "random",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 142.07266666666666,
+          "averageEssenceSpentRatio": 0.973109243697479,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "commons",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 118,
+          "averageEssenceSpentRatio": 0.918918918918919,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "recommended",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 118,
+          "averageEssenceSpentRatio": 0.918918918918919,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "whale",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 118,
+          "averageEssenceSpentRatio": 1,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        }
+      ],
+      "targets": [
+        {
+          "id": "idle-win-rate",
+          "label": "idle wins",
+          "scope": "level",
+          "levelId": "w1_l04",
+          "botId": "idle",
+          "value": "0.0%",
+          "requirement": "= 0.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "random-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l04",
+          "botId": "random",
+          "value": "0.0%",
+          "requirement": "≤ 30.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "commons-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l04",
+          "botId": "commons",
+          "value": "0.0%",
+          "requirement": "≥ 90.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l04",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "≥ 95.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-three-star-rate",
+          "label": "3-star rate",
+          "scope": "level",
+          "levelId": "w1_l04",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "40.0%-80.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-duration",
+          "label": "level duration",
+          "scope": "level",
+          "levelId": "w1_l04",
+          "botId": "recommended",
+          "value": "1:58",
+          "requirement": "3:00-5:00",
+          "pass": false,
+          "severity": 0.34444444444444444
+        },
+        {
+          "id": "recommended-essence-spent",
+          "label": "Essence spent",
+          "scope": "level",
+          "levelId": "w1_l04",
+          "botId": "recommended",
+          "value": "91.9%",
+          "requirement": "≥ 70.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-trap-usage",
+          "label": "trap usage",
+          "scope": "level",
+          "levelId": "w1_l04",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "< 25.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "whale-time-vs-recommended",
+          "label": "average level time",
+          "scope": "level",
+          "levelId": "w1_l04",
+          "botId": "whale",
+          "value": "100.0%",
+          "requirement": "≥ 70.0% of recommended",
+          "pass": true,
+          "severity": 0
+        }
+      ]
+    },
+    {
+      "levelId": "w1_l05",
+      "levelName": "Shield Wall",
+      "world": 1,
+      "number": 5,
+      "bots": [
+        {
+          "botId": "idle",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 115,
+          "averageEssenceSpentRatio": 0,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "random",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 130.21333333333334,
+          "averageEssenceSpentRatio": 0.9584905660377359,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "commons",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 115,
+          "averageEssenceSpentRatio": 0.9444444444444444,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "recommended",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 115,
+          "averageEssenceSpentRatio": 0.9444444444444444,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "whale",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 115,
+          "averageEssenceSpentRatio": 0.9444444444444444,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        }
+      ],
+      "targets": [
+        {
+          "id": "idle-win-rate",
+          "label": "idle wins",
+          "scope": "level",
+          "levelId": "w1_l05",
+          "botId": "idle",
+          "value": "0.0%",
+          "requirement": "= 0.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "random-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l05",
+          "botId": "random",
+          "value": "0.0%",
+          "requirement": "≤ 30.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "commons-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l05",
+          "botId": "commons",
+          "value": "0.0%",
+          "requirement": "≥ 90.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l05",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "≥ 95.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-three-star-rate",
+          "label": "3-star rate",
+          "scope": "level",
+          "levelId": "w1_l05",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "40.0%-80.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-duration",
+          "label": "level duration",
+          "scope": "level",
+          "levelId": "w1_l05",
+          "botId": "recommended",
+          "value": "1:55",
+          "requirement": "3:00-5:00",
+          "pass": false,
+          "severity": 0.3611111111111111
+        },
+        {
+          "id": "recommended-essence-spent",
+          "label": "Essence spent",
+          "scope": "level",
+          "levelId": "w1_l05",
+          "botId": "recommended",
+          "value": "94.4%",
+          "requirement": "≥ 70.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-trap-usage",
+          "label": "trap usage",
+          "scope": "level",
+          "levelId": "w1_l05",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "< 25.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "whale-time-vs-recommended",
+          "label": "average level time",
+          "scope": "level",
+          "levelId": "w1_l05",
+          "botId": "whale",
+          "value": "100.0%",
+          "requirement": "≥ 70.0% of recommended",
+          "pass": true,
+          "severity": 0
+        }
+      ]
+    },
+    {
+      "levelId": "w1_l06",
+      "levelName": "Whispering Field",
+      "world": 1,
+      "number": 6,
+      "bots": [
+        {
+          "botId": "idle",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 124,
+          "averageEssenceSpentRatio": 0,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "random",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 130.32333333333332,
+          "averageEssenceSpentRatio": 0.9601722282023681,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "commons",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 126.53333333333333,
+          "averageEssenceSpentRatio": 0.9473684210526315,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "recommended",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 126.53333333333333,
+          "averageEssenceSpentRatio": 0.9473684210526315,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "whale",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 136.03333333333333,
+          "averageEssenceSpentRatio": 0.9,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        }
+      ],
+      "targets": [
+        {
+          "id": "idle-win-rate",
+          "label": "idle wins",
+          "scope": "level",
+          "levelId": "w1_l06",
+          "botId": "idle",
+          "value": "0.0%",
+          "requirement": "= 0.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "random-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l06",
+          "botId": "random",
+          "value": "0.0%",
+          "requirement": "≤ 30.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "commons-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l06",
+          "botId": "commons",
+          "value": "0.0%",
+          "requirement": "≥ 70.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l06",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "≥ 95.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-three-star-rate",
+          "label": "3-star rate",
+          "scope": "level",
+          "levelId": "w1_l06",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "40.0%-80.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-duration",
+          "label": "level duration",
+          "scope": "level",
+          "levelId": "w1_l06",
+          "botId": "recommended",
+          "value": "2:07",
+          "requirement": "3:00-5:00",
+          "pass": false,
+          "severity": 0.29703703703703704
+        },
+        {
+          "id": "recommended-essence-spent",
+          "label": "Essence spent",
+          "scope": "level",
+          "levelId": "w1_l06",
+          "botId": "recommended",
+          "value": "94.7%",
+          "requirement": "≥ 70.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-trap-usage",
+          "label": "trap usage",
+          "scope": "level",
+          "levelId": "w1_l06",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "< 25.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "whale-time-vs-recommended",
+          "label": "average level time",
+          "scope": "level",
+          "levelId": "w1_l06",
+          "botId": "whale",
+          "value": "107.5%",
+          "requirement": "≥ 70.0% of recommended",
+          "pass": true,
+          "severity": 0
+        }
+      ]
+    },
+    {
+      "levelId": "w1_l07",
+      "levelName": "Wings at Dusk",
+      "world": 1,
+      "number": 7,
+      "bots": [
+        {
+          "botId": "idle",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 109.03333333333333,
+          "averageEssenceSpentRatio": 0,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "random",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 113.804,
+          "averageEssenceSpentRatio": 0.9427390791027155,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "commons",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 109.03333333333333,
+          "averageEssenceSpentRatio": 0.9142857142857143,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "recommended",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 109.03333333333333,
+          "averageEssenceSpentRatio": 0.9142857142857143,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "whale",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 113.56666666666666,
+          "averageEssenceSpentRatio": 0.9714285714285714,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        }
+      ],
+      "targets": [
+        {
+          "id": "idle-win-rate",
+          "label": "idle wins",
+          "scope": "level",
+          "levelId": "w1_l07",
+          "botId": "idle",
+          "value": "0.0%",
+          "requirement": "= 0.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "random-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l07",
+          "botId": "random",
+          "value": "0.0%",
+          "requirement": "≤ 30.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "commons-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l07",
+          "botId": "commons",
+          "value": "0.0%",
+          "requirement": "≥ 70.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l07",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "≥ 95.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-three-star-rate",
+          "label": "3-star rate",
+          "scope": "level",
+          "levelId": "w1_l07",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "40.0%-80.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-duration",
+          "label": "level duration",
+          "scope": "level",
+          "levelId": "w1_l07",
+          "botId": "recommended",
+          "value": "1:49",
+          "requirement": "3:00-5:00",
+          "pass": false,
+          "severity": 0.39425925925925925
+        },
+        {
+          "id": "recommended-essence-spent",
+          "label": "Essence spent",
+          "scope": "level",
+          "levelId": "w1_l07",
+          "botId": "recommended",
+          "value": "91.4%",
+          "requirement": "≥ 70.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-trap-usage",
+          "label": "trap usage",
+          "scope": "level",
+          "levelId": "w1_l07",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "< 25.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "whale-time-vs-recommended",
+          "label": "average level time",
+          "scope": "level",
+          "levelId": "w1_l07",
+          "botId": "whale",
+          "value": "104.2%",
+          "requirement": "≥ 70.0% of recommended",
+          "pass": true,
+          "severity": 0
+        }
+      ]
+    },
+    {
+      "levelId": "w1_l08",
+      "levelName": "Priest's Procession",
+      "world": 1,
+      "number": 8,
+      "bots": [
+        {
+          "botId": "idle",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 103.03333333333333,
+          "averageEssenceSpentRatio": 0,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "random",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 117.05333333333333,
+          "averageEssenceSpentRatio": 0.9565217391304348,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "commons",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 150.8,
+          "averageEssenceSpentRatio": 0.9565217391304348,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "recommended",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 150.8,
+          "averageEssenceSpentRatio": 0.9565217391304348,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "whale",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 144.8,
+          "averageEssenceSpentRatio": 1,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        }
+      ],
+      "targets": [
+        {
+          "id": "idle-win-rate",
+          "label": "idle wins",
+          "scope": "level",
+          "levelId": "w1_l08",
+          "botId": "idle",
+          "value": "0.0%",
+          "requirement": "= 0.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "random-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l08",
+          "botId": "random",
+          "value": "0.0%",
+          "requirement": "≤ 30.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "commons-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l08",
+          "botId": "commons",
+          "value": "0.0%",
+          "requirement": "≥ 70.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l08",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "≥ 95.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-three-star-rate",
+          "label": "3-star rate",
+          "scope": "level",
+          "levelId": "w1_l08",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "40.0%-80.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-duration",
+          "label": "level duration",
+          "scope": "level",
+          "levelId": "w1_l08",
+          "botId": "recommended",
+          "value": "2:31",
+          "requirement": "3:00-5:00",
+          "pass": false,
+          "severity": 0.16222222222222216
+        },
+        {
+          "id": "recommended-essence-spent",
+          "label": "Essence spent",
+          "scope": "level",
+          "levelId": "w1_l08",
+          "botId": "recommended",
+          "value": "95.7%",
+          "requirement": "≥ 70.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-trap-usage",
+          "label": "trap usage",
+          "scope": "level",
+          "levelId": "w1_l08",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "< 25.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "whale-time-vs-recommended",
+          "label": "average level time",
+          "scope": "level",
+          "levelId": "w1_l08",
+          "botId": "whale",
+          "value": "96.0%",
+          "requirement": "≥ 70.0% of recommended",
+          "pass": true,
+          "severity": 0
+        }
+      ]
+    },
+    {
+      "levelId": "w1_l09",
+      "levelName": "The Ogre Bridge",
+      "world": 1,
+      "number": 9,
+      "bots": [
+        {
+          "botId": "idle",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 121,
+          "averageEssenceSpentRatio": 0,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "random",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 128.09466666666668,
+          "averageEssenceSpentRatio": 0.9704545454545455,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "commons",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 121,
+          "averageEssenceSpentRatio": 0.9473684210526315,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "recommended",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 121,
+          "averageEssenceSpentRatio": 0.9473684210526315,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "whale",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 124,
+          "averageEssenceSpentRatio": 0.8648648648648649,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        }
+      ],
+      "targets": [
+        {
+          "id": "idle-win-rate",
+          "label": "idle wins",
+          "scope": "level",
+          "levelId": "w1_l09",
+          "botId": "idle",
+          "value": "0.0%",
+          "requirement": "= 0.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "random-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l09",
+          "botId": "random",
+          "value": "0.0%",
+          "requirement": "≤ 30.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "commons-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l09",
+          "botId": "commons",
+          "value": "0.0%",
+          "requirement": "≥ 70.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l09",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "≥ 95.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-three-star-rate",
+          "label": "3-star rate",
+          "scope": "level",
+          "levelId": "w1_l09",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "40.0%-80.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-duration",
+          "label": "level duration",
+          "scope": "level",
+          "levelId": "w1_l09",
+          "botId": "recommended",
+          "value": "2:01",
+          "requirement": "3:00-5:00",
+          "pass": false,
+          "severity": 0.3277777777777778
+        },
+        {
+          "id": "recommended-essence-spent",
+          "label": "Essence spent",
+          "scope": "level",
+          "levelId": "w1_l09",
+          "botId": "recommended",
+          "value": "94.7%",
+          "requirement": "≥ 70.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-trap-usage",
+          "label": "trap usage",
+          "scope": "level",
+          "levelId": "w1_l09",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "< 25.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "whale-time-vs-recommended",
+          "label": "average level time",
+          "scope": "level",
+          "levelId": "w1_l09",
+          "botId": "whale",
+          "value": "102.5%",
+          "requirement": "≥ 70.0% of recommended",
+          "pass": true,
+          "severity": 0
+        }
+      ]
+    },
+    {
+      "levelId": "w1_l10",
+      "levelName": "Rift's Edge",
+      "world": 1,
+      "number": 10,
+      "bots": [
+        {
+          "botId": "idle",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 103.03333333333333,
+          "averageEssenceSpentRatio": 0,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "random",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 109.10666666666665,
+          "averageEssenceSpentRatio": 0.9580801944106926,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "commons",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 106.56666666666666,
+          "averageEssenceSpentRatio": 1,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "recommended",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 106.56666666666666,
+          "averageEssenceSpentRatio": 1,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        },
+        {
+          "botId": "whale",
+          "runs": 50,
+          "wins": 0,
+          "winRate": 0,
+          "threeStarRate": 0,
+          "averageDurationSeconds": 109.03333333333333,
+          "averageEssenceSpentRatio": 0.9473684210526315,
+          "trapRate": 0,
+          "timedOut": 0,
+          "defenderWinCounts": {}
+        }
+      ],
+      "targets": [
+        {
+          "id": "idle-win-rate",
+          "label": "idle wins",
+          "scope": "level",
+          "levelId": "w1_l10",
+          "botId": "idle",
+          "value": "0.0%",
+          "requirement": "= 0.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "random-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l10",
+          "botId": "random",
+          "value": "0.0%",
+          "requirement": "≤ 30.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "commons-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l10",
+          "botId": "commons",
+          "value": "0.0%",
+          "requirement": "≥ 70.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-win-rate",
+          "label": "win rate",
+          "scope": "level",
+          "levelId": "w1_l10",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "≥ 95.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-three-star-rate",
+          "label": "3-star rate",
+          "scope": "level",
+          "levelId": "w1_l10",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "40.0%-80.0%",
+          "pass": false,
+          "severity": 1
+        },
+        {
+          "id": "recommended-duration",
+          "label": "level duration",
+          "scope": "level",
+          "levelId": "w1_l10",
+          "botId": "recommended",
+          "value": "1:47",
+          "requirement": "3:00-5:00",
+          "pass": false,
+          "severity": 0.40796296296296297
+        },
+        {
+          "id": "recommended-essence-spent",
+          "label": "Essence spent",
+          "scope": "level",
+          "levelId": "w1_l10",
+          "botId": "recommended",
+          "value": "100.0%",
+          "requirement": "≥ 70.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "recommended-trap-usage",
+          "label": "trap usage",
+          "scope": "level",
+          "levelId": "w1_l10",
+          "botId": "recommended",
+          "value": "0.0%",
+          "requirement": "< 25.0%",
+          "pass": true,
+          "severity": 0
+        },
+        {
+          "id": "whale-time-vs-recommended",
+          "label": "average level time",
+          "scope": "level",
+          "levelId": "w1_l10",
+          "botId": "whale",
+          "value": "102.3%",
+          "requirement": "≥ 70.0% of recommended",
+          "pass": true,
+          "severity": 0
+        }
+      ]
+    }
+  ],
+  "botSummary": [
+    {
+      "botId": "idle",
+      "runs": 500,
+      "wins": 0,
+      "winRate": 0,
+      "threeStarRate": 0,
+      "averageDurationSeconds": 113.89,
+      "averageEssenceSpentRatio": 0,
+      "trapRate": 0,
+      "timedOut": 0,
+      "defenderWinCounts": {}
+    },
+    {
+      "botId": "random",
+      "runs": 500,
+      "wins": 65,
+      "winRate": 0.13,
+      "threeStarRate": 0.084,
+      "averageDurationSeconds": 126.50793333333333,
+      "averageEssenceSpentRatio": 0.9588998604146203,
+      "trapRate": 0.26153846153846155,
+      "timedOut": 0,
+      "defenderWinCounts": {
+        "sparkbolt_gremlin": 65,
+        "glowshroom_monk": 16
+      }
+    },
+    {
+      "botId": "commons",
+      "runs": 500,
+      "wins": 100,
+      "winRate": 0.2,
+      "threeStarRate": 0.2,
+      "averageDurationSeconds": 119.23666666666666,
+      "averageEssenceSpentRatio": 0.9456521739130435,
+      "trapRate": 0,
+      "timedOut": 0,
+      "defenderWinCounts": {
+        "sparkbolt_gremlin": 100,
+        "glowshroom_monk": 50
+      }
+    },
+    {
+      "botId": "recommended",
+      "runs": 500,
+      "wins": 100,
+      "winRate": 0.2,
+      "threeStarRate": 0.2,
+      "averageDurationSeconds": 119.23666666666666,
+      "averageEssenceSpentRatio": 0.9456521739130435,
+      "trapRate": 0,
+      "timedOut": 0,
+      "defenderWinCounts": {
+        "sparkbolt_gremlin": 100,
+        "glowshroom_monk": 50
+      }
+    },
+    {
+      "botId": "whale",
+      "runs": 500,
+      "wins": 150,
+      "winRate": 0.3,
+      "threeStarRate": 0.1,
+      "averageDurationSeconds": 120.80333333333333,
+      "averageEssenceSpentRatio": 0.9405405405405406,
+      "trapRate": 0.6666666666666666,
+      "timedOut": 0,
+      "defenderWinCounts": {
+        "sparkbolt_gremlin": 150,
+        "glowshroom_monk": 100
+      }
+    }
+  ],
+  "worldTargets": [
+    {
+      "id": "card-diversity",
+      "label": "card diversity",
+      "scope": "world",
+      "levelId": null,
+      "botId": "recommended",
+      "value": "Sparkbolt Gremlin 100.0%",
+      "requirement": "≤ 80.0% per non-producer",
+      "pass": false,
+      "severity": 0.24999999999999994
+    }
+  ],
+  "cardDiversity": [
+    {
+      "defenderId": "sparkbolt_gremlin",
+      "name": "Sparkbolt Gremlin",
+      "role": "shooter",
+      "wins": 100,
+      "winShare": 1,
+      "exempt": false,
+      "pass": false
+    },
+    {
+      "defenderId": "glowshroom_monk",
+      "name": "Glowshroom Monk",
+      "role": "producer",
+      "wins": 50,
+      "winShare": 0.5,
+      "exempt": true,
+      "pass": true
+    }
+  ]
+}
