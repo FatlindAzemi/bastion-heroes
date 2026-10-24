@@ -178,7 +178,7 @@ function addBaseMarker(group: Group, options: LevelViewOptions): void {
   addMergedMesh(group, trapPads, GREYBOX_COLORS.wood);
 }
 
-/** Dusk-purple portal marker at x = 9.6, where enemies enter the level (spec 3.1, 9.4). */
+/** Dusk-purple portal marker at the enemy spawn point, where enemies enter (spec 3.1, 9.4). */
 function addPortalMarker(group: Group): void {
   const portalX = rules.grid.enemySpawnX + 0.4;
   const strips: BufferGeometry[] = [];
