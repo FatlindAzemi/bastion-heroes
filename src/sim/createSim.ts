@@ -1,6 +1,7 @@
 import { updateDefenders } from './combat/defenderActions';
 import { removeDeadEntities } from './combat/deaths';
 import { updateEnemies } from './combat/enemyActions';
+import { updateFirePatches } from './combat/firePatches';
 import { updateStatusEffects } from './combat/status';
 import { updateProjectiles } from './combat/projectiles';
 import { collectOrb, updateEssence } from './essence';
@@ -34,6 +35,7 @@ export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number
     enemies: [],
     projectiles: [],
     orbs: [],
+    firePatches: [],
     wave: initialWaveState(level),
     traps: initialTraps(),
     status: 'playing',
@@ -86,6 +88,7 @@ export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number
     updateDefenders(state, events); // 4) defenders act, sorted by id
     updateProjectiles(state, events); // 5) projectiles move and hit
     updateStatusEffects(state, level, events); // 6) status effects tick
+    updateFirePatches(state, events); // 6b) ★3 fire patches apply Burn (spec 5.2)
     updateEnemies(state, events); // 7) enemies move, block and eat, sorted by id
     removeDeadEntities(state, events); // 8) remove dead entities
     updateTraps(state, events); // 9) Last Stand Traps

@@ -6,10 +6,12 @@ import { tileCenterX } from '../grid';
 import type { DefenderState, SimEvent, SimState } from '../types';
 import { beginDefenderAttack } from '../combat/status';
 import { collectAuraDamageBuffs } from './aura';
+import { star3ExtraHits, star3RangeTiles } from './star3';
 
 /**
  * One `straight` attack (spec 4.3): fires a projectile to the right at the first
  * enemy in the lane that the pattern can hit (non-flying unless `hitsFlying`).
+ * A ★3 `piercing_arrow` projectile passes through its first targets (spec 5.2).
  * Returns true when the defender fired.
  */
 export function attackWithStraight(
@@ -27,7 +29,7 @@ export function attackWithStraight(
   const target = findTarget(state.enemies, {
     lane: defender.lane,
     fromX: fireFromX,
-    rangeTiles: defenderDef.range,
+    rangeTiles: star3RangeTiles(defender, defenderDef),
     canHitFlying: hitsFlying,
   });
   if (target === undefined) {
@@ -54,6 +56,7 @@ export function attackWithStraight(
       hitsFlying,
       status: attackStatus,
       element: defenderDef.element,
+      piercesRemaining: star3ExtraHits(defender, defenderDef),
     },
     events,
   );

@@ -98,6 +98,7 @@ function addDefender(
       defenderDef.pattern === 'trap' ? ticksFromSeconds(defenderDef.armDelayS ?? 0) : null,
     trapRearmed: false,
     attackCount: 0,
+    burstShotsRemaining: 0,
   };
   state.nextId += 1;
   state.defenders.push(defender);

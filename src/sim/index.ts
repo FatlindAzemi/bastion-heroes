@@ -29,6 +29,7 @@ export {
   ticksFromSeconds,
 } from './placement';
 export { createRng } from './rng';
+export { MAX_STARS, starModelScale } from './stars';
 export type {
   ComboCooldownState,
   ComboId,
@@ -37,6 +38,8 @@ export type {
   ElementKind,
   EnemyState,
   EnemyStatusState,
+  FirePatchSpec,
+  FirePatchState,
   LevelDef,
   LevelStatus,
   LoadoutEntry,

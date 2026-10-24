@@ -9,6 +9,7 @@ import type { ElementKind } from '../types';
 import type { DefenderState, SimEvent, SimState } from '../types';
 import { beginDefenderAttack } from '../combat/status';
 import { collectAuraDamageBuffs } from './aura';
+import { star3RangeTiles } from './star3';
 
 /**
  * One `diagonal` attack (spec 4.3): fires three straight projectiles — one in the
@@ -30,7 +31,7 @@ export function attackWithDiagonal(
   const target = findTarget(state.enemies, {
     lane: defender.lane,
     fromX,
-    rangeTiles: defenderDef.range,
+    rangeTiles: star3RangeTiles(defender, defenderDef),
     canHitFlying: defenderDef.hitsFlying === true,
   });
   if (target === undefined) {

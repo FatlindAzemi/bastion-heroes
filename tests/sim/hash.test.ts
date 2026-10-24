@@ -5,6 +5,7 @@ import { hashState } from '../../src/sim/hash';
 import type {
   DefenderState,
   EnemyState,
+  FirePatchState,
   OrbState,
   ProjectileState,
   SimState,
@@ -28,6 +29,7 @@ const baseDefender: DefenderState = {
   trapReadyAtTick: null,
   trapRearmed: false,
   attackCount: 0,
+  burstShotsRemaining: 0,
 };
 
 const baseEnemy: EnemyState = {
@@ -63,6 +65,8 @@ const baseProjectile: ProjectileState = {
   statusDurationS: 0,
   statusStacks: 1,
   element: 'none',
+  piercesRemaining: 0,
+  firePatch: null,
 };
 
 const baseOrb: OrbState = {
@@ -73,6 +77,15 @@ const baseOrb: OrbState = {
   spawnTick: 0,
   landTick: 30,
   expiresAtTick: 270,
+};
+
+const baseFirePatch: FirePatchState = {
+  id: 5,
+  lane: 0,
+  x: 5,
+  radiusTiles: 0.5,
+  expiresAtTick: 90,
+  nextBurnTick: 30,
 };
 
 /** Creates a hashable state of a level whose first wave is far away. */
@@ -262,6 +275,13 @@ const mutationCases: MutationCase[] = [
     },
   },
   {
+    name: 'a pending ★3 burst shot',
+    mutate: (state) => {
+      state.defenders.push({ ...baseDefender });
+      state.defenders[0]!.burstShotsRemaining = 1;
+    },
+  },
+  {
     name: 'an enemy',
     mutate: (state) => {
       state.enemies.push({ ...baseEnemy });
@@ -420,6 +440,20 @@ const mutationCases: MutationCase[] = [
     },
   },
   {
+    name: 'the projectile pierce counter',
+    mutate: (state) => {
+      state.projectiles.push({ ...baseProjectile });
+      state.projectiles[0]!.piercesRemaining = 1;
+    },
+  },
+  {
+    name: 'the projectile fire patch',
+    mutate: (state) => {
+      state.projectiles.push({ ...baseProjectile });
+      state.projectiles[0]!.firePatch = { radiusTiles: 0.5, durationTicks: 60 };
+    },
+  },
+  {
     name: 'an Essence orb',
     mutate: (state) => {
       state.orbs.push({ ...baseOrb });
@@ -437,6 +471,33 @@ const mutationCases: MutationCase[] = [
     mutate: (state) => {
       state.orbs.push({ ...baseOrb });
       state.orbs[0]!.expiresAtTick = 271;
+    },
+  },
+  {
+    name: 'a fire patch',
+    mutate: (state) => {
+      state.firePatches.push({ ...baseFirePatch });
+    },
+  },
+  {
+    name: 'the fire patch radius',
+    mutate: (state) => {
+      state.firePatches.push({ ...baseFirePatch });
+      state.firePatches[0]!.radiusTiles = 1.2;
+    },
+  },
+  {
+    name: 'the fire patch lifetime',
+    mutate: (state) => {
+      state.firePatches.push({ ...baseFirePatch });
+      state.firePatches[0]!.expiresAtTick = 91;
+    },
+  },
+  {
+    name: 'the fire patch burn timer',
+    mutate: (state) => {
+      state.firePatches.push({ ...baseFirePatch });
+      state.firePatches[0]!.nextBurnTick = 31;
     },
   },
   {

@@ -114,6 +114,8 @@ export interface DefenderState {
   trapRearmed: boolean;
   /** Attacks fired so far; the `freezeEveryNthAttack` counter uses it (spec 4.5, 5.2). */
   attackCount: number;
+  /** Extra bolts still to fire in the current ★3 burst attack; 0 when not bursting (spec 5.2). */
+  burstShotsRemaining: number;
 }
 
 /** A defender element of spec 4.6/5.2. */
@@ -202,6 +204,38 @@ export interface ProjectileState {
   statusStacks: number;
   /** Element of the defender that fired it; the 4.6 combos match on it. */
   element: ElementKind;
+  /**
+   * ★3 piercing bonuses: enemies the projectile may still pass through after its
+   * first hit; 0 for every normal projectile (spec 5.2 Rune Archer).
+   */
+  piercesRemaining: number;
+  /** ★3 Pyro Fox: the Burn patch left at the impact point, or null (spec 5.2). */
+  firePatch: FirePatchSpec | null;
+}
+
+/** The area and lifetime of a ★3 Pyro Fox fire patch (spec 5.2). */
+export interface FirePatchSpec {
+  /** Impact radius in tiles (spec 5.2: 0.5). */
+  radiusTiles: number;
+  /** Lifetime in ticks (spec 5.2: 2.0 s). */
+  durationTicks: number;
+}
+
+/**
+ * A ★3 Pyro Fox fire patch on the field (spec 5.2): a small area that keeps
+ * applying Burn to every enemy inside until it expires.
+ */
+export interface FirePatchState {
+  id: number;
+  lane: number;
+  /** World x of the impact point. */
+  x: number;
+  /** Impact radius in tiles (spec 5.2: 0.5). */
+  radiusTiles: number;
+  /** Tick at which the patch disappears. */
+  expiresAtTick: number;
+  /** Tick of the next Burn application to the enemies inside the patch. */
+  nextBurnTick: number;
 }
 
 /**
@@ -297,6 +331,8 @@ export interface SimState {
   readonly projectiles: ProjectileState[];
   /** Essence orbs currently on the field (spec 3.3, 11.3). */
   readonly orbs: OrbState[];
+  /** ★3 Pyro Fox fire patches currently on the field (spec 5.2). */
+  readonly firePatches: FirePatchState[];
   /** Wave runner state (spec 3.10). */
   wave: WaveState;
   /** One Last Stand Trap per lane (spec 3.9); the renderer can read the roller positions. */

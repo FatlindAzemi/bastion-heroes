@@ -42,6 +42,7 @@ export function hashState(state: Readonly<SimState>): string {
       defender.trapReadyAtTick,
       defender.trapRearmed,
       defender.attackCount,
+      defender.burstShotsRemaining,
     ]),
     enemies: state.enemies.map((enemy) => [
       enemy.id,
@@ -83,6 +84,10 @@ export function hashState(state: Readonly<SimState>): string {
       projectile.statusDurationS,
       projectile.statusStacks,
       projectile.element,
+      projectile.piercesRemaining,
+      projectile.firePatch === null
+        ? null
+        : [projectile.firePatch.radiusTiles, projectile.firePatch.durationTicks],
     ]),
     orbs: state.orbs.map((orb) => [
       orb.id,
@@ -92,6 +97,14 @@ export function hashState(state: Readonly<SimState>): string {
       orb.spawnTick,
       orb.landTick,
       orb.expiresAtTick,
+    ]),
+    firePatches: state.firePatches.map((patch) => [
+      patch.id,
+      patch.lane,
+      patch.x,
+      patch.radiusTiles,
+      patch.expiresAtTick,
+      patch.nextBurnTick,
     ]),
     wave: {
       index: state.wave.index,

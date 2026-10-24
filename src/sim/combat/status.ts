@@ -1,5 +1,6 @@
 import { enemyById, rules } from '../../data';
 import type { DefenderDef, LevelDef } from '../../data';
+import { star3StatusDurationS } from '../behaviors/star3';
 import { isActiveLane, isInBounds, terrainAt } from '../grid';
 import { ticksFromSeconds } from '../placement';
 import type {
@@ -258,8 +259,9 @@ function applyKnockback(tick: number, enemy: EnemyState, application: StatusAppl
 /**
  * Returns the status of the next defender attack from `statusOnHit`, with the
  * `freezeEveryNthAttack` override (Frost Witch: every 4th attack Freezes instead
- * of Slowing, spec 5.2). Increments the per-defender attack counter when the
- * defender has any status-on-hit behaviour; returns null otherwise.
+ * of Slowing, spec 5.2) and the ★3 `slow_duration_up` bonus (spec 5.2).
+ * Increments the per-defender attack counter when the defender has any
+ * status-on-hit behaviour; returns null otherwise.
  */
 export function beginDefenderAttack(
   defender: DefenderState,
@@ -282,7 +284,9 @@ export function beginDefenderAttack(
     everyNth !== undefined && everyNth > 0 && defender.attackCount % everyNth === 0;
   return {
     kind: freezeThisAttack ? 'freeze' : kind,
-    durationS: freezeThisAttack ? rules.status.freeze.durationS : statusOnHit.durationS,
+    durationS: freezeThisAttack
+      ? rules.status.freeze.durationS
+      : star3StatusDurationS(defender, defenderDef, statusOnHit.durationS),
     stacks: Math.max(1, Math.round(Math.abs(statusOnHit.value))),
   };
 }
