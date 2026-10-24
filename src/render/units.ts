@@ -1,6 +1,7 @@
 import { CapsuleGeometry, Group, Mesh, MeshToonMaterial } from 'three';
 
 import { rules } from '../data/rules';
+import { starModelScale } from '../sim/stars';
 import type { DefenderState, EnemyState } from '../sim/types';
 import { defenderColor, enemyColor } from './greyboxPalette';
 import { createToonMaterial } from './toonMaterial';
@@ -11,13 +12,6 @@ import { columnToWorldX, laneToWorldZ, simXToWorldX } from './worldMapping';
 const CAPSULE_RADIUS = 0.28 * rules.grid.tileSize;
 const CAPSULE_LENGTH = 0.34 * rules.grid.tileSize;
 const CAPSULE_CENTER_Y = CAPSULE_RADIUS + CAPSULE_LENGTH / 2;
-
-/** Model scale per star level (spec 3.6, values from `rules.merge`). */
-const STAR_SCALES: Readonly<Record<1 | 2 | 3, number>> = {
-  1: 1,
-  2: rules.merge.star2Scale,
-  3: rules.merge.star3Scale,
-};
 
 /** Greybox capsules for defenders and enemies, driven by the sim events (spec 11.7). */
 export interface UnitLayer {
@@ -54,7 +48,8 @@ export function createUnitLayer(parent: Group): UnitLayer {
       return;
     }
     const mesh = new Mesh(geometry, materialFor(color));
-    mesh.scale.setScalar(STAR_SCALES[stars]);
+    // The model scale of a star level comes from the sim helper (spec 3.6).
+    mesh.scale.setScalar(starModelScale(stars));
     parent.add(mesh);
     objects.add(id, mesh, x, 0, z);
   }
@@ -84,7 +79,7 @@ export function createUnitLayer(parent: Group): UnitLayer {
       addUnit(id, enemyColor(enemyId), simXToWorldX(x), laneToWorldZ(lane), 1);
     },
     setStars: (id, stars): void => {
-      objects.objectOf(id)?.scale.setScalar(STAR_SCALES[stars]);
+      objects.objectOf(id)?.scale.setScalar(starModelScale(stars));
     },
     remove: removeUnit,
     sync: (defenders, enemies): void => {

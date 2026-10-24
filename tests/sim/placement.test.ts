@@ -65,6 +65,7 @@ describe('placement', () => {
         trapReadyAtTick: null,
         trapRearmed: false,
         attackCount: 0,
+        burstShotsRemaining: 0,
       },
     ]);
   });
@@ -120,7 +121,7 @@ describe('placement', () => {
     expect(sim.state.defenders).toEqual([]);
   });
 
-  it('3.4: rejects an occupied tile with tileOccupied (merging is M2)', () => {
+  it('3.4: rejects an occupied tile with tileOccupied when the defender differs', () => {
     const sim = createTestSim({}, [
       { defenderId: SPARKBOLT, level: 1 },
       { defenderId: GLOWSHROOM, level: 1 },
@@ -158,13 +159,14 @@ describe('placement', () => {
     ]);
   });
 
-  it('3.4: stores the card level and base hp (card-level health scaling is #21)', () => {
+  it('3.4/4.2: a placed defender gets the card-level health scaling', () => {
     const sim = createTestSim({}, [{ defenderId: SPARKBOLT, level: 3 }]);
 
     sim.enqueue(place(SPARKBOLT, 0, 0));
     sim.step();
 
-    expect(sim.state.defenders[0]).toMatchObject({ cardLevel: 3, hp: 300, maxHp: 300 });
+    // hp = baseHp * L * S with L = 1 + 0.08 * 2 = 1.16 and S = 1 (spec 4.2).
+    expect(sim.state.defenders[0]).toMatchObject({ cardLevel: 3, hp: 348, maxHp: 348 });
   });
 
   it('3.5: placing starts the cooldown for cooldownS and blocks the card until then', () => {

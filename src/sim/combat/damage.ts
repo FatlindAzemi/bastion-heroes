@@ -23,7 +23,7 @@ export interface DamageInput {
 }
 
 /** Card level multiplier L = 1 + 0.08 * (cardLevel - 1) (spec 4.2). */
-function cardLevelMultiplier(cardLevel: number): number {
+export function cardLevelMultiplier(cardLevel: number): number {
   return 1 + rules.combat.cardLevelMultiplierPerLevel * (cardLevel - 1);
 }
 

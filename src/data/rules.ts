@@ -25,8 +25,9 @@ export const rules: RulesDef = {
   },
   // 3.4: a placed defender becomes active after 0.5 s.
   placement: { defenderActivationDelayS: 0.5 },
-  // 3.6: star multipliers, model scales and producer interval divisors.
+  // 3.6: max star level, star multipliers, model scales and producer interval divisors.
   merge: {
+    maxStars: 3,
     star2HealthMultiplier: 1.6,
     star2DamageMultiplier: 1.6,
     star3HealthMultiplier: 2.5,

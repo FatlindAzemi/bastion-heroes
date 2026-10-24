@@ -41,6 +41,7 @@ describe('rules data (spec 3, 4)', () => {
   it('3.4/3.6: placement, merge and model-scale values match the spec', () => {
     expect(rules.placement).toEqual({ defenderActivationDelayS: 0.5 });
     expect(rules.merge).toEqual({
+      maxStars: 3,
       star2HealthMultiplier: 1.6,
       star2DamageMultiplier: 1.6,
       star3HealthMultiplier: 2.5,

@@ -1,6 +1,8 @@
 import { defenderById, rules } from '../data';
 import type { DefenderDef, LevelDef } from '../data';
 import { isPlaceableTile } from './grid';
+import { canMerge, defenderMaxHp, rebaseProducerTimer } from './stars';
+import { ticksFromSeconds } from './time';
 import type { Command, DefenderState, LoadoutEntry, SimEvent, SimState } from './types';
 
 /** The reason of a rejected command (spec 11.3). */
@@ -9,10 +11,9 @@ export type CommandRejectedReason = Extract<SimEvent, { type: 'commandRejected' 
 type PlaceCommand = Extract<Command, { type: 'place' }>;
 type ShovelCommand = Extract<Command, { type: 'shovel' }>;
 
-/** Converts data seconds to whole simulation ticks (spec 3.2: `Math.round(seconds * 30)`). */
-export function ticksFromSeconds(seconds: number): number {
-  return Math.round(seconds * rules.tick.tickRate);
-}
+// Spec 3.2: the sim imports `ticksFromSeconds` from time.ts; re-exported for the
+// existing call sites that import it from the placement module.
+export { ticksFromSeconds };
 
 /** 0.5 s of drop time at the fixed tick rate: 15 ticks (spec 3.2, 3.4). */
 export const ACTIVATION_DELAY_TICKS = ticksFromSeconds(rules.placement.defenderActivationDelayS);
@@ -67,64 +68,119 @@ function reject(events: SimEvent[], reason: CommandRejectedReason): void {
   events.push({ type: 'commandRejected', reason });
 }
 
+/** What a validated `place` command acts on: the loadout card and the defender on the tile, if any. */
+interface ValidatedPlacement {
+  cardIndex: number;
+  card: LoadoutEntry;
+  defenderDef: DefenderDef;
+  existing: DefenderState | undefined;
+}
+
 /**
- * Applies a `place` command (spec 3.4). Validation order:
+ * Validates a `place` command (spec 3.4, 3.6) in the fixed order:
  * 1) the defender is in the loadout and in `src/data` (invalidTile),
  * 2) the tile is in bounds, in an active lane and on placeable terrain (invalidTile),
  * 3) the card is off cooldown (onCooldown),
  * 4) the player can afford the cost (notEnoughEssence),
- * 5) the tile is empty (tileOccupied; merging is M2, enemies never block).
+ * 5) the tile is empty or holds the same defender at ★1/★2 (tileOccupied).
+ * Returns the rejection reason instead of a placement when the command is invalid.
  */
-export function placeDefender(
+function validatePlacement(
   state: SimState,
   level: LevelDef,
   command: PlaceCommand,
-  events: SimEvent[],
-): void {
+): ValidatedPlacement | CommandRejectedReason {
   const cardIndex = state.loadout.findIndex((entry) => entry.defenderId === command.defenderId);
   const card = cardIndex === -1 ? undefined : state.loadout[cardIndex];
-  const defender = defenderById[command.defenderId];
-  if (card === undefined || defender === undefined) {
-    reject(events, 'invalidTile');
-    return;
+  const defenderDef = defenderById[command.defenderId];
+  if (card === undefined || defenderDef === undefined) {
+    return 'invalidTile';
   }
   if (!isPlaceableTile(level, command.lane, command.col)) {
-    reject(events, 'invalidTile');
-    return;
+    return 'invalidTile';
   }
   if (!isCardReady(state, cardIndex)) {
-    reject(events, 'onCooldown');
-    return;
+    return 'onCooldown';
   }
-  if (state.essence < defender.cost) {
-    reject(events, 'notEnoughEssence');
-    return;
+  if (state.essence < defenderDef.cost) {
+    return 'notEnoughEssence';
   }
-  if (findDefenderAt(state, command.lane, command.col) !== undefined) {
-    reject(events, 'tileOccupied');
-    return;
+  const existing = findDefenderAt(state, command.lane, command.col);
+  if (existing !== undefined && !canMerge(existing, defenderDef)) {
+    return 'tileOccupied';
   }
+  return { cardIndex, card, defenderDef, existing };
+}
 
+/**
+ * Merges a placed card into the defender already standing on its tile (spec 3.6):
+ * raises the star level by one, keeps the same entity id, heals to the new full
+ * health, rebases a pending producer orb timer and emits `defenderMerged`.
+ */
+function mergeDefender(
+  state: SimState,
+  existing: DefenderState,
+  defenderDef: DefenderDef,
+  events: SimEvent[],
+): void {
+  const previousStars = existing.stars;
+  const stars: 2 | 3 = previousStars === 1 ? 2 : 3;
+  existing.stars = stars;
+  existing.maxHp = defenderMaxHp(defenderDef.hp, existing.cardLevel, stars);
+  existing.hp = existing.maxHp;
+  // A ★3 burst bonus must not continue a burst started below ★3.
+  existing.burstShotsRemaining = 0;
+  if (existing.nextOrbTick !== null && defenderDef.attackIntervalS !== undefined) {
+    existing.nextOrbTick = rebaseProducerTimer(
+      existing.nextOrbTick,
+      state.tick,
+      defenderDef.attackIntervalS,
+      previousStars,
+      stars,
+    );
+  }
+  events.push({ type: 'defenderMerged', id: existing.id, stars });
+}
+
+/** Spends the full cost and starts the full cooldown: a merge pays like a normal placement (spec 3.6). */
+function payPlacementCost(state: SimState, cardIndex: number, defenderDef: DefenderDef): void {
+  state.essence -= defenderDef.cost;
+  state.cardCooldownEndTicks[cardIndex] = state.tick + ticksFromSeconds(defenderDef.cooldownS);
+}
+
+/**
+ * Adds a fresh ★1 defender to the grid with the card-level health of spec 4.2.
+ * The entity id comes from the shared counter (spec 11.3).
+ */
+function spawnDefender(
+  state: SimState,
+  card: LoadoutEntry,
+  defenderDef: DefenderDef,
+  command: PlaceCommand,
+  events: SimEvent[],
+): void {
   const id = state.nextId;
+  const maxHp = defenderMaxHp(defenderDef.hp, card.level, 1);
   state.nextId += 1;
-  state.essence -= defender.cost;
-  state.cardCooldownEndTicks[cardIndex] = state.tick + ticksFromSeconds(defender.cooldownS);
   state.defenders.push({
     id,
     defenderId: command.defenderId,
     lane: command.lane,
     col: command.col,
     stars: 1,
-    hp: defender.hp,
-    maxHp: defender.hp,
+    hp: maxHp,
+    maxHp,
     cardLevel: card.level,
     activeAtTick: state.tick + ACTIVATION_DELAY_TICKS,
-    nextOrbTick: initialNextOrbTick(defender, state.tick),
+    nextOrbTick: initialNextOrbTick(defenderDef, state.tick),
     nextAttackTick: 0,
     trapReadyAtTick:
-      defender.pattern === 'trap' ? state.tick + ticksFromSeconds(defender.armDelayS ?? 0) : null,
+      defenderDef.pattern === 'trap'
+        ? state.tick + ticksFromSeconds(defenderDef.armDelayS ?? 0)
+        : null,
     trapRearmed: false,
     attackCount: 0,
+    burstShotsRemaining: 0,
   });
   events.push({
     type: 'defenderPlaced',
@@ -134,6 +190,32 @@ export function placeDefender(
     col: command.col,
     stars: 1,
   });
+}
+
+/**
+ * Applies a `place` command (spec 3.4, 3.6). A same-defender placement below the
+ * max stars is a merge: it pays the full cost and cooldown like a normal
+ * placement and raises the star level by one. Enemies never block placement.
+ */
+export function placeDefender(
+  state: SimState,
+  level: LevelDef,
+  command: PlaceCommand,
+  events: SimEvent[],
+): void {
+  const validation = validatePlacement(state, level, command);
+  if (typeof validation === 'string') {
+    reject(events, validation);
+    return;
+  }
+
+  const { card, defenderDef, existing, cardIndex } = validation;
+  payPlacementCost(state, cardIndex, defenderDef);
+  if (existing !== undefined) {
+    mergeDefender(state, existing, defenderDef, events);
+    return;
+  }
+  spawnDefender(state, card, defenderDef, command, events);
 }
 
 /**

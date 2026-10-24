@@ -99,6 +99,7 @@ function addDefender(
     trapReadyAtTick: null,
     trapRearmed: false,
     attackCount: 0,
+    burstShotsRemaining: 0,
   };
   state.nextId += 1;
   state.defenders.push(defender);
