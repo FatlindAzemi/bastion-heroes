@@ -17,6 +17,10 @@ coverage/
 # Generated asset output (spec 12.1)
 assets-build/
 
+# Python bytecode from the Blender asset scripts (spec 12.3)
+__pycache__/
+*.pyc
+
 # Local environment files (spec 13.6)
 .env.local
 .env.*.local
