@@ -10,12 +10,18 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { defenders, enemies } from '../../src/data';
-import { evaluateInventory, evaluateModel } from './check-logic';
+import { ENVIRONMENT_MODEL_IDS, evaluateInventory, evaluateModel } from './check-logic';
 import type { UnitInfo } from './check-logic';
 import { readModelSummary } from './model-summary';
 
 const MODELS_DIR = 'public/models';
-const SCRIPT_DIRS = ['assets-src/blender/characters', 'assets-src/blender/import'];
+const SCRIPT_DIRS = [
+  'assets-src/blender/characters',
+  'assets-src/blender/import',
+  'assets-src/blender/environment',
+];
+/** Environment preview scripts (`preview_world1.py`) are not model scripts (issue #73). */
+const PREVIEW_SCRIPT_PREFIX = 'preview_';
 const MODEL_EXTENSION = '.glb';
 const SCRIPT_EXTENSION = '.py';
 
@@ -32,7 +38,11 @@ export function dataUnits(): UnitInfo[] {
     id: enemy.id,
     isBoss: enemy.isBoss,
   }));
-  return [...defenderUnits, ...enemyUnits];
+  const environmentUnits: UnitInfo[] = ENVIRONMENT_MODEL_IDS.map((id) => ({
+    kind: 'environment',
+    id,
+  }));
+  return [...defenderUnits, ...enemyUnits, ...environmentUnits];
 }
 
 /** The model ids that have a committed `.glb`, sorted for stable output. */
@@ -54,9 +64,13 @@ export function scriptIds(): string[] {
       continue;
     }
     for (const name of readdirSync(directory)) {
-      if (name.endsWith(SCRIPT_EXTENSION) && !name.startsWith('_')) {
-        ids.push(name.slice(0, -SCRIPT_EXTENSION.length));
+      if (!name.endsWith(SCRIPT_EXTENSION) || name.startsWith('_')) {
+        continue;
       }
+      if (name.startsWith(PREVIEW_SCRIPT_PREFIX)) {
+        continue;
+      }
+      ids.push(name.slice(0, -SCRIPT_EXTENSION.length));
     }
   }
   return ids;

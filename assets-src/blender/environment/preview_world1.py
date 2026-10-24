@@ -132,6 +132,9 @@ def main():
 
     armature, meshes = render.open_model(glb_path)
     render.set_idle_pose(armature)
+    # Same toon preview material as the spec 12.8 previews (#66), so the art review
+    # sees the environment with the renderer's 9.2 three-step shading.
+    render.apply_toon_materials(meshes)
     scene = render.setup_render(width=1280, height=720, background=SKY_BACKGROUND)
     render.setup_lights()
     # The beauty renders show the model, not the lighting rig: disable sun shadows so

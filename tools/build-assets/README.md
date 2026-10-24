@@ -77,6 +77,17 @@ The size and height measurement uses the skinned bind pose (`model-summary.ts`):
 are quantized, so the real scale lives in the skin's inverse bind matrices, not in the raw accessor
 min/max.
 
+### World environments (spec 9.3 row "Level environment", issue #73)
+
+Environments are non-character models built by a script in
+`assets-src/blender/environment/<id>.py` (currently `world1.py`). `npm run assets -- world1`
+builds the raw model, renders the spec 12.8 previews (framed on the playfield through
+`--frame-bounds`, not on the whole model incl. the painted sky panel), optimizes it to
+`public/models/world1.glb` and skips the card portrait. The checks enforce the spec 9.3/12.6
+environment limits (30,000 triangles, 1.5 MB) and do not apply the character rules (clips,
+`root`/`head` bones, bounding height or data-id mapping). `preview_*.py` files in that folder
+are review scripts, not model scripts, and are ignored by the pipeline.
+
 CI runs `npm run assets:check` after `npm run check` (which ends with `npm run validate-data`), so a
 model that breaks a budget or the data registry turns the pull request red. With no committed models
 the check passes (empty set).

@@ -37,7 +37,10 @@ const mythic: UnitInfo = {
 const enemy: UnitInfo = { kind: 'enemy', id: 'gloomling', isBoss: false };
 const ogre: UnitInfo = { kind: 'enemy', id: 'gloom_ogre', isBoss: false };
 const boss: UnitInfo = { kind: 'enemy', id: 'morvak', isBoss: true };
-const units: UnitInfo[] = [producer, shooter, wall, epic, mythic, enemy, ogre, boss];
+const environment: UnitInfo = { kind: 'environment', id: 'world1' };
+const units: UnitInfo[] = [producer, shooter, wall, epic, mythic, enemy, ogre, boss, environment];
+/** Character-only units, for the generic character inventory assertions. */
+const characterUnits: UnitInfo[] = [producer, shooter, wall, epic, mythic, enemy, ogre, boss];
 
 /** A model summary that passes every rule for a common defender. */
 function model(overrides: Partial<ModelSummary> = {}): ModelSummary {
@@ -195,36 +198,87 @@ describe('evaluateModel (spec 9.3, 12.5, 12.6, 12.7)', () => {
 
   it('fails a model id that has no data definition', () => {
     expect(evaluateModel('not_a_unit', model(), units)).toEqual([
-      'model "not_a_unit" has no matching defender or enemy in src/data/index.ts',
+      'model "not_a_unit" has no matching defender, enemy or environment in src/data/index.ts',
     ]);
+  });
+
+  it('accepts a world environment without clips, bones or a character height', () => {
+    expect(
+      evaluateModel(
+        'world1',
+        model({
+          bytes: 1_400_000,
+          animations: [],
+          joints: [],
+          triangles: 25_118,
+          bounds: { min: [-3.6, -0.4, -1.9], max: [12.8, 0.2, 6.9] },
+        }),
+        units,
+      ),
+    ).toEqual([]);
+  });
+
+  it('fails an environment over the spec 12.6 1.5 MB limit', () => {
+    const errors = evaluateModel('world1', model({ bytes: 1536 * KIB + 1 }), units);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('1.5 MB limit of spec 12.6');
+  });
+
+  it('fails an environment over the spec 9.3 30,000 triangle budget', () => {
+    const errors = evaluateModel('world1', model({ triangles: 30_001 }), units);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('30001 triangles');
+    expect(errors[0]).toContain('budget of spec 9.3');
   });
 });
 
 describe('evaluateInventory (spec 12.7 id mapping)', () => {
   it('accepts matching models, scripts and data units', () => {
-    expect(evaluateInventory(['gloomling'], ['gloomling'], units)).toEqual([]);
+    expect(evaluateInventory(['gloomling'], ['gloomling'], characterUnits)).toEqual([]);
   });
 
   it('fails a model without a data unit', () => {
     const errors = evaluateInventory(['mystery_model'], ['mystery_model'], units);
     expect(errors).toContain(
-      'model "mystery_model" has no matching defender or enemy in src/data/index.ts',
+      'model "mystery_model" has no matching defender, enemy or environment in src/data/index.ts',
     );
     expect(errors).toContain(
-      'character script "mystery_model" has no matching defender or enemy in src/data/index.ts',
+      'model script "mystery_model" has no matching data unit or environment in src/data/index.ts',
     );
   });
 
   it('fails a committed model without a character script', () => {
-    const errors = evaluateInventory(['gloomling'], [], units);
+    const errors = evaluateInventory(['gloomling'], [], characterUnits);
     expect(errors).toEqual([
       'model "gloomling" has no character script under assets-src/blender/characters or import',
     ]);
   });
 
   it('fails a character script without a committed model', () => {
-    const errors = evaluateInventory([], ['gloomling'], units);
+    const errors = evaluateInventory([], ['gloomling'], characterUnits);
     expect(errors[0]).toContain('has no committed model');
+  });
+
+  it('accepts a world environment with its script and committed model', () => {
+    expect(evaluateInventory(['world1'], ['world1'], units)).toEqual([]);
+  });
+
+  it('fails an environment model without its environment script', () => {
+    expect(evaluateInventory(['world1'], [], units)).toEqual([
+      'model "world1" has no script under assets-src/blender/environment',
+    ]);
+  });
+
+  it('fails an environment script without a committed model', () => {
+    expect(evaluateInventory([], ['world1'], units)).toEqual([
+      'environment "world1" has no committed model (run npm run assets -- world1 and commit it)',
+    ]);
+  });
+
+  it('fails an environment that has neither script nor model', () => {
+    expect(evaluateInventory([], [], units)).toEqual([
+      'environment "world1" has neither a script under assets-src/blender/environment nor a committed model (run npm run assets -- world1)',
+    ]);
   });
 
   it('fails an id that is both a defender and an enemy', () => {

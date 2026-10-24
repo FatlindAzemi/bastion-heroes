@@ -22,7 +22,8 @@ export type UnitInfo =
       readonly rarity: DefenderRarity;
       readonly pattern: string;
     }
-  | { readonly kind: 'enemy'; readonly id: string; readonly isBoss: boolean };
+  | { readonly kind: 'enemy'; readonly id: string; readonly isBoss: boolean }
+  | { readonly kind: 'environment'; readonly id: string };
 
 export interface ModelBounds {
   readonly min: readonly [number, number, number];
@@ -55,6 +56,10 @@ const DEFENDER_SIZE_BYTES: Readonly<Record<DefenderRarity, number>> = {
 };
 const ENEMY_SIZE_BYTES = 250 * KIB;
 const BOSS_SIZE_BYTES = 700 * KIB;
+/** Spec 12.6: one world environment file is at most 1.5 MB. */
+const ENVIRONMENT_SIZE_BYTES = 1536 * KIB;
+/** The non-character environment models (spec 9.3 row "Level environment", issue #73). */
+export const ENVIRONMENT_MODEL_IDS: readonly string[] = ['world1'];
 
 /** Spec 9.3: triangle budget per unit. */
 const DEFENDER_TRIANGLES: Readonly<Record<DefenderRarity, number>> = {
@@ -66,6 +71,8 @@ const DEFENDER_TRIANGLES: Readonly<Record<DefenderRarity, number>> = {
 };
 const ENEMY_TRIANGLES = 3000;
 const BOSS_TRIANGLES = 8000;
+/** Spec 9.3: one world environment may use up to 30,000 triangles. */
+const ENVIRONMENT_TRIANGLES = 30000;
 
 /**
  * Spec 9.3: height range per unit. The Ogre (1.4) and the boss (2.4) are single
@@ -89,6 +96,9 @@ const ATTACKING_PATTERNS = ['straight', 'lob', 'splash', 'beam', 'diagonal', 'me
 
 /** The clips a unit's role requires (spec 12.5). */
 export function requiredClips(unit: UnitInfo): string[] {
+  if (unit.kind === 'environment') {
+    return [];
+  }
   if (unit.kind === 'enemy') {
     return ['walk', 'eat'];
   }
@@ -103,6 +113,9 @@ export function requiredClips(unit: UnitInfo): string[] {
 
 /** Spec 12.6 size limit in bytes for the unit. */
 export function sizeLimitFor(unit: UnitInfo): number {
+  if (unit.kind === 'environment') {
+    return ENVIRONMENT_SIZE_BYTES;
+  }
   if (unit.kind === 'enemy') {
     return unit.isBoss ? BOSS_SIZE_BYTES : ENEMY_SIZE_BYTES;
   }
@@ -111,6 +124,9 @@ export function sizeLimitFor(unit: UnitInfo): number {
 
 /** Spec 9.3 triangle budget for the unit. */
 export function triangleLimitFor(unit: UnitInfo): number {
+  if (unit.kind === 'environment') {
+    return ENVIRONMENT_TRIANGLES;
+  }
   if (unit.kind === 'enemy') {
     return unit.isBoss ? BOSS_TRIANGLES : ENEMY_TRIANGLES;
   }
@@ -119,6 +135,10 @@ export function triangleLimitFor(unit: UnitInfo): number {
 
 /** Spec 9.3 height range for the unit. */
 export function heightRangeFor(unit: UnitInfo): HeightRange {
+  if (unit.kind === 'environment') {
+    // Environments are not character-height checked; evaluateModel skips this rule.
+    return { maxHeight: Number.POSITIVE_INFINITY };
+  }
   if (unit.kind === 'defender') {
     return DEFENDER_HEIGHT[unit.rarity];
   }
@@ -141,6 +161,26 @@ function checkBudget(errors: string[], id: string, detail: string): void {
   errors.push(`model "${id}" ${detail}`);
 }
 
+/** Spec 12.6/9.3 budgets of one world environment; no clips, bones or height rules apply (issue #73). */
+function evaluateEnvironmentModel(id: string, summary: ModelSummary): string[] {
+  const errors: string[] = [];
+  if (summary.bytes > ENVIRONMENT_SIZE_BYTES) {
+    checkBudget(
+      errors,
+      id,
+      `is ${kilobytes(summary.bytes)} (${summary.bytes} bytes), over the 1.5 MB limit of spec 12.6`,
+    );
+  }
+  if (summary.triangles > ENVIRONMENT_TRIANGLES) {
+    checkBudget(
+      errors,
+      id,
+      `has ${summary.triangles} triangles, over the ${ENVIRONMENT_TRIANGLES} budget of spec 9.3`,
+    );
+  }
+  return errors;
+}
+
 /** Compares one model against the spec rules for its data unit. */
 export function evaluateModel(
   id: string,
@@ -149,7 +189,10 @@ export function evaluateModel(
 ): string[] {
   const unit = units.find((candidate) => candidate.id === id);
   if (unit === undefined) {
-    return [`model "${id}" has no matching defender or enemy in src/data/index.ts`];
+    return [`model "${id}" has no matching defender, enemy or environment in src/data/index.ts`];
+  }
+  if (unit.kind === 'environment') {
+    return evaluateEnvironmentModel(id, summary);
   }
   const errors: string[] = [];
   const sizeLimit = sizeLimitFor(unit);
@@ -216,27 +259,43 @@ export function evaluateInventory(
       errors.push(`data id "${id.id}" is defined more than once (defender and enemy?)`);
     }
   }
+  const environmentIds = new Set(
+    units.filter((unit) => unit.kind === 'environment').map((unit) => unit.id),
+  );
   const models = new Set(modelIds);
   const scripts = new Set(scriptIds);
   for (const id of models) {
     if (!unitIds.has(id)) {
-      errors.push(`model "${id}" has no matching defender or enemy in src/data/index.ts`);
+      errors.push(
+        `model "${id}" has no matching defender, enemy or environment in src/data/index.ts`,
+      );
     }
     if (!scripts.has(id)) {
       errors.push(
-        `model "${id}" has no character script under assets-src/blender/characters or import`,
+        environmentIds.has(id)
+          ? `model "${id}" has no script under assets-src/blender/environment`
+          : `model "${id}" has no character script under assets-src/blender/characters or import`,
       );
     }
   }
   for (const id of scripts) {
     if (!unitIds.has(id)) {
       errors.push(
-        `character script "${id}" has no matching defender or enemy in src/data/index.ts`,
+        `model script "${id}" has no matching data unit or environment in src/data/index.ts`,
       );
     }
     if (!models.has(id)) {
       errors.push(
-        `character script "${id}" has no committed model (run npm run assets -- ${id} and commit it)`,
+        environmentIds.has(id)
+          ? `environment "${id}" has no committed model (run npm run assets -- ${id} and commit it)`
+          : `character script "${id}" has no committed model (run npm run assets -- ${id} and commit it)`,
+      );
+    }
+  }
+  for (const id of environmentIds) {
+    if (!scripts.has(id) && !models.has(id)) {
+      errors.push(
+        `environment "${id}" has neither a script under assets-src/blender/environment nor a committed model (run npm run assets -- ${id})`,
       );
     }
   }
