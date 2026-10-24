@@ -33,6 +33,7 @@ export type {
   DefenderState,
   EnemyState,
   LevelDef,
+  LevelStatus,
   LoadoutEntry,
   OrbState,
   PendingSpawn,
@@ -41,5 +42,6 @@ export type {
   Sim,
   SimEvent,
   SimState,
+  TrapState,
   WaveState,
 } from './types';

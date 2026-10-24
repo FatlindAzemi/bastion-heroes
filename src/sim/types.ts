@@ -171,6 +171,17 @@ export interface WaveState {
   bannerTick: number | null;
 }
 
+/** The Last Stand Trap of one lane (spec 3.9). The renderer can read `rollerX` for the rolling VFX. */
+export interface TrapState {
+  /** True once the trap was used; one use per lane per level (spec 3.9). */
+  used: boolean;
+  /** World x of the roller while it rolls from trapStartX to trapEndX; null when it is not rolling. */
+  rollerX: number | null;
+}
+
+/** Status of the level run (spec 3.9, 3.10). */
+export type LevelStatus = 'playing' | 'won' | 'lost';
+
 /**
  * The simulated game state. It is exposed read-only to the renderer and the UI,
  * which only read it; the simulation mutates it internally (spec 11.3).
@@ -207,6 +218,14 @@ export interface SimState {
   readonly orbs: OrbState[];
   /** Wave runner state (spec 3.10). */
   wave: WaveState;
+  /** One Last Stand Trap per lane (spec 3.9); the renderer can read the roller positions. */
+  readonly traps: TrapState[];
+  /** 'playing' until the win/loss check ends the level; commands are ignored afterwards (spec 3.9, 3.10). */
+  status: LevelStatus;
+  /** Stars earned by a win: 0 while playing or lost, 1-3 after a win (spec 3.11). */
+  stars: 0 | 1 | 2 | 3;
+  /** Defenders lost to enemies in this run; the 3-star rule of 3.11 uses it. */
+  defendersLost: number;
 }
 
 /** The simulation of one level run. It is the only entry point into `src/sim/` (spec 11.2). */
