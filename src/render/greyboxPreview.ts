@@ -1,6 +1,6 @@
-import { defenderById, enemyById } from '../data';
+import { enemyById } from '../data';
 import { rules } from '../data/rules';
-import type { DefenderState, LoadoutEntry, OrbState, SimEvent, SimState } from '../sim/types';
+import type { SimEvent, SimState } from '../sim/types';
 import type { LevelViewOptions } from './grid';
 import type { GameRenderer } from './renderer';
 
@@ -23,13 +23,6 @@ const PREVIEW_LEVEL: LevelViewOptions = {
   ],
 };
 
-/** Loadout of the preview level; the renderer does not read it yet (spec 3.12). */
-const PREVIEW_LOADOUT: readonly LoadoutEntry[] = [
-  { defenderId: 'sparkbolt_gremlin', level: 1 },
-  { defenderId: 'glowshroom_monk', level: 1 },
-  { defenderId: 'iron_granny', level: 1 },
-];
-
 interface PreviewDefender {
   readonly id: number;
   readonly defenderId: string;
@@ -45,56 +38,20 @@ const PREVIEW_DEFENDERS: readonly PreviewDefender[] = [
   { id: 5, defenderId: 'glowshroom_monk', lane: 4, col: 3 },
 ];
 
-/**
- * Builds a preview defender at its data health, placed at level start and already active
- * (spec 3.4, 5.1). Producers get their first-orb tick from the data (spec 5.2).
- */
-function createPreviewDefender(defender: PreviewDefender): DefenderState {
-  const definition = defenderById[defender.defenderId];
-  const maxHp = definition?.hp ?? 0;
-  const nextOrbTick =
-    definition?.pattern === 'producer'
-      ? Math.round((definition.firstOrbDelayS ?? 0) * rules.tick.tickRate)
-      : null;
+/** Builds the defender fields the greybox renderer reads (deleted with this route in #27). */
+function createPreviewDefender(defender: PreviewDefender): {
+  id: number;
+  defenderId: string;
+  lane: number;
+  col: number;
+  stars: 1;
+} {
   return {
     id: defender.id,
     defenderId: defender.defenderId,
     lane: defender.lane,
     col: defender.col,
     stars: 1,
-    hp: maxHp,
-    maxHp,
-    cardLevel: 1,
-    activeAtTick: 0,
-    nextOrbTick,
-  };
-}
-
-/** One tick of gloomling movement: its data speed divided by the tick rate (spec 3.2, 6.1). */
-const ENEMY_TICK_STEP = (enemyById.gloomling?.speed ?? 0) / rules.tick.tickRate;
-
-interface PreviewOrb {
-  readonly id: number;
-  readonly lane: number;
-  readonly x: number;
-  readonly value: number;
-}
-
-const PREVIEW_ORBS: readonly PreviewOrb[] = [
-  { id: 25, lane: 0, x: 2.6, value: 25 },
-  { id: 26, lane: 2, x: 4.9, value: 25 },
-  { id: 27, lane: 4, x: 8.4, value: 25 },
-];
-
-/** Builds a preview orb that just landed at `tick`, with the 3.3 fall and lifetime timings. */
-function createPreviewOrb(orb: PreviewOrb, tick: number): OrbState {
-  const fallTicks = Math.round(rules.essence.skyDropFallTimeS * rules.tick.tickRate);
-  const lifetimeTicks = Math.round(rules.essence.orbLifetimeS * rules.tick.tickRate);
-  return {
-    ...orb,
-    spawnTick: tick - fallTicks,
-    landTick: tick,
-    expiresAtTick: tick + lifetimeTicks,
   };
 }
 
@@ -115,32 +72,71 @@ const PREVIEW_ENEMIES: readonly PreviewEnemy[] = [
   { id: 17, lane: 4, x: 7.2 },
 ];
 
-/** Creates a fixed preview state; `enemyStep` shifts the enemies back for the interpolation frame. */
+/** Full health of a preview enemy from the data, so the preview frame stays representative (6.1). */
+const ENEMY_MAX_HP = enemyById.gloomling?.hp ?? 0;
+
+/** One tick of gloomling movement: its data speed divided by the tick rate (spec 3.2, 6.1). */
+const ENEMY_TICK_STEP = (enemyById.gloomling?.speed ?? 0) / rules.tick.tickRate;
+
+interface PreviewOrb {
+  readonly id: number;
+  readonly lane: number;
+  readonly x: number;
+  readonly value: number;
+}
+
+const PREVIEW_ORBS: readonly PreviewOrb[] = [
+  { id: 25, lane: 0, x: 2.6, value: 25 },
+  { id: 26, lane: 2, x: 4.9, value: 25 },
+  { id: 27, lane: 4, x: 8.4, value: 25 },
+];
+
+/**
+ * Minimal wave-runner state for context only; the greybox renderer never reads it (spec 3.10).
+ * Deliberately a plain object, because this fixture is decoupled from the sim state types.
+ */
+const PREVIEW_WAVE = {
+  index: 0,
+  nextWaveTick: null,
+  pendingSpawns: [],
+  nextSpawnTick: 0,
+  earlyClearTick: null,
+  allWavesSpawned: false,
+  bannerWaveIndex: null,
+  bannerTick: null,
+};
+
+/**
+ * Creates the fixed preview frame of one tick; `enemyStep` shifts the enemies back so the
+ * interpolation frame lies exactly between two ticks (spec 11.4).
+ */
 function createPreviewState(tick: number, enemyStep: number): Readonly<SimState> {
-  return {
+  const previewFrame = {
     levelId: 'w1_l01',
     seed: 10001,
-    loadout: PREVIEW_LOADOUT,
-    cardCooldownEndTicks: PREVIEW_LOADOUT.map(() => 0),
     tick,
-    rng: { state: 0, next: () => 0 },
-    nextId: 30,
-    essence: 150,
-    autoCollect: false,
+    wave: PREVIEW_WAVE,
     defenders: PREVIEW_DEFENDERS.map(createPreviewDefender),
     enemies: PREVIEW_ENEMIES.map((enemy) => ({
       id: enemy.id,
       enemyId: 'gloomling',
       lane: enemy.lane,
       x: enemy.x + enemyStep,
+      hp: ENEMY_MAX_HP,
+      maxHp: ENEMY_MAX_HP,
+      waveIndex: 0,
     })),
     projectiles: [
       { id: 20, kind: 'bolt', lane: 1, x: 5.9 },
       { id: 21, kind: 'bolt', lane: 2, x: 4.6 },
       { id: 22, kind: 'bolt', lane: 3, x: 5.1 },
     ],
-    orbs: PREVIEW_ORBS.map((orb) => createPreviewOrb(orb, tick)),
+    orbs: PREVIEW_ORBS,
   };
+  // Dev-only preview frame for the fixed-tick screenshot; deleted in #27 together with this route.
+  // Intentionally not an exhaustive SimState: the greybox renderer only reads defenders/enemies/
+  // projectiles/orbs. The cast keeps this temporary fixture out of the sim type-extension loop.
+  return previewFrame as unknown as Readonly<SimState>;
 }
 
 /** Spawn events of the preview entities, so the screenshot exercises the event path (spec 11.3). */
