@@ -1,6 +1,6 @@
 /**
- * Units layer (spec 11.7): the pilot GLB models for the three style-pilot ids
- * (issue #66), with the greybox capsule as the asynchronous-loading and
+ * Units layer (spec 11.7): the committed GLB models (style pilot #66, the M2
+ * enemies #70), with the greybox capsule as the asynchronous-loading and
  * not-yet-modelled fallback.
  *
  * Spawned units get the real model as soon as it is loaded: until then they show
