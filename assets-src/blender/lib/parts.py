@@ -108,6 +108,14 @@ def capsule(name, radius, depth, loc, swatch, rot=(0.0, 0.0, 0.0), segments=CYLI
     return _prepare(cylinder_obj, name, swatch, 0.0, smooth=True)
 
 
+def rod(name, start, end, radius, swatch, vertices=6):
+    """A low-poly cylinder between two points, for bows, slings, staffs and struts."""
+    direction = Vector(end) - Vector(start)
+    middle = (Vector(start) + Vector(end)) / 2.0
+    rotation = direction.to_track_quat("Z", "Y").to_euler()
+    return cylinder(name, radius=radius, depth=direction.length, loc=tuple(middle), swatch=swatch, rot=tuple(rotation), vertices=vertices)
+
+
 def mirror_x(obj, name=None):
     """Duplicate `obj` mirrored across the character's left/right symmetry plane.
 
