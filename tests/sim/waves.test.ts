@@ -311,14 +311,17 @@ describe('waves', () => {
     advanceToTick(sim, 30);
     sim.step();
 
+    const gloomling = enemyById['gloomling'];
+    const speedPerTick = (gloomling?.speed ?? 0) / rules.tick.tickRate;
     expect(sim.state.enemies[0]).toMatchObject({
       enemyId: 'gloomling',
       lane: 2,
-      x: rules.grid.enemySpawnX,
       hp: 200,
       maxHp: 200,
       waveIndex: 0,
     });
-    expect(enemyById['gloomling']?.hp).toBe(200);
+    // Spawned at the spawn point in phase 2, then walked one tick in phase 7 (#21).
+    expect(sim.state.enemies[0]?.x).toBeCloseTo(rules.grid.enemySpawnX - speedPerTick);
+    expect(gloomling?.hp).toBe(200);
   });
 });

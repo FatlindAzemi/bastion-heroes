@@ -61,6 +61,7 @@ describe('placement', () => {
         cardLevel: 1,
         activeAtTick: ACTIVATION_DELAY_TICKS,
         nextOrbTick: null,
+        nextAttackTick: 0,
       },
     ]);
   });
@@ -140,6 +141,8 @@ describe('placement', () => {
       hp: 200,
       maxHp: 200,
       waveIndex: 0,
+      blockedByDefenderId: null,
+      nextBiteTick: null,
     });
 
     sim.enqueue(place(SPARKBOLT, 0, 0));

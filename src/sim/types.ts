@@ -89,27 +89,38 @@ export interface DefenderState {
   activeAtTick: number;
   /** Absolute tick of its next producer orb, or null if the defender does not produce (spec 5.2). */
   nextOrbTick: number | null;
+  /** Absolute tick at which the defender may fire again (spec 5.2 attackIntervalS). */
+  nextAttackTick: number;
 }
 
-/** An enemy walking along a lane (spec 3.8, 11.3). Issue #21 adds movement and combat timers. */
+/** An enemy walking along a lane (spec 3.8, 11.3). */
 export interface EnemyState {
   id: number;
   enemyId: string;
   lane: number;
   x: number;
-  /** Current health; the base hp comes from the enemy data, damage is #21. */
+  /** Current health; reduced by projectiles (spec 4.2). */
   hp: number;
   maxHp: number;
   /** Index of the wave that spawned this enemy; the early-clear rule of 3.10 uses it. */
   waveIndex: number;
+  /** Defender currently blocking this enemy, or null when it walks freely (spec 3.8). */
+  blockedByDefenderId: number | null;
+  /** Tick of the next bite of the blocking defender, or null when it is not biting (spec 4.7). */
+  nextBiteTick: number | null;
 }
 
-/** A projectile in flight (spec 11.3). */
+/** A projectile in flight (spec 4.3, 11.3). */
 export interface ProjectileState {
   id: number;
   kind: string;
   lane: number;
   x: number;
+  /** Id of the defender that fired it (spec 11.3 attack event). */
+  sourceId: number;
+  /** Damage before the armor multiplier T; T is applied when it hits (spec 4.2). */
+  damage: number;
+  damageType: 'pierce' | 'blast' | 'arcane';
 }
 
 /**

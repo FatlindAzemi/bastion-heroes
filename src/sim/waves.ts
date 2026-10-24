@@ -233,6 +233,8 @@ function spawnEnemy(
     hp: enemyDef.hp,
     maxHp: enemyDef.hp,
     waveIndex,
+    blockedByDefenderId: null,
+    nextBiteTick: null,
   });
   events.push({ type: 'enemySpawned', id, enemyId: spawn.enemyId, lane: spawn.lane });
 }

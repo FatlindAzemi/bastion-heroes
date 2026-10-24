@@ -1,3 +1,7 @@
+import { updateDefenders } from './combat/defenderActions';
+import { removeDeadEntities } from './combat/deaths';
+import { updateEnemies } from './combat/enemyActions';
+import { updateProjectiles } from './combat/projectiles';
 import { collectOrb, updateEssence } from './essence';
 import { initialCardCooldownEndTicks, placeDefender, shovelDefender } from './placement';
 import { createRng } from './rng';
@@ -58,32 +62,17 @@ export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number
     }
   }
 
-  // The phases below are the fixed tick order of spec 11.3. Waves (#20) and
-  // Essence (#19) are implemented; the remaining phases arrive with #21-#22.
-  function updateDefenders(): void {
-    // Issue #21 (spec 3.4, 4.4: defenders act sorted by id).
-  }
-
-  function updateProjectiles(): void {
-    // Issue #21 (spec 4.3, 4.4).
-  }
-
+  /** Phase 6 (spec 11.3): status effects tick; they arrive with milestone M2 (#2.2). */
   function updateStatusEffects(): void {
-    // Issue #21 (spec 4.5).
+    // Status effects are implemented in M2 (spec 4.5, issue #2.2).
   }
 
-  function updateEnemies(): void {
-    // Issue #21 (spec 3.8: enemies move, block and eat sorted by id).
-  }
-
-  function removeDeadEntities(): void {
-    // Issue #21 (spec 3.8, 4.7).
-  }
-
+  /** Phase 9 (spec 11.3): the Last Stand Traps; implemented in issue #22 (spec 3.9). */
   function updateTraps(): void {
     // Issue #22 (spec 3.9).
   }
 
+  /** Phase 10 (spec 11.3): win and loss check; implemented in issue #22 (spec 3.9, 3.10). */
   function checkLevelResult(): void {
     // Issue #22 (spec 3.9, 3.10).
   }
@@ -95,11 +84,11 @@ export function createSim(level: LevelDef, loadout: LoadoutEntry[], seed: number
     applyQueuedCommands(events); // 1) queued commands, in order
     updateWaves(state, level, events); // 2) waves spawn
     updateEssence(state, level, events); // 3) Essence and orbs
-    updateDefenders(); // 4) defenders act, sorted by id
-    updateProjectiles(); // 5) projectiles move and hit
+    updateDefenders(state, events); // 4) defenders act, sorted by id
+    updateProjectiles(state, events); // 5) projectiles move and hit
     updateStatusEffects(); // 6) status effects tick
-    updateEnemies(); // 7) enemies move, block and eat, sorted by id
-    removeDeadEntities(); // 8) remove dead entities
+    updateEnemies(state, events); // 7) enemies move, block and eat, sorted by id
+    removeDeadEntities(state, events); // 8) remove dead entities
     updateTraps(); // 9) Last Stand Traps
     checkLevelResult(); // 10) win and loss check
 
