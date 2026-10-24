@@ -72,6 +72,11 @@ export const DefenderDef = z.object({
   star3Bonus: z.string(),
   /** Extension: numeric values of the ★3 bonus named by `star3Bonus` (section 5.2). */
   star3Params: z.record(z.string(), z.number()).optional(),
+  /**
+   * Extension: highest star level (default 3); 1 is the no-merge seam of the
+   * "Cannot be merged" defenders (Aurora, section 5.2), set by M7 data.
+   */
+  maxStars: z.number().int().min(1).max(3).optional(),
   milestone: z.enum(['M1', 'M2', 'M7']),
 });
 
@@ -141,6 +146,8 @@ export const RulesDef = z.object({
     defenderActivationDelayS: z.number().nonnegative(),
   }),
   merge: z.object({
+    /** Highest star level of spec 3.6 (★3). */
+    maxStars: z.number().int().min(1).max(3),
     star2HealthMultiplier: z.number().positive(),
     star2DamageMultiplier: z.number().positive(),
     star3HealthMultiplier: z.number().positive(),

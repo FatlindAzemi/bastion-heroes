@@ -7,11 +7,12 @@ import { ENEMY_SPAWN_X } from '../grid';
 import { tileCenterX } from '../grid';
 import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
 import { collectAuraDamageBuffs } from './aura';
+import { star3RangeTiles } from './star3';
 
 /**
  * One `beam` attack (spec 4.3): instantly hits every enemy in its lane within
  * `range` tiles. Ignores shields (no shield system yet, see #47) and hits flying
- * enemies (spec 4.4 rule 4).
+ * enemies (spec 4.4 rule 4). A ★3 `range_up` bonus replaces the range (spec 5.2).
  */
 export function attackWithBeam(
   state: SimState,
@@ -24,7 +25,7 @@ export function attackWithBeam(
     return false;
   }
   const fromX = tileCenterX(defender.col);
-  const maximumX = fromX + (defenderDef.range ?? ENEMY_SPAWN_X);
+  const maximumX = fromX + (star3RangeTiles(defender, defenderDef) ?? ENEMY_SPAWN_X);
   const targets = state.enemies
     .filter(
       (enemy) =>

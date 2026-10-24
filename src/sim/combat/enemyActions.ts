@@ -1,4 +1,5 @@
 import { defenderById, enemyById, rules } from '../../data';
+import { star3MeleeReflectRatio } from '../behaviors/star3';
 import { tileCenterX } from '../grid';
 import { isDefenderActive, ticksFromSeconds } from '../placement';
 import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
@@ -35,9 +36,13 @@ function findBlockingDefender(state: SimState, enemy: EnemyState): DefenderState
 }
 
 /**
- * Bites the blocking defender for biteDamage (spec 4.7). Enemy bites have no
- * damage type in the 4.1 table, so they emit `attack` (eat animation) and not the
- * typed `hit` event that defender attacks use.
+ * Bites the blocking defender for biteDamage (spec 4.7). A ★3 Iron Granny
+ * reflects part of that melee damage back to the enemy (spec 5.2).
+ *
+ * Enemy bites have no damage type in the 4.1 table, so they emit `attack` (eat
+ * animation) and not the typed `hit` event that defender attacks use. The
+ * reflection is an untyped hit too and reuses the same `attack` event, from the
+ * defender to the enemy.
  */
 function biteDefender(enemy: EnemyState, defender: DefenderState, events: SimEvent[]): void {
   const enemyDef = enemyById[enemy.enemyId];
@@ -46,6 +51,18 @@ function biteDefender(enemy: EnemyState, defender: DefenderState, events: SimEve
   }
   defender.hp -= enemyDef.biteDamage;
   events.push({ type: 'attack', sourceId: enemy.id, targetId: defender.id });
+  const defenderDef = defenderById[defender.defenderId];
+  if (defenderDef === undefined) {
+    return;
+  }
+  const reflectedDamage = Math.round(
+    enemyDef.biteDamage * star3MeleeReflectRatio(defender, defenderDef),
+  );
+  if (reflectedDamage <= 0) {
+    return;
+  }
+  enemy.hp -= reflectedDamage;
+  events.push({ type: 'attack', sourceId: defender.id, targetId: enemy.id });
 }
 
 /** Applies one tick of active knockback movement; returns true when it moved (spec 4.5). */

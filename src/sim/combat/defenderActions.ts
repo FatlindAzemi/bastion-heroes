@@ -5,6 +5,7 @@ import { attackWithDiagonal } from '../behaviors/diagonal';
 import { attackWithLob } from '../behaviors/lob';
 import { attackWithSplash } from '../behaviors/splash';
 import { attackWithStraight } from '../behaviors/straight';
+import { star3BoltBurst } from '../behaviors/star3';
 import { updateTrapDefender } from '../behaviors/trap';
 import { isDefenderActive, ticksFromSeconds } from '../placement';
 import type { DefenderState, SimEvent, SimState } from '../types';
@@ -30,6 +31,43 @@ function attackWithPattern(
     default:
       return false;
   }
+}
+
+/**
+ * Schedules the next attack of a defender that just fired. A ★3 `double_bolt`
+ * burst fires its remaining bolts after the data bolt gap and only then waits
+ * the full attack interval (spec 5.2).
+ */
+function scheduleNextAttack(
+  state: SimState,
+  defender: DefenderState,
+  defenderDef: DefenderDef,
+  attackIntervalTicks: number,
+): void {
+  const burst = star3BoltBurst(defender, defenderDef);
+  if (burst === null || burst.boltCount < 2) {
+    defender.nextAttackTick = state.tick + attackIntervalTicks;
+    return;
+  }
+  if (defender.burstShotsRemaining > 0) {
+    defender.burstShotsRemaining -= 1;
+  } else {
+    defender.burstShotsRemaining = burst.boltCount - 1;
+  }
+  defender.nextAttackTick =
+    state.tick + (defender.burstShotsRemaining > 0 ? burst.gapTicks : attackIntervalTicks);
+}
+
+/**
+ * A burst that loses its target stops: the next attack starts a fresh burst as
+ * soon as a target appears again (spec 5.2).
+ */
+function cancelBurstWithoutTarget(state: SimState, defender: DefenderState): void {
+  if (defender.burstShotsRemaining === 0) {
+    return;
+  }
+  defender.burstShotsRemaining = 0;
+  defender.nextAttackTick = state.tick;
 }
 
 /**
@@ -68,7 +106,9 @@ export function updateDefenders(state: SimState, events: SimEvent[]): void {
       continue;
     }
     if (attackWithPattern(state, defender, defenderDef, events)) {
-      defender.nextAttackTick = state.tick + attackIntervalTicks;
+      scheduleNextAttack(state, defender, defenderDef, attackIntervalTicks);
+    } else {
+      cancelBurstWithoutTarget(state, defender);
     }
   }
 }

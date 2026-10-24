@@ -4,12 +4,14 @@ import type {
   DefenderState,
   ElementKind,
   EnemyState,
+  FirePatchSpec,
   ProjectileState,
   SimEvent,
   SimState,
 } from '../types';
 import { applyAfterHitCombos, applyShatter } from './combos';
 import { applyArmorMultiplier, scaleDamage, type DamageType } from './damage';
+import { spawnFirePatch } from './firePatches';
 import { applyStatus, type AttackStatus } from './status';
 
 /** Tiles a moving projectile covers per tick (spec 4.3: 6 tiles/s at 30 ticks/s). */
@@ -36,6 +38,10 @@ export interface ProjectileOptions {
   status?: AttackStatus | null;
   /** Element of the firing defender; the 4.6 combos match on it. */
   element?: ElementKind;
+  /** ★3 piercing_arrow: extra enemies the projectile passes through after its first hit (spec 5.2). */
+  piercesRemaining?: number;
+  /** ★3 Pyro Fox: the Burn patch left at the impact point, or null (spec 5.2). */
+  firePatch?: FirePatchSpec | null;
 }
 
 /** Adds a projectile to the state, allocates its id and emits `projectileSpawned` (spec 11.3). */
@@ -64,6 +70,8 @@ export function spawnProjectile(
     statusDurationS: options.status?.durationS ?? 0,
     statusStacks: options.status?.stacks ?? 1,
     element: options.element ?? 'none',
+    piercesRemaining: options.piercesRemaining ?? 0,
+    firePatch: options.firePatch ?? null,
   };
   state.nextId += 1;
   state.projectiles.push(projectile);
@@ -148,7 +156,8 @@ function applyHit(
 /**
  * Lands a lob/splash arc (spec 4.3): full damage to the target and the 50 %
  * splash ratio from the rules to every other enemy inside the splash radius.
- * If the target died during the flight the arc lands without effect.
+ * If the target died during the flight the arc lands without effect. A ★3 Pyro
+ * Fox fire patch is dropped at the impact point (spec 5.2).
  */
 function resolveArcImpact(state: SimState, projectile: ProjectileState, events: SimEvent[]): void {
   if (projectile.targetId === null) {
@@ -160,6 +169,9 @@ function resolveArcImpact(state: SimState, projectile: ProjectileState, events: 
   }
   const impactX = target.x;
   applyHit(state, target, projectile, events);
+  if (projectile.firePatch !== null) {
+    spawnFirePatch(state, target.lane, impactX, projectile.firePatch);
+  }
   const splashRadius = projectile.splashRadius;
   if (splashRadius === null) {
     return;
@@ -208,6 +220,11 @@ function updateMovingProjectile(
   const hitEnemy = findHitEnemy(state.enemies, projectile, previousX);
   if (hitEnemy !== undefined) {
     applyHit(state, hitEnemy, projectile, events);
+    if (projectile.piercesRemaining > 0) {
+      // ★3 piercing_arrow: the projectile passes through and keeps flying (spec 5.2).
+      projectile.piercesRemaining -= 1;
+      return projectile.x > ENEMY_SPAWN_X;
+    }
     return true;
   }
   return projectile.x > ENEMY_SPAWN_X;
