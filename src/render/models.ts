@@ -43,6 +43,8 @@ export const PILOT_MODEL_IDS = [
   'pyro_fox',
   'shade_wisp',
   'bat_swarm',
+  'gloom_priest',
+  'gloom_ogre',
 ] as const;
 
 /** Outline colour and thickness of spec 9.2. */
