@@ -33,6 +33,7 @@ export type {
   Command,
   DefenderState,
   EnemyState,
+  EnemyStatusState,
   LevelDef,
   LevelStatus,
   LoadoutEntry,
@@ -45,6 +46,7 @@ export type {
   Sim,
   SimEvent,
   SimState,
+  StatusKind,
   TrapState,
   WaveState,
 } from './types';

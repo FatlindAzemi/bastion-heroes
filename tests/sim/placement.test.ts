@@ -64,6 +64,7 @@ describe('placement', () => {
         nextAttackTick: 0,
         trapReadyAtTick: null,
         trapRearmed: false,
+        attackCount: 0,
       },
     ]);
   });
@@ -145,6 +146,7 @@ describe('placement', () => {
       waveIndex: 0,
       blockedByDefenderId: null,
       nextBiteTick: null,
+      statuses: [],
     });
 
     sim.enqueue(place(SPARKBOLT, 0, 0));

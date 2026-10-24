@@ -112,6 +112,22 @@ export interface DefenderState {
   trapReadyAtTick: number | null;
   /** True once a ★3 trap used its one rearm (spec 4.3, 5.2). */
   trapRearmed: boolean;
+  /** Attacks fired so far; the `freezeEveryNthAttack` counter uses it (spec 4.5, 5.2). */
+  attackCount: number;
+}
+
+/** The seven enemy status effects of spec 4.5. */
+export type StatusKind = 'slow' | 'freeze' | 'burn' | 'poison' | 'stun' | 'knockback' | 'wet';
+
+/** One active status on an enemy (spec 4.5). The renderer reads it for tints/VFX, combos use it. */
+export interface EnemyStatusState {
+  kind: StatusKind;
+  /** Tick at which the status expires (wet is refreshed every tick while on water). */
+  expiresAtTick: number;
+  /** Tick of the next periodic damage tick (burn/poison only), null otherwise. */
+  nextTickAt: number | null;
+  /** Knockback only: tiles pushed to the right per tick. */
+  knockbackTilesPerTick: number;
 }
 
 /** An enemy walking along a lane (spec 3.8, 11.3). */
@@ -129,6 +145,8 @@ export interface EnemyState {
   blockedByDefenderId: number | null;
   /** Tick of the next bite of the blocking defender, or null when it is not biting (spec 4.7). */
   nextBiteTick: number | null;
+  /** Active status effects, in application order (spec 4.5). */
+  statuses: EnemyStatusState[];
 }
 
 /**
@@ -160,6 +178,12 @@ export interface ProjectileState {
   targetLane: number | null;
   /** Diagonal: world x at which the projectile switches to `targetLane`; null otherwise. */
   switchAtX: number | null;
+  /** Status this projectile applies to every enemy it hits, or null (spec 4.5, 5.2). */
+  statusKind: StatusKind | null;
+  /** Duration in seconds of the applied status (spec 4.5). */
+  statusDurationS: number;
+  /** Poison stacks of the applied status (1 for every other status, spec 4.5). */
+  statusStacks: number;
 }
 
 /**

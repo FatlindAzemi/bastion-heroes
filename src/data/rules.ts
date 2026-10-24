@@ -70,4 +70,12 @@ export const rules: RulesDef = {
     // 4.3: diagonal projectiles switch lane once, 1 tile after spawning.
     diagonalLaneSwitchTiles: 1,
   },
+  // 4.5: enemy status effects (effect, duration, stacking).
+  status: {
+    slow: { moveSpeedMultiplier: 0.5, attackSpeedMultiplier: 0.5, durationS: 3 },
+    freeze: { durationS: 2 },
+    burn: { damage: 6, damageType: 'blast', intervalS: 0.5, durationS: 3 },
+    poison: { maxHealthRatio: 0.02, intervalS: 1, durationS: 4, maxStacks: 3 },
+    knockback: { durationS: 0.2 },
+  },
 };
