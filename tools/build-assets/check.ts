@@ -93,7 +93,7 @@ if (isCli) {
     process.exitCode = 1;
   } else {
     process.stdout.write(
-      `check: ok - ${modelCount} model(s) within spec 9.3/12.5/12.6 limits and the spec 12.7 id map\n`,
+      `check: ok - ${modelCount} model(s) decoded with MeshoptDecoder and within spec 9.3/12.5/12.6 limits and the spec 12.7 id map\n`,
     );
   }
 }

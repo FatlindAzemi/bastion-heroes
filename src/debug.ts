@@ -7,15 +7,26 @@
  * `parseDebugUrl` is a pure function so it can be tested without a browser; the
  * module uses no Node APIs.
  */
-import { defenders, levelById } from './data';
+import { defenders, levelById, rules } from './data';
 import type { LevelDef } from './data/schemas';
 import type { LoadoutEntry, Sim, SimEvent } from './sim/types';
+
+/** One debug auto-placement: put a defender on a tile before the first rendered frame. */
+export interface DebugPlacement {
+  readonly defenderId: string;
+  readonly lane: number;
+  readonly col: number;
+}
 
 /** A validated debug-level request: which level, which seed and how many ticks to skip. */
 export interface DebugLevelRequest {
   readonly levelId: string;
   readonly seed: number;
   readonly tick: number;
+  /** Debug-only loadout override (`?cards=id,id`), used for model screenshots. */
+  readonly cards?: readonly string[];
+  /** Debug-only auto-placements (`?place=id:lane,col;...`), applied before the fast-forward. */
+  readonly placements?: readonly DebugPlacement[];
 }
 
 /**
@@ -56,6 +67,59 @@ function parseIntegerParam(
   return value;
 }
 
+/** Reads the optional `?cards=` loadout override; returns an error message as a string. */
+function parseCards(parameters: URLSearchParams): string[] | string {
+  const rawCards = parameters.get('cards');
+  if (rawCards === null) {
+    return [];
+  }
+  const cards = rawCards
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+  if (cards.length === 0) {
+    return 'Debug URL: "cards" needs at least one defender id.';
+  }
+  for (const defenderId of cards) {
+    if (defenders.every((defender) => defender.id !== defenderId)) {
+      return `Debug URL: unknown defender "${defenderId}" in "cards".`;
+    }
+  }
+  return cards;
+}
+
+/** Reads the optional `?place=id:lane,col;...` auto-placement list. */
+function parsePlacements(parameters: URLSearchParams): DebugPlacement[] | string {
+  const rawPlacements = parameters.get('place');
+  if (rawPlacements === null) {
+    return [];
+  }
+  const placements: DebugPlacement[] = [];
+  for (const token of rawPlacements
+    .split(';')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0)) {
+    const match = /^([a-z0-9_]+):(\d+),(\d+)$/.exec(token);
+    if (match === null) {
+      return `Debug URL: bad "place" entry "${token}", expected <defenderId>:<lane>,<col>.`;
+    }
+    const defenderId = match[1] ?? '';
+    const lane = Number(match[2]);
+    const col = Number(match[3]);
+    if (defenders.every((defender) => defender.id !== defenderId)) {
+      return `Debug URL: unknown defender "${defenderId}" in "place".`;
+    }
+    if (lane < 0 || lane >= rules.grid.laneCount || col < 0 || col >= rules.grid.columnCount) {
+      return `Debug URL: "place" entry "${token}" is outside the grid.`;
+    }
+    placements.push({ defenderId, lane, col });
+  }
+  if (placements.length === 0) {
+    return 'Debug URL: "place" needs at least one <defenderId>:<lane>,<col> entry.';
+  }
+  return placements;
+}
+
 /**
  * Parses the debug URL query (spec 13.7: `?level=w1-l01&seed=10001&tick=900`).
  * Without a `level` parameter the app shows its title screen. Unknown levels and
@@ -87,8 +151,23 @@ export function parseDebugUrl(search: string): DebugUrlResult {
   if (typeof tick === 'string') {
     return { kind: 'error', message: tick };
   }
+  const cards = parseCards(parameters);
+  if (typeof cards === 'string') {
+    return { kind: 'error', message: cards };
+  }
+  const placements = parsePlacements(parameters);
+  if (typeof placements === 'string') {
+    return { kind: 'error', message: placements };
+  }
   const kind = parameters.get('scout') === '1' ? 'scout' : 'level';
-  return { kind, levelId, seed, tick };
+  return {
+    kind,
+    levelId,
+    seed,
+    tick,
+    ...(cards.length > 0 ? { cards } : {}),
+    ...(placements.length > 0 ? { placements } : {}),
+  };
 }
 
 /**
@@ -96,9 +175,12 @@ export function parseDebugUrl(search: string): DebugUrlResult {
  * defenders for a free-loadout level, always at card level 1 (spec 3.12). The
  * real loadout screen arrives with M2 issue 2.8.
  */
-export function createDebugLoadout(level: LevelDef): LoadoutEntry[] {
+export function createDebugLoadout(level: LevelDef, cards?: readonly string[]): LoadoutEntry[] {
   const defenderIds =
-    level.fixedLoadout ?? defenders.slice(0, level.loadoutSlots).map((defender) => defender.id);
+    cards !== undefined && cards.length > 0
+      ? cards
+      : (level.fixedLoadout ??
+        defenders.slice(0, level.loadoutSlots).map((defender) => defender.id));
   return defenderIds.map((defenderId) => ({ defenderId, level: 1 }));
 }
 

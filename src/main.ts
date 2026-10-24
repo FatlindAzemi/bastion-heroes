@@ -1,6 +1,12 @@
 import { defenderById, levelById, rules } from './data';
 import { LevelDef } from './data/schemas';
-import { createDebugLoadout, fastForward, parseDebugUrl, type DebugLevelRequest } from './debug';
+import {
+  createDebugLoadout,
+  fastForward,
+  parseDebugUrl,
+  type DebugLevelRequest,
+  type DebugPlacement,
+} from './debug';
 import { startGameLoop, startRenderLoop, type GameLoop } from './loop';
 import { createRenderer, type GameRenderer } from './render';
 import { createSim } from './sim';
@@ -117,8 +123,18 @@ function startLevelRun(
   seed: number,
   tick: number,
   loadout: readonly LoadoutEntry[],
+  placements: readonly DebugPlacement[] = [],
 ): void {
   const sim = createSim(level, [...loadout], seed);
+  // Debug-only (issue #66): place defenders at tick 0 so a deep tick already shows the models.
+  for (const placement of placements) {
+    sim.enqueue({
+      type: 'place',
+      defenderId: placement.defenderId,
+      lane: placement.lane,
+      col: placement.col,
+    });
+  }
   renderer.showLevel(level);
   fastForward(sim, tick, (events) => renderer.handleEvents(events));
 
@@ -154,7 +170,15 @@ function startDebugLevel(
     showDebugError(root, `Debug URL: unknown level "${request.levelId}".`);
     return;
   }
-  startLevelRun(root, renderer, level, request.seed, request.tick, createDebugLoadout(level));
+  startLevelRun(
+    root,
+    renderer,
+    level,
+    request.seed,
+    request.tick,
+    createDebugLoadout(level, request.cards),
+    request.placements ?? [],
+  );
 }
 
 /**
