@@ -28,6 +28,12 @@ const GRID_CENTER_Z = (LANE_COUNT * TILE_SIZE) / 2;
 const GROUND_WIDTH = 24;
 const GROUND_DEPTH = 18;
 
+/** Dirt frame width around the playfield, in tiles (greybox art, spec 9.4). */
+const LAWN_BORDER_WIDTH = 0.5;
+
+/** Height of the rock blocks that mark blocked tiles, in tiles (greybox art). */
+const ROCK_HEIGHT = 0.4;
+
 /** One terrain tile of the level definition (spec 7.1). */
 export interface TerrainTile {
   readonly lane: number;
@@ -119,20 +125,38 @@ function collectRockTiles(options: LevelViewOptions): ReadonlySet<string> {
   return rockTiles;
 }
 
+/** Adds one rock block with a dark cross on top, marking a blocked tile (spec 3.1, 7.1). */
+function addRockBlock(
+  blocks: BufferGeometry[],
+  crosses: BufferGeometry[],
+  x: number,
+  z: number,
+): void {
+  const baseY = 0.02;
+  pushBox(
+    blocks,
+    [TILE_SIZE * 0.96, ROCK_HEIGHT, TILE_SIZE * 0.96],
+    [x, baseY + ROCK_HEIGHT / 2, z],
+  );
+  for (const angle of [Math.PI / 4, -Math.PI / 4]) {
+    const bar = new BoxGeometry(TILE_SIZE * 0.7, 0.03, TILE_SIZE * 0.12);
+    bar.rotateY(angle);
+    bar.translate(x, baseY + ROCK_HEIGHT + 0.02, z);
+    crosses.push(bar);
+  }
+}
+
 /** Checkerboard grass tiles of spec 9.4, with rock blocks for blocked tiles. */
 function addTiles(group: Group, options: LevelViewOptions): void {
   const rockTiles = collectRockTiles(options);
   const lightTiles: BufferGeometry[] = [];
   const darkTiles: BufferGeometry[] = [];
   const rockBlocks: BufferGeometry[] = [];
+  const rockCrosses: BufferGeometry[] = [];
   for (let lane = 0; lane < LANE_COUNT; lane += 1) {
     for (let col = 0; col < COLUMN_COUNT; col += 1) {
       if (rockTiles.has(tileKey(lane, col))) {
-        pushBox(
-          rockBlocks,
-          [TILE_SIZE * 0.96, 0.32, TILE_SIZE * 0.96],
-          [columnToWorldX(col), 0.18, laneToWorldZ(lane)],
-        );
+        addRockBlock(rockBlocks, rockCrosses, columnToWorldX(col), laneToWorldZ(lane));
         continue;
       }
       const tiles = (lane + col) % 2 === 0 ? lightTiles : darkTiles;
@@ -142,15 +166,16 @@ function addTiles(group: Group, options: LevelViewOptions): void {
   addMergedMesh(group, lightTiles, GREYBOX_COLORS.grassLight);
   addMergedMesh(group, darkTiles, GREYBOX_COLORS.grassDark);
   addMergedMesh(group, rockBlocks, GREYBOX_COLORS.stoneDark);
+  addMergedMesh(group, rockCrosses, GREYBOX_COLORS.gloom);
 }
 
-/** Thin horizontal strips between the lanes, reading as lane dividers (spec 9.1). */
+/** Bold horizontal strips between the lanes, so the five rows read at a glance (spec 9.1). */
 function addLaneDividers(group: Group): void {
   const parts: BufferGeometry[] = [];
   for (let lane = 1; lane < LANE_COUNT; lane += 1) {
-    pushGroundPlane(parts, COLUMN_COUNT * TILE_SIZE, 0.05, GRID_CENTER_X, lane * TILE_SIZE, 0.03);
+    pushGroundPlane(parts, COLUMN_COUNT * TILE_SIZE, 0.14, GRID_CENTER_X, lane * TILE_SIZE, 0.035);
   }
-  addMergedMesh(group, parts, GREYBOX_COLORS.moss);
+  addMergedMesh(group, parts, GREYBOX_COLORS.gloom);
 }
 
 /** Stone base apron at x < 0, its bright base line at x = 0 and the trap pads (spec 3.1, 3.9). */
@@ -213,11 +238,44 @@ function addPortalMarker(group: Group): void {
   group.add(portal);
 }
 
-/** Grass ground around the lawn, so the camera never sees the void (spec 9.4). */
+/** Dark neutral void around the lawn, so the playfield reads clearly (spec 9.4 Gloom shadow). */
 function addGround(group: Group): void {
   const parts: BufferGeometry[] = [];
   pushGroundPlane(parts, GROUND_WIDTH, GROUND_DEPTH, GRID_CENTER_X, GRID_CENTER_Z, 0);
-  addMergedMesh(group, parts, GREYBOX_COLORS.grassDark);
+  addMergedMesh(group, parts, GREYBOX_COLORS.gloom);
+}
+
+/** Dirt frame around the 5 x 9 playfield, so the field boundary is unmistakable (spec 9.4). */
+function addLawnBorder(group: Group): void {
+  const width = COLUMN_COUNT * TILE_SIZE;
+  const depth = LANE_COUNT * TILE_SIZE;
+  const parts: BufferGeometry[] = [];
+  pushGroundPlane(
+    parts,
+    width + LAWN_BORDER_WIDTH * 2,
+    LAWN_BORDER_WIDTH,
+    GRID_CENTER_X,
+    -LAWN_BORDER_WIDTH / 2,
+    0.015,
+  );
+  pushGroundPlane(
+    parts,
+    width + LAWN_BORDER_WIDTH * 2,
+    LAWN_BORDER_WIDTH,
+    GRID_CENTER_X,
+    depth + LAWN_BORDER_WIDTH / 2,
+    0.015,
+  );
+  pushGroundPlane(parts, LAWN_BORDER_WIDTH, depth, -LAWN_BORDER_WIDTH / 2, GRID_CENTER_Z, 0.015);
+  pushGroundPlane(
+    parts,
+    LAWN_BORDER_WIDTH,
+    depth,
+    width + LAWN_BORDER_WIDTH / 2,
+    GRID_CENTER_Z,
+    0.015,
+  );
+  addMergedMesh(group, parts, GREYBOX_COLORS.dirt);
 }
 
 /** Disposes the geometry and material of one mesh. */
@@ -250,6 +308,7 @@ function disposeGroup(group: Group): void {
 export function createGrid(options: LevelViewOptions): Grid {
   const group = new Group();
   addGround(group);
+  addLawnBorder(group);
   addTiles(group, options);
   addLaneDividers(group);
   addBaseMarker(group, options);

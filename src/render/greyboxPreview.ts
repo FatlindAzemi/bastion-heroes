@@ -1,6 +1,6 @@
-import { enemyById } from '../data';
+import { defenderById, enemyById } from '../data';
 import { rules } from '../data/rules';
-import type { SimEvent, SimState } from '../sim/types';
+import type { DefenderState, LoadoutEntry, SimEvent, SimState } from '../sim/types';
 import type { LevelViewOptions } from './grid';
 import type { GameRenderer } from './renderer';
 
@@ -22,6 +22,45 @@ const PREVIEW_LEVEL: LevelViewOptions = {
     { lane: 3, col: 2, type: 'rock' },
   ],
 };
+
+/** Loadout of the preview level; the renderer does not read it yet (spec 3.12). */
+const PREVIEW_LOADOUT: readonly LoadoutEntry[] = [
+  { defenderId: 'sparkbolt_gremlin', level: 1 },
+  { defenderId: 'glowshroom_monk', level: 1 },
+  { defenderId: 'iron_granny', level: 1 },
+];
+
+interface PreviewDefender {
+  readonly id: number;
+  readonly defenderId: string;
+  readonly lane: number;
+  readonly col: number;
+}
+
+const PREVIEW_DEFENDERS: readonly PreviewDefender[] = [
+  { id: 1, defenderId: 'sparkbolt_gremlin', lane: 2, col: 0 },
+  { id: 2, defenderId: 'glowshroom_monk', lane: 2, col: 1 },
+  { id: 3, defenderId: 'iron_granny', lane: 3, col: 4 },
+  { id: 4, defenderId: 'sparkbolt_gremlin', lane: 1, col: 5 },
+  { id: 5, defenderId: 'glowshroom_monk', lane: 4, col: 3 },
+];
+
+/** Builds a preview defender at its data health, active since level start (spec 5.1, 3.4). */
+function createPreviewDefender(defender: PreviewDefender): DefenderState {
+  const definition = defenderById[defender.defenderId];
+  const maxHp = definition?.hp ?? 0;
+  return {
+    id: defender.id,
+    defenderId: defender.defenderId,
+    lane: defender.lane,
+    col: defender.col,
+    stars: 1,
+    hp: maxHp,
+    maxHp,
+    cardLevel: 1,
+    activeAtTick: 0,
+  };
+}
 
 /** One tick of gloomling movement: its data speed divided by the tick rate (spec 3.2, 6.1). */
 const ENEMY_TICK_STEP = (enemyById.gloomling?.speed ?? 0) / rules.tick.tickRate;
@@ -48,23 +87,14 @@ function createPreviewState(tick: number, enemyStep: number): Readonly<SimState>
   return {
     levelId: 'w1_l01',
     seed: 10001,
-    loadout: [
-      { defenderId: 'sparkbolt_gremlin', level: 1 },
-      { defenderId: 'glowshroom_monk', level: 1 },
-      { defenderId: 'iron_granny', level: 1 },
-    ],
+    loadout: PREVIEW_LOADOUT,
+    cardCooldownEndTicks: PREVIEW_LOADOUT.map(() => 0),
     tick,
     rng: { state: 0, next: () => 0 },
     nextId: 30,
     essence: 150,
     autoCollect: false,
-    defenders: [
-      { id: 1, defenderId: 'sparkbolt_gremlin', lane: 2, col: 0, stars: 1 },
-      { id: 2, defenderId: 'glowshroom_monk', lane: 2, col: 1, stars: 1 },
-      { id: 3, defenderId: 'iron_granny', lane: 3, col: 4, stars: 1 },
-      { id: 4, defenderId: 'sparkbolt_gremlin', lane: 1, col: 5, stars: 1 },
-      { id: 5, defenderId: 'glowshroom_monk', lane: 4, col: 3, stars: 1 },
-    ],
+    defenders: PREVIEW_DEFENDERS.map(createPreviewDefender),
     enemies: PREVIEW_ENEMIES.map((enemy) => ({
       id: enemy.id,
       enemyId: 'gloomling',
