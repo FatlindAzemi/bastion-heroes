@@ -292,6 +292,11 @@ const levelRewards = z.object({
   gold: z.number().int().nonnegative(),
   firstClearChest: z.enum(['wooden', 'silver', 'gold']).optional(),
   unlockDefender: z.string().optional(),
+  /**
+   * Extension: true when the first clear opens the free 6-slot loadout (spec 7.2
+   * row 4, W1-L04 "unlocks free loadout"); spec 11.5 has no field for it.
+   */
+  unlockFreeLoadout: z.boolean().optional(),
 });
 
 /**
