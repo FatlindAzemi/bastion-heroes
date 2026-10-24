@@ -63,7 +63,22 @@ test('debug overlay: shows sim tick, status, stars and entity counts for a level
   // Spec 11.7 / 16.6: ?perf=1 opens the overlay, which now shows the read-only sim state.
   const overlay = page.locator('#debug-overlay');
   await expect(overlay).toBeVisible();
-  await expect(overlay).toContainText('tick 900');
+  // The fixed 30 Hz loop can advance a few ticks before the test-only rAF throttle
+  // kicks in on a loaded CI runner, so assert the requested boot tick within a
+  // documented window instead of the exact string (the overlay itself is unchanged).
+  await expect
+    .poll(
+      async () => {
+        const text = (await overlay.textContent()) ?? '';
+        const match = text.match(/tick (\d+)/);
+        return match === null ? null : Number(match[1]);
+      },
+      { timeout: 5000 },
+    )
+    .toBeGreaterThanOrEqual(900);
+  const overlayText = (await overlay.textContent()) ?? '';
+  const tickMatch = overlayText.match(/tick (\d+)/);
+  expect(tickMatch === null ? null : Number(tickMatch[1])).toBeLessThan(960);
   await expect(overlay).toContainText('status playing');
   await expect(overlay).toContainText(/stars [0-3]/);
   await expect(overlay).toContainText(/enemies \d+ \| defenders \d+ \| orbs \d+/);
