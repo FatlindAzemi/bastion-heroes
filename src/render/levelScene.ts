@@ -1,32 +1,26 @@
-import {
-  Color,
-  DirectionalLight,
-  Group,
-  HemisphereLight,
-  PerspectiveCamera,
-  Scene,
-  Vector3,
-} from 'three';
+import { DirectionalLight, Group, HemisphereLight, PerspectiveCamera, Scene, Vector3 } from 'three';
 
 import { rules } from '../data/rules';
 import type { SimEvent, SimState } from '../sim/types';
+import { applySky } from './backdrop';
 import { fitLevelCamera } from './cameraFit';
 import { readDebugAnimationHold } from './debugAnimation';
 import { createEnvironmentLayer } from './environment';
 import { createGrid, type Grid, type LevelViewOptions } from './grid';
-import { GREYBOX_COLORS } from './greyboxPalette';
-import { createOrbLayer, type OrbLayer } from './orbs';
+import { createOrbLayer } from './orbs';
 import { createParticleBursts, type ParticleBursts } from './particles';
-import { createProjectileLayer, type ProjectileLayer } from './projectiles';
+import { createPropSpriteLayer } from './propSprites';
+import { createProjectileLayer } from './projectiles';
+import { createSpriteUnitLayer } from './sprites';
 import { createUnitLayer, type UnitLayer } from './units';
 import { readDebugVfx } from './vfx/debugVfx';
-import { createVfxLayer, type VfxLayer } from './vfx/index';
+import { createVfxLayer } from './vfx/index';
 import { SHAKE_AMPLITUDE, SHAKE_DURATION_S } from './vfx/juice';
 
 /**
- * Camera FOV of spec 9.1. The distance is fitted to the aspect ratio by
- * `fitLevelCamera` so the whole playfield stays visible on phones and desktops and the
- * top 14 % of the screen stays free for the HUD (spec 9.1).
+ * Camera FOV of spec 9.1 (portrait). The distance is fitted to the aspect ratio by
+ * `fitLevelCamera` so the whole playfield stays visible between the top status bar and
+ * the bottom card tray (spec 9.1, 9.8).
  */
 const CAMERA_FOV = 32;
 
@@ -44,19 +38,12 @@ export interface LevelScene {
   handleEvents(events: readonly SimEvent[]): void;
   /** Stores the state of the latest tick once per tick and lerps all objects (spec 11.4). */
   draw(state: Readonly<SimState>, alpha: number): void;
-  resize(aspect: number, hudTopFraction?: number): void;
+  resize(aspect: number): void;
   dispose(): void;
 }
 
-/** Applies one tick of sim events to the three entity layers (spec 11.3, 11.7). */
-function applyEvents(
-  events: readonly SimEvent[],
-  units: UnitLayer,
-  projectiles: ProjectileLayer,
-  orbs: OrbLayer,
-  vfx: VfxLayer,
-): void {
-  vfx.handleEvents(events);
+/** Applies one tick of sim events to the unit layers (spec 11.3, 11.7). */
+function applyUnitEvents(events: readonly SimEvent[], units: UnitLayer): void {
   for (const event of events) {
     switch (event.type) {
       case 'defenderPlaced':
@@ -86,20 +73,9 @@ function applyEvents(
         // Spec 9.6/12.5: attackers play their attack clip, enemies their eat clip.
         units.playAttack(event.sourceId);
         break;
-      case 'projectileSpawned':
-        projectiles.spawn(event.id, event.kind, event.x, event.lane);
-        break;
-      case 'projectileEnded':
-        projectiles.remove(event.id);
-        break;
       case 'orbSpawned':
         // Spec 9.6: the producer on this tile pulses its produce clip when its orb spawns.
         units.playProduceAt(event.lane, event.x);
-        orbs.spawn(event.id, event.x, event.lane, ORB_HEIGHT);
-        break;
-      case 'orbCollected':
-      case 'orbExpired':
-        orbs.remove(event.id);
         break;
       case 'levelWon':
         // Spec 9.6: every living defender plays the victory clip.
@@ -120,7 +96,7 @@ function applyEvents(
  */
 export function createLevelScene(options: LevelViewOptions): LevelScene {
   const scene = new Scene();
-  scene.background = new Color(GREYBOX_COLORS.sky);
+  applySky(scene);
 
   const camera = new PerspectiveCamera(CAMERA_FOV, 1, 0.1, 60);
   fitLevelCamera(camera, 1);
@@ -139,6 +115,9 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
   scene.add(grid.group);
   const environment = createEnvironmentLayer(options);
   scene.add(environment.group);
+  // 2.5D pixel-art props replace the hidden 3D edge props (issue #114).
+  const propSprites = createPropSpriteLayer(camera);
+  scene.add(propSprites.group);
   void environment.ready.then((loaded) => {
     if (!loaded || grid === null) {
       return;
@@ -149,9 +128,10 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
   });
 
   const unitGroup = new Group();
+  const glbUnitGroup = new Group();
   const projectileGroup = new Group();
   const orbGroup = new Group();
-  scene.add(unitGroup, projectileGroup, orbGroup);
+  scene.add(unitGroup, glbUnitGroup, projectileGroup, orbGroup);
 
   // Spec 9.7 (issue #75): one shared particle system for the 9.6 animations and all
   // VFX, plus the VFX layer with its sprite billboards, damage numbers and bars.
@@ -170,10 +150,32 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
   });
   scene.add(vfx.object);
   let shakeAmplitude = SHAKE_AMPLITUDE;
-  const units = createUnitLayer(unitGroup, {
+  const debugAnimationHold = readDebugAnimationHold(window.location.search);
+  const glbUnits = createUnitLayer(glbUnitGroup, {
     // Debug-only screenshot helper (`?debuganim=kind:progress`), issue #74.
-    debugAnimationHold: readDebugAnimationHold(window.location.search),
+    debugAnimationHold,
     particles,
+  });
+  // 2.5D sprite billboards (issue #114). The GLB unit layer stays visible until the
+  // atlases loaded, then the sprites take over and the 3D layer is removed.
+  const spriteUnits = createSpriteUnitLayer(unitGroup, {
+    camera,
+    particles,
+    debugAnimationHold,
+    // Phone readability: sprites draw 25 % taller than their measured model height.
+    worldScale: 1.25,
+  });
+  const unitLayers: UnitLayer[] = [glbUnits, spriteUnits];
+  void spriteUnits.ready.then((available) => {
+    if (!available) {
+      return;
+    }
+    glbUnitGroup.visible = false;
+    const index = unitLayers.indexOf(glbUnits);
+    if (index >= 0) {
+      unitLayers.splice(index, 1);
+    }
+    glbUnits.dispose();
   });
   const projectiles = createProjectileLayer(projectileGroup);
   const orbs = createOrbLayer(orbGroup);
@@ -186,7 +188,9 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
 
   /** Copies the current sim positions into the interpolation store. */
   function snapshot(state: Readonly<SimState>): void {
-    units.sync(state.defenders, state.enemies);
+    for (const layer of unitLayers) {
+      layer.sync(state.defenders, state.enemies);
+    }
     projectiles.sync(state.projectiles);
     orbs.sync(state.orbs, ORB_HEIGHT);
   }
@@ -196,19 +200,36 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
     camera,
     handleEvents: (events): void => {
       tickCount += 1;
-      applyEvents(events, units, projectiles, orbs, vfx);
+      vfx.handleEvents(events);
+      for (const layer of unitLayers) {
+        applyUnitEvents(events, layer);
+      }
+      for (const event of events) {
+        if (event.type === 'projectileSpawned') {
+          projectiles.spawn(event.id, event.kind, event.x, event.lane);
+        } else if (event.type === 'projectileEnded') {
+          projectiles.remove(event.id);
+        } else if (event.type === 'orbSpawned') {
+          orbs.spawn(event.id, event.x, event.lane, ORB_HEIGHT);
+        } else if (event.type === 'orbCollected' || event.type === 'orbExpired') {
+          orbs.remove(event.id);
+        }
+      }
     },
     draw: (state, alpha): void => {
       if (tickCount !== lastSnapshotTick) {
         snapshot(state);
         lastSnapshotTick = tickCount;
       }
-      units.apply(alpha);
+      for (const layer of unitLayers) {
+        layer.apply(alpha);
+      }
       projectiles.apply(alpha);
       orbs.apply(alpha);
       const now = performance.now();
       const deltaSeconds = Math.min(Math.max((now - lastDrawMs) / 1000, 0), 0.1);
       lastDrawMs = now;
+      propSprites.update(camera);
       vfx.update(state, deltaSeconds, camera);
       particles.update(deltaSeconds);
       // Spec 9.7: 0.05 unit camera shake for 0.15 s on heavy hits, trap fire and
@@ -221,16 +242,20 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
         camera.position.copy(baseCameraPosition);
       }
     },
-    resize: (aspect, hudTopFraction): void => {
-      fitLevelCamera(camera, aspect, hudTopFraction);
+    resize: (aspect): void => {
+      fitLevelCamera(camera, aspect);
       baseCameraPosition.copy(camera.position);
     },
     dispose: (): void => {
       vfx.dispose();
       particles.dispose();
-      units.dispose();
+      for (const layer of unitLayers) {
+        layer.dispose();
+      }
+      unitLayers.length = 0;
       projectiles.dispose();
       orbs.dispose();
+      propSprites.dispose();
       environment.dispose();
       grid?.dispose();
       grid = null;

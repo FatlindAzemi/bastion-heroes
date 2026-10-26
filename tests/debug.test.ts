@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { levelById, levels } from '../src/data';
 import { LevelDef } from '../src/data/schemas';
-import { createDebugLoadout, fastForward, parseDebugUrl } from '../src/debug';
+import {
+  createDebugLoadout,
+  createFinalWavePreview,
+  fastForward,
+  FINAL_WAVE_PREVIEW_ESSENCE,
+  parseDebugUrl,
+} from '../src/debug';
 import { createSim } from '../src/sim';
 import type { Sim } from '../src/sim/types';
 
@@ -277,5 +283,27 @@ describe('debug model screenshots (issue #66)', () => {
   it('keeps the debug loadout untouched when no cards override is given', () => {
     const level = debugLevel();
     expect(createDebugLoadout(level)).toEqual([{ defenderId: 'sparkbolt_gremlin', level: 1 }]);
+  });
+});
+
+describe('final-wave preview (spec 13.7 screenshots, issue #113)', () => {
+  it('13.7: parses ?finalwave=1 as an additive debug flag', () => {
+    expect(parseDebugUrl('?level=w1-l10&finalwave=1')).toEqual({
+      kind: 'level',
+      levelId: 'w1_l10',
+      seed: 10010,
+      tick: 0,
+      finalWave: true,
+    });
+  });
+
+  it('13.7: keeps only the last wave, funds the setup and starts it immediately', () => {
+    const level = LevelDef.parse(levelById['w1_l10']);
+    const preview = createFinalWavePreview(level);
+    expect(preview.id).toBe(level.id);
+    expect(preview.waves).toHaveLength(1);
+    expect(preview.waves[0]).toEqual(level.waves[level.waves.length - 1]);
+    expect(preview.startEssence).toBeGreaterThanOrEqual(FINAL_WAVE_PREVIEW_ESSENCE);
+    expect(preview.firstWaveDelay).toBeLessThan(level.firstWaveDelay);
   });
 });

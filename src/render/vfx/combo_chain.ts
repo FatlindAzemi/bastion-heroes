@@ -12,11 +12,12 @@ export const vfx: VfxDefinition = {
   id: 'combo_chain',
   sprite: 2,
   colors: [0x3cf2ff, 0xf4fbff, 0x7cff6b],
-  count: 8,
+  count: 10,
   speed: 2.6,
   upward: 1.2,
   gravity: 3.0,
   lifeMin: 0.25,
   lifeMax: 0.45,
   size: 0.16,
+  glow: 1.52,
 };

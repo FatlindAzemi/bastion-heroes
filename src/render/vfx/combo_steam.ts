@@ -19,4 +19,5 @@ export const vfx: VfxDefinition = {
   lifeMin: 0.5,
   lifeMax: 0.9,
   size: 0.26,
+  glow: 1.13,
 };

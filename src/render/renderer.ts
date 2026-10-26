@@ -15,7 +15,9 @@ import type { SimEvent, SimState } from '../sim/types';
 import { createDebugOverlay, type DebugSimInfo } from './debugOverlay';
 import type { LevelViewOptions } from './grid';
 import { createLevelScene, type LevelScene } from './levelScene';
+import { createPostProcessing, type PostProcessing } from './postprocessing';
 import { createTitleScene } from './titleScene';
+import { createTitleHeroes } from './titleHeroes';
 
 /** Camera position of the title screen (a 3/4 view of the Brightvale gate). */
 const CAMERA_POSITION = new Vector3(1.7, 1.82, 9.0);
@@ -35,6 +37,8 @@ export interface GameRenderer {
   handleEvents(events: readonly SimEvent[]): void;
   /** Switches the canvas to the greybox level renderer of issue #24 (spec 9.1, 11.7). */
   showLevel(options: LevelViewOptions): LevelScene;
+  /** Switches back from a level to the 3D title scene (shell navigation, spec 11.8). */
+  showTitle(): void;
   /**
    * Converts a DOM pointer position into the world point where its ray hits the ground
    * plane (spec 9.1). The HUD (#26) uses it to turn taps into tiles and orb picks.
@@ -55,6 +59,9 @@ export function createRenderer(container: HTMLElement): GameRenderer {
   const renderer = new WebGLRenderer({ antialias: true });
   // Spec 11.7: cap the device pixel ratio at 2.
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // The post-processing composer renders several passes per frame; keep the renderer
+  // statistics across them so the 11.7 draw-call/triangle overlay shows the real totals.
+  renderer.info.autoReset = false;
 
   const titleScene = new Scene();
   titleScene.background = new Color(0x9fd8ff);
@@ -72,12 +79,34 @@ export function createRenderer(container: HTMLElement): GameRenderer {
   titleScene.add(fillLight);
 
   const title = createTitleScene(titleScene);
-  const titleStartedAtMs = performance.now();
+  // 2.5D key art on the home screen: defender billboards posed in front of the gate.
+  const titleHeroes = createTitleHeroes();
+  titleScene.add(titleHeroes.group);
+  let titleStartedAtMs = performance.now();
   // Spec 11.7: draw calls, triangles and fps in a backquote overlay; `?perf=1` opens it.
   const debugOverlay = createDebugOverlay(
     container,
     new URLSearchParams(window.location.search).has('perf'),
   );
+
+  // 2.5D post-processing (issue #114): bloom + tilt-shift + colour grade for both the
+  // title scene and the level. `?post=0` turns it off (debug/perf).
+  const postDisabled = new URLSearchParams(window.location.search).get('post') === '0';
+  const postProcessing: PostProcessing = createPostProcessing(renderer, titleScene, titleCamera, {
+    enabled: !postDisabled,
+    // Gameplay readability first: a wide sharp band over the board, light tilt-shift
+    // blur only at the far top and the extreme foreground, gentle bloom for emissives.
+    bloomStrength: 0.8,
+    bloomThreshold: 1,
+    bloomRadius: 0.45,
+    focusCenter: 0.46,
+    focusHalfHeight: 0.3,
+    focusFeather: 0.2,
+    blurPixels: 1.6,
+    vignetteStrength: 0.26,
+    saturation: 1.1,
+    contrast: 1.03,
+  });
 
   let levelScene: LevelScene | null = null;
 
@@ -96,6 +125,7 @@ export function createRenderer(container: HTMLElement): GameRenderer {
     titleCamera.aspect = width / height;
     titleCamera.updateProjectionMatrix();
     levelScene?.resize(width / height);
+    postProcessing.setSize(width, height);
   };
   resize();
   window.addEventListener('resize', resize);
@@ -129,12 +159,15 @@ export function createRenderer(container: HTMLElement): GameRenderer {
     titleCamera.position.x = CAMERA_POSITION.x + Math.sin(elapsedSeconds * 0.23) * 0.16;
     titleCamera.position.y = CAMERA_POSITION.y + Math.sin(elapsedSeconds * 0.31) * 0.04;
     titleCamera.lookAt(CAMERA_TARGET);
-    renderer.render(titleScene, titleCamera);
+    titleHeroes.update(elapsedSeconds, titleCamera);
+    postProcessing.setScene(titleScene, titleCamera);
+    postProcessing.render();
   };
 
   return {
     canvas: renderer.domElement,
     draw: (state?: Readonly<SimState>, alpha = 0): void => {
+      renderer.info.reset();
       let simInfo: DebugSimInfo | undefined;
       if (levelScene === null) {
         drawTitle();
@@ -143,12 +176,18 @@ export function createRenderer(container: HTMLElement): GameRenderer {
           levelScene.draw(state, alpha);
           simInfo = readDebugSimInfo(state);
         }
-        renderer.render(levelScene.scene, levelScene.camera);
+        postProcessing.setScene(levelScene.scene, levelScene.camera);
+        postProcessing.render();
       }
       recordDebugFrame(simInfo);
     },
     handleEvents: (events): void => {
       levelScene?.handleEvents(events);
+    },
+    showTitle: (): void => {
+      levelScene?.dispose();
+      levelScene = null;
+      titleStartedAtMs = performance.now();
     },
     showLevel: (options): LevelScene => {
       levelScene?.dispose();
@@ -183,6 +222,8 @@ export function createRenderer(container: HTMLElement): GameRenderer {
     dispose: (): void => {
       window.removeEventListener('resize', resize);
       debugOverlay.dispose();
+      postProcessing.dispose();
+      titleHeroes.dispose();
       levelScene?.dispose();
       renderer.dispose();
     },

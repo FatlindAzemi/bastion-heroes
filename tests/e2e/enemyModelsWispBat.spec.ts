@@ -59,12 +59,12 @@ for (const enemyCase of CASES) {
     await expect(overlay).toContainText(/enemies [1-9]\d*/);
 
     await page.screenshot({
-      path: `test-results/screens/m3-enemy-${enemyCase.id}-844x390.png`,
+      path: `test-results/screens/m3-enemy-${enemyCase.id}-390x844.png`,
     });
-    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.setViewportSize({ width: 834, height: 1194 });
     await page.waitForTimeout(500);
     await page.screenshot({
-      path: `test-results/screens/m3-enemy-${enemyCase.id}-1280x720.png`,
+      path: `test-results/screens/m3-enemy-${enemyCase.id}-834x1194.png`,
     });
 
     expect(consoleErrors, 'browser console errors').toEqual([]);

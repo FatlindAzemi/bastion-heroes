@@ -59,8 +59,8 @@ test('defender models: Iron Granny and Frost Witch render in W1-L01', async ({ p
   const stats = (await overlay.textContent()) ?? '';
   console.log(`GRANNY_WITCH_STATS ${stats.replace(/\s+/g, ' ').trim()}`);
 
-  await page.screenshot({ path: 'test-results/screens/m3-defenders-granny-witch-844x390.png' });
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.screenshot({ path: 'test-results/screens/m3-defenders-granny-witch-390x844.png' });
+  await page.setViewportSize({ width: 834, height: 1194 });
   // Let the renderer draw the resized frame before the second screenshot (no fixed wait).
   await page.evaluate(
     () =>
@@ -68,7 +68,7 @@ test('defender models: Iron Granny and Frost Witch render in W1-L01', async ({ p
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
       }),
   );
-  await page.screenshot({ path: 'test-results/screens/m3-defenders-granny-witch-1280x720.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-defenders-granny-witch-834x1194.png' });
 
   expect(consoleErrors, 'browser console errors').toEqual([]);
   expect(pageErrors, 'uncaught page errors').toEqual([]);

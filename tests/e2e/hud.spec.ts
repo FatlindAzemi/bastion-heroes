@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 // Spec 9.8 final HUD (issue #76): the complete in-level HUD, bundled fonts, SVG icons,
 // card visuals, level progress and wave banner, plus the Scouting/Loadout card styling
-// and the title screen at 844x390 and 1280x720. Every test also asserts that the
+// and the title screen at 390x844 and 834x1194. Every test also asserts that the
 // browser console and page stay error-free.
 
 /** Records browser console errors and uncaught page errors for the final assertions. */
@@ -70,7 +70,7 @@ async function expectIconsLoaded(page: import('@playwright/test').Page): Promise
     .toBe(true);
 }
 
-test('final HUD: renders every 9.8 element with bundled fonts and SVG icons at 844x390', async ({
+test('final HUD: renders every 9.8 element with bundled fonts and SVG icons at 390x844', async ({
   page,
 }) => {
   const errors = trackErrors(page);
@@ -86,7 +86,7 @@ test('final HUD: renders every 9.8 element with bundled fonts and SVG icons at 8
   await expectBundledFonts(page);
   await expectIconsLoaded(page);
   await expectPortraitsLoaded(page);
-  await page.screenshot({ path: 'test-results/screens/m3-hud-w1-l05-844x390.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-hud-w1-l05-390x844.png' });
 
   expect(errors.consoleErrors, 'browser console errors').toEqual([]);
   expect(errors.pageErrors, 'uncaught page errors').toEqual([]);
@@ -124,7 +124,7 @@ test('final HUD: slides the BIG wave banner in and flags the BIG and FINAL waves
     'aria-valuenow',
     '33',
   );
-  await page.screenshot({ path: 'test-results/screens/m3-hud-banner-844x390.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-hud-banner-390x844.png' });
 
   expect(errors.consoleErrors, 'browser console errors').toEqual([]);
   expect(errors.pageErrors, 'uncaught page errors').toEqual([]);
@@ -140,7 +140,7 @@ test('final HUD: shows cooldown overlays on the cards that are still recharging'
   await expect(page.locator('.hud-card')).toHaveCount(6);
   await expect(page.locator('.hud-card__cooldown')).toHaveCount(3);
   await expect(page.locator('.hud-card__cooldown-label').first()).toBeVisible();
-  await page.screenshot({ path: 'test-results/screens/m3-hud-cooldown-844x390.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-hud-cooldown-390x844.png' });
 
   expect(errors.consoleErrors, 'browser console errors').toEqual([]);
   expect(errors.pageErrors, 'uncaught page errors').toEqual([]);
@@ -150,7 +150,7 @@ test('final HUD: Scouting/Loadout cards use the shared portrait and rarity styli
   page,
 }) => {
   const errors = trackErrors(page);
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.setViewportSize({ width: 834, height: 1194 });
   await page.goto('/?level=w1-l05&scout=1');
   await expect(page.getByTestId('scout-screen')).toBeVisible({ timeout: 5000 });
   await expectBundledFonts(page);
@@ -163,23 +163,23 @@ test('final HUD: Scouting/Loadout cards use the shared portrait and rarity styli
   await expect(page.locator('.loadout-slot .card-portrait')).toHaveCount(6);
   await expectIconsLoaded(page);
   await expectPortraitsLoaded(page);
-  await page.screenshot({ path: 'test-results/screens/m3-hud-loadout-1280x720.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-hud-loadout-834x1194.png' });
 
   expect(errors.consoleErrors, 'browser console errors').toEqual([]);
   expect(errors.pageErrors, 'uncaught page errors').toEqual([]);
 });
 
-test('final HUD: title screen renders the game title in the bundled Lilita One at 1280x720', async ({
+test('final HUD: title screen renders the game title in the bundled Lilita One at 834x1194', async ({
   page,
 }) => {
   const errors = trackErrors(page);
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.setViewportSize({ width: 834, height: 1194 });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Bastion Heroes' })).toBeVisible({
-    timeout: 5000,
-  });
+  await expect(page.getByTestId('title-screen')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('.title-lockup__title')).toContainText('Bastion');
+  await expect(page.locator('.title-lockup__title')).toContainText('Heroes');
   await expectBundledFonts(page);
-  await page.screenshot({ path: 'test-results/screens/m3-hud-title-1280x720.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-hud-title-834x1194.png' });
 
   expect(errors.consoleErrors, 'browser console errors').toEqual([]);
   expect(errors.pageErrors, 'uncaught page errors').toEqual([]);

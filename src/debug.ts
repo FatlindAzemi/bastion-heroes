@@ -29,7 +29,19 @@ export interface DebugLevelRequest {
   readonly placements?: readonly DebugPlacement[];
   /** Debug-only auto-collect (`?autocollect=1`) so sky drops fund the screenshot loadout. */
   readonly autoCollect?: boolean;
+  /**
+   * Debug-only final-wave preview (`?finalwave=1`): play only the level's last wave with a
+   * generous starting Essence, so the PR screenshot of the final wave can be captured
+   * deterministically without surviving the whole level.
+   */
+  readonly finalWave?: boolean;
 }
+
+/** Starting Essence of the final-wave preview, enough for a full defensive setup. */
+export const FINAL_WAVE_PREVIEW_ESSENCE = 3000;
+
+/** Delay of the preview wave in seconds; the wave starts almost immediately. */
+const FINAL_WAVE_PREVIEW_DELAY = 1;
 
 /**
  * The result of reading the debug URL: title screen, a direct level run, the
@@ -170,6 +182,25 @@ export function parseDebugUrl(search: string): DebugUrlResult {
     ...(cards.length > 0 ? { cards } : {}),
     ...(placements.length > 0 ? { placements } : {}),
     ...(parameters.get('autocollect') === '1' ? { autoCollect: true } : {}),
+    ...(parameters.get('finalwave') === '1' ? { finalWave: true } : {}),
+  };
+}
+
+/**
+ * Builds the debug final-wave preview level: only the last wave of the level, starting
+ * almost immediately, with enough Essence for the pre-placed defenders of `?place=`.
+ * Used by the spec 13.7 final-wave screenshot; never part of normal play.
+ */
+export function createFinalWavePreview(level: LevelDef): LevelDef {
+  const lastWave = level.waves[level.waves.length - 1];
+  if (lastWave === undefined) {
+    throw new Error(`debug: level "${level.id}" has no waves`);
+  }
+  return {
+    ...level,
+    startEssence: Math.max(level.startEssence, FINAL_WAVE_PREVIEW_ESSENCE),
+    firstWaveDelay: FINAL_WAVE_PREVIEW_DELAY,
+    waves: [lastWave],
   };
 }
 

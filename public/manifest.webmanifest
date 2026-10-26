@@ -1,0 +1,31 @@
+{
+  "name": "Bastion Heroes",
+  "short_name": "Bastion",
+  "description": "A premium portrait 2.5D fantasy lane-defense game. Build your bastion, merge your heroes, hold the line.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#12111f",
+  "background_color": "#12111f",
+  "icons": [
+    {
+      "src": "/app-icon/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,327 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!--
+    Bastion Heroes app icon master (1024 x 1024).
+    "Modern fantasy arcade": midnight indigo/violet field, a golden bastion crest with a
+    crenellated gatehouse keep and a glowing teal essence gem, warm gold sparkles, soft
+    vignette. Hand-authored for this project (no third-party assets). Top-left key light.
+    The same crest mark is simplified in /public/favicon.svg and /public/icons/bastion-crest.svg.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0.12" y1="0" x2="0.88" y2="1">
+      <stop offset="0" stop-color="#3A3170" />
+      <stop offset="0.34" stop-color="#282050" />
+      <stop offset="0.68" stop-color="#181334" />
+      <stop offset="1" stop-color="#0B0817" />
+    </linearGradient>
+    <radialGradient id="violetHalo" cx="0.44" cy="0.34" r="0.66">
+      <stop offset="0" stop-color="#8A5CFF" stop-opacity="0.5" />
+      <stop offset="0.5" stop-color="#5A35C4" stop-opacity="0.2" />
+      <stop offset="1" stop-color="#2A1C5A" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="goldHalo" cx="0.5" cy="0.44" r="0.42">
+      <stop offset="0" stop-color="#FFC933" stop-opacity="0.34" />
+      <stop offset="0.68" stop-color="#FFB01F" stop-opacity="0.09" />
+      <stop offset="1" stop-color="#FFB01F" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="tealHalo" cx="0.5" cy="0.74" r="0.36">
+      <stop offset="0" stop-color="#3BF0C8" stop-opacity="0.36" />
+      <stop offset="0.7" stop-color="#3BF0C8" stop-opacity="0.07" />
+      <stop offset="1" stop-color="#3BF0C8" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.44" r="0.74">
+      <stop offset="0.52" stop-color="#000000" stop-opacity="0" />
+      <stop offset="1" stop-color="#04030B" stop-opacity="0.76" />
+    </radialGradient>
+    <linearGradient id="rim" x1="0.08" y1="0" x2="0.92" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.55" />
+      <stop offset="0.38" stop-color="#C9B7FF" stop-opacity="0.16" />
+      <stop offset="0.72" stop-color="#000000" stop-opacity="0.12" />
+      <stop offset="1" stop-color="#000000" stop-opacity="0.42" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0.12" y1="0" x2="0.84" y2="1">
+      <stop offset="0" stop-color="#FFF6C4" />
+      <stop offset="0.24" stop-color="#FFDE72" />
+      <stop offset="0.52" stop-color="#FFC12E" />
+      <stop offset="0.78" stop-color="#EF9A08" />
+      <stop offset="1" stop-color="#B96800" />
+    </linearGradient>
+    <linearGradient id="goldFace" x1="0.16" y1="0.02" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#FFDD66" />
+      <stop offset="0.42" stop-color="#FFC12E" />
+      <stop offset="0.78" stop-color="#EE9A0A" />
+      <stop offset="1" stop-color="#C97900" />
+    </linearGradient>
+    <linearGradient id="goldTrim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF3B0" />
+      <stop offset="0.5" stop-color="#FFC12E" />
+      <stop offset="1" stop-color="#8F5300" />
+    </linearGradient>
+    <radialGradient id="goldSheen" cx="0.32" cy="0.14" r="0.74">
+      <stop offset="0" stop-color="#FFF9D8" stop-opacity="0.8" />
+      <stop offset="0.42" stop-color="#FFE68C" stop-opacity="0.24" />
+      <stop offset="1" stop-color="#FFC12E" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="tower" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#37306B" />
+      <stop offset="0.5" stop-color="#211A45" />
+      <stop offset="1" stop-color="#0E0A1F" />
+    </linearGradient>
+    <linearGradient id="gem" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#D6FFF7" />
+      <stop offset="0.3" stop-color="#7CFFE4" />
+      <stop offset="0.62" stop-color="#3BF0C8" />
+      <stop offset="1" stop-color="#0E9C85" />
+    </linearGradient>
+    <radialGradient id="gemGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7CFFE4" stop-opacity="0.9" />
+      <stop offset="0.5" stop-color="#3BF0C8" stop-opacity="0.38" />
+      <stop offset="1" stop-color="#3BF0C8" stop-opacity="0" />
+    </radialGradient>
+    <filter id="crestShadow" x="-30%" y="-24%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="22" stdDeviation="26" flood-color="#04030C" flood-opacity="0.72" />
+    </filter>
+    <filter id="sparkGlow" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur stdDeviation="18" />
+    </filter>
+    <filter id="softBlur" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="12" />
+    </filter>
+    <clipPath id="frame">
+      <rect x="0" y="0" width="1024" height="1024" rx="228" />
+    </clipPath>
+    <clipPath id="shieldFaceClip">
+      <path
+        d="M 512 240
+           C 634 240 736 266 774 294
+           Q 798 312 798 350
+           L 794 494
+           C 784 662 674 804 512 876
+           C 350 804 240 662 230 494
+           L 226 350
+           Q 226 312 250 294
+           C 288 266 390 240 512 240 Z"
+      />
+    </clipPath>
+  </defs>
+
+  <rect x="0" y="0" width="1024" height="1024" rx="228" fill="url(#bg)" />
+
+  <g clip-path="url(#frame)">
+    <!-- Night sky: violet halo, warm crest halo, teal pool of light. -->
+    <rect width="1024" height="1024" fill="url(#violetHalo)" />
+    <rect width="1024" height="1024" fill="url(#goldHalo)" />
+    <rect width="1024" height="1024" fill="url(#tealHalo)" />
+
+    <!-- Pixel-art nod: sparse square stars, kept faint so the 48 px icon stays clean. -->
+    <g fill="#F4FBFF">
+      <rect x="152" y="168" width="8" height="8" opacity="0.5" />
+      <rect x="284" y="112" width="5" height="5" opacity="0.38" />
+      <rect x="836" y="196" width="7" height="7" opacity="0.42" />
+      <rect x="902" y="330" width="5" height="5" opacity="0.32" />
+      <rect x="736" y="96" width="4" height="4" opacity="0.3" />
+      <rect x="190" y="596" width="5" height="5" opacity="0.3" />
+      <rect x="86" y="438" width="6" height="6" opacity="0.34" />
+      <rect x="880" y="680" width="6" height="6" opacity="0.3" />
+      <rect x="342" y="924" width="5" height="5" opacity="0.26" />
+      <rect x="664" y="944" width="6" height="6" opacity="0.28" />
+    </g>
+    <g fill="#FFD34D">
+      <rect x="382" y="150" width="5" height="5" opacity="0.5" />
+      <rect x="860" y="486" width="5" height="5" opacity="0.38" />
+      <rect x="120" y="782" width="5" height="5" opacity="0.3" />
+    </g>
+    <g fill="#7CFFE4">
+      <rect x="246" y="252" width="4" height="4" opacity="0.45" />
+      <rect x="796" y="820" width="5" height="5" opacity="0.34" />
+    </g>
+
+    <!-- Faint royal ring behind the crest, for depth. -->
+    <circle cx="512" cy="534" r="410" fill="none" stroke="#FFC12E" stroke-width="3" opacity="0.13" />
+
+    <!-- APP-CONTENT-START -->
+    <!-- ===================== Crest ===================== -->
+    <g transform="translate(0 -28)">
+      <ellipse cx="512" cy="944" rx="244" ry="28" fill="#04030C" opacity="0.42" filter="url(#softBlur)" />
+
+      <g filter="url(#crestShadow)">
+        <!-- Outer golden shield. -->
+        <path
+          d="M 512 190
+             C 648 190 760 220 806 252
+             Q 840 274 840 318
+             L 836 500
+             C 826 690 706 840 512 920
+             C 318 840 198 690 188 500
+             L 184 318
+             Q 184 274 218 252
+             C 264 220 376 190 512 190 Z"
+          fill="url(#gold)"
+          stroke="#141326"
+          stroke-width="30"
+          stroke-linejoin="round"
+        />
+        <!-- Recessed face: forged bevel, warm top-left sheen, darker rim shadow. -->
+        <path
+          d="M 512 240
+             C 634 240 736 266 774 294
+             Q 798 312 798 350
+             L 794 494
+             C 784 662 674 804 512 876
+             C 350 804 240 662 230 494
+             L 226 350
+             Q 226 312 250 294
+             C 288 266 390 240 512 240 Z"
+          fill="url(#goldFace)"
+        />
+        <path
+          d="M 512 240
+             C 634 240 736 266 774 294
+             Q 798 312 798 350
+             L 794 494
+             C 784 662 674 804 512 876
+             C 350 804 240 662 230 494
+             L 226 350
+             Q 226 312 250 294
+             C 288 266 390 240 512 240 Z"
+          fill="url(#goldSheen)"
+        />
+        <path
+          d="M 512 240
+             C 634 240 736 266 774 294
+             Q 798 312 798 350
+             L 794 494
+             C 784 662 674 804 512 876
+             C 350 804 240 662 230 494
+             L 226 350
+             Q 226 312 250 294
+             C 288 266 390 240 512 240 Z"
+          fill="none"
+          stroke="#A35C00"
+          stroke-width="14"
+          opacity="0.28"
+        />
+        <!-- Engraved inner border line of the plate. -->
+        <path
+          d="M 512 276
+             C 612 276 700 298 736 322
+             Q 758 338 758 372
+             L 754 490
+             C 746 640 646 770 512 834
+             C 378 770 278 640 270 490
+             L 266 372
+             Q 266 338 288 322
+             C 324 298 412 276 512 276 Z"
+          fill="none"
+          stroke="#A35C00"
+          stroke-width="5"
+          opacity="0.3"
+        />
+        <!-- Top-left inner rim light of the receding face. -->
+        <path
+          d="M 254 404 L 254 384 Q 254 346 286 328 C 344 298 426 284 512 284"
+          fill="none"
+          stroke="#FFF6C4"
+          stroke-width="8"
+          stroke-linecap="round"
+          opacity="0.62"
+        />
+        <!-- Soft teal light from the gem spills onto the gold plate. -->
+        <g clip-path="url(#shieldFaceClip)">
+          <circle cx="512" cy="748" r="240" fill="url(#gemGlow)" opacity="0.24" filter="url(#softBlur)" />
+        </g>
+
+        <!-- Grounding pedestal for the gatehouse. -->
+        <rect x="330" y="780" width="364" height="46" rx="15" fill="url(#goldTrim)" stroke="#141326" stroke-width="12" />
+        <rect x="350" y="790" width="326" height="10" rx="5" fill="#FFF3B0" opacity="0.55" />
+
+        <!-- Bastion gatehouse: three merlons, machicolation band, tapered base. -->
+        <path
+          d="M 352 780
+             L 362 540
+             V 480 H 426 V 540
+             H 480 V 480 H 544 V 540
+             H 598 V 480 H 662 V 540
+             L 672 780
+             Q 672 798 654 800
+             H 370 Q 352 798 352 780 Z"
+          fill="url(#tower)"
+          stroke="#0A0817"
+          stroke-width="10"
+          stroke-linejoin="round"
+        />
+        <!-- Merlon tips and left edge catch the key light. -->
+        <path
+          d="M 362 540 V 480 H 426 V 540 H 480 V 480 H 544 V 540 H 598 V 480 H 662 V 540"
+          fill="none"
+          stroke="#8A79E8"
+          stroke-width="7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          opacity="0.6"
+        />
+        <path d="M 370 570 L 364 776" stroke="#6B5BC4" stroke-width="8" stroke-linecap="round" opacity="0.32" />
+        <path d="M 650 570 L 660 776" stroke="#08060F" stroke-width="10" stroke-linecap="round" opacity="0.55" />
+
+        <!-- Gold machicolation band under the merlons. -->
+        <g>
+          <path d="M 358 554 L 666 554 L 672 590 L 352 590 Z" fill="url(#goldTrim)" stroke="#141326" stroke-width="10" stroke-linejoin="round" />
+          <rect x="400" y="567" width="18" height="10" rx="3" fill="#8F5300" opacity="0.6" />
+          <rect x="503" y="567" width="18" height="10" rx="3" fill="#8F5300" opacity="0.6" />
+          <rect x="606" y="567" width="18" height="10" rx="3" fill="#8F5300" opacity="0.6" />
+          <path d="M 364 560 L 660 560" stroke="#FFF6C4" stroke-width="4" opacity="0.5" />
+        </g>
+
+        <!-- Ornate gate: gold arch, dark opening and the essence gem. -->
+        <path
+          d="M 414 780 V 690 Q 414 620 512 620 Q 610 620 610 690 V 780 Z"
+          fill="url(#goldTrim)"
+          stroke="#141326"
+          stroke-width="10"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M 434 780 V 696 Q 434 648 512 648 Q 590 648 590 696 V 780 Z"
+          fill="#0B0818"
+          stroke="#141326"
+          stroke-width="6"
+        />
+        <path d="M 446 774 V 698 Q 446 660 512 660 Q 578 660 578 698 V 774" fill="none" stroke="#FFC12E" stroke-width="3" opacity="0.3" />
+        <circle cx="512" cy="716" r="114" fill="url(#gemGlow)" opacity="0.8" filter="url(#softBlur)" />
+        <circle cx="512" cy="716" r="62" fill="none" stroke="url(#goldTrim)" stroke-width="9" opacity="0.92" />
+        <path
+          d="M 512 664 L 556 690 L 556 742 L 512 768 L 468 742 L 468 690 Z"
+          fill="url(#gem)"
+          stroke="#141326"
+          stroke-width="9"
+          stroke-linejoin="round"
+        />
+        <path d="M 512 664 L 468 690 L 512 710 L 556 690 Z" fill="#D6FFF7" opacity="0.62" />
+        <path d="M 512 710 L 468 742 L 512 768 L 556 742 Z" fill="#0B7D6B" opacity="0.5" />
+        <ellipse cx="492" cy="690" rx="15" ry="8" fill="#FFFFFF" opacity="0.9" transform="rotate(-28 492 690)" />
+      </g>
+    </g>
+
+    <!-- Warm gold sparkles. -->
+    <g filter="url(#sparkGlow)" fill="#FFD34D" opacity="0.6">
+      <path d="M 768 154 Q 784 170 810 174 Q 784 178 768 194 Q 752 178 726 174 Q 752 170 768 154 Z" />
+      <path d="M 150 612 Q 161 623 178 625 Q 161 627 150 638 Q 139 627 122 625 Q 139 623 150 612 Z" />
+      <path d="M 858 760 Q 870 772 888 774 Q 870 776 858 788 Q 846 776 828 774 Q 846 772 858 760 Z" />
+    </g>
+    <g fill="url(#goldTrim)">
+      <path d="M 768 154 Q 784 170 810 174 Q 784 178 768 194 Q 752 178 726 174 Q 752 170 768 154 Z" />
+      <path d="M 150 612 Q 161 623 178 625 Q 161 627 150 638 Q 139 627 122 625 Q 139 623 150 612 Z" />
+      <path d="M 858 760 Q 870 772 888 774 Q 870 776 858 788 Q 846 776 828 774 Q 846 772 858 760 Z" />
+    </g>
+    <circle cx="898" cy="474" r="7" fill="#FFE58C" opacity="0.9" />
+    <circle cx="166" cy="366" r="6" fill="#FFE58C" opacity="0.8" />
+    <circle cx="640" cy="126" r="5" fill="#F4FBFF" opacity="0.7" />
+    <circle cx="768" cy="900" r="6" fill="#FFE58C" opacity="0.7" />
+
+    <!-- APP-CONTENT-END -->
+
+    <!-- Soft vignette + rounded-square rim light. -->
+    <rect width="1024" height="1024" fill="url(#vignette)" />
+    <rect x="22" y="22" width="980" height="980" rx="208" fill="none" stroke="url(#rim)" stroke-width="12" />
+  </g>
+  <rect x="0" y="0" width="1024" height="1024" rx="228" fill="none" stroke="#0A0814" stroke-width="4" opacity="0.55" />
+</svg>

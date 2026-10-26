@@ -11,6 +11,9 @@ coverage/
 assets-build/
 balance-report/
 
+# Generated sprite atlas manifest (npm run sprites, tools/sprites)
+public/sprites/manifest.json
+
 # Human-owned documents: the spec is the single source of truth and stays verbatim
 # (spec 1.1), the templates are fixed text from spec 13.4 and 13.5.
 docs/

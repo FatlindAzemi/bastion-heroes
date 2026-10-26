@@ -72,6 +72,12 @@ export interface HudBannerView {
   readonly nonce: number;
 }
 
+/** One non-blocking first-time tutorial bubble (spec 4.9, M4). */
+export interface HudTipView {
+  readonly id: string;
+  readonly text: string;
+}
+
 /** Everything the HUD renders for one frame (spec 9.8). */
 export interface HudStateView {
   readonly essence: number;
@@ -99,6 +105,10 @@ export interface HudActions {
   collectOrb(orbId: number): void;
   togglePause(): void;
   toggleSpeed(): void;
+  /** Pause menu: restart the current level (issue #113); the button is hidden while absent. */
+  onRestart?(): void;
+  /** Pause menu: quit to the level select (issue #113); the button is hidden while absent. */
+  onQuit?(): void;
 }
 
 /** A point on the ground plane, in world units (spec 9.1). */
@@ -119,6 +129,8 @@ export interface HudOptions {
    * so a `?tick=` screenshot can show the spec 3.10 wave banner as it would look live.
    */
   readonly initialBanner?: HudBannerKind | null;
+  /** First-time tip of this level; absent once the player has dismissed it (M4 tutorial). */
+  readonly tip?: HudTipView;
 }
 
 /** Event sink the game loop forwards command feedback and banners to (spec 11.3). */

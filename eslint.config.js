@@ -176,7 +176,8 @@ export default tseslint.config(
     },
   },
   {
-    // Spec 10.4: src/meta/ may import from src/data/ and src/platform/ only.
+    // Spec 10.4/11.9: src/meta/ may import from src/data/ and src/platform/ plus zod
+    // for the save schema.
     files: ['src/meta/**/*.ts'],
     rules: {
       'no-restricted-imports': [
@@ -185,8 +186,8 @@ export default tseslint.config(
           patterns: [
             platformOnlyPackages,
             packagesExcept(
-              null,
-              'src/meta/ may import only from src/data/ and src/platform/ (spec 10.4).',
+              'zod(?:/|$)',
+              'src/meta/ may import only from src/data/, src/platform/ and zod (spec 10.4, 11.9).',
             ),
             escapesTo(
               ['sim', 'render', 'ui', 'main', 'loop'],

@@ -23,29 +23,28 @@ static instantiation.
 
 ## Icons
 
-The hand-written SVG icons in [`public/icons/`](public/icons/) were created for this project and are
-not third-party assets.
+The hand-written SVG icons in [`public/icons/`](public/icons/), the app icon in
+[`public/app-icon/`](public/app-icon/) and the sprite atlases in [`public/sprites/`](public/sprites/)
+are created for this project and are not third-party assets. The sprites are rendered from the
+project's own rigged Blender models by `tools/sprites/build_sprites.py` (spec 12.12); the icons and
+the app icon are hand-authored SVG/scripts in this repository.
 
 ## Audio
 
-The placeholder music and SFX come from five [Kenney](https://kenney.nl) audio packs, all
-released under **Creative Commons Zero (CC0 1.0)**. They are placeholder assets (spec 9.9: the
-final audio is an open decision, section 17) and are expected to be replaced before release.
+The soundtrack and all SFX are **procedurally generated for this project** by
+`tools/audio/generate.ts` (`npm run audio`, spec 9.9 and 12.13). No third-party samples, loops or
+packs are bundled. The committed files in [`public/audio/`](public/audio/) are the direct output of
+the generator and are original work of this repository.
 
-| Asset                   | Used for in the bundle                                      | Author | License | Source                                    |
-| ----------------------- | ----------------------------------------------------------- | ------ | ------- | ----------------------------------------- |
-| Kenney Interface Sounds | UI taps, card/orb SFX, beam attack, wave horn               | Kenney | CC0 1.0 | https://kenney.nl/assets/interface-sounds |
-| Kenney Casino Audio     | card place/flip/shove, chest open/shake                     | Kenney | CC0 1.0 | https://kenney.nl/assets/casino-audio     |
-| Kenney Impact Sounds    | hit types, splash attack, combos, deaths, trap, boss roar   | Kenney | CC0 1.0 | https://kenney.nl/assets/impact-sounds    |
-| Kenney RPG Audio        | attack swings, enemy groan/eat/death, orb collect           | Kenney | CC0 1.0 | https://kenney.nl/assets/rpg-audio        |
-| Kenney Music Jingles    | 3 looping tracks, victory/defeat stings, level win/lose SFX | Kenney | CC0 1.0 | https://kenney.nl/assets/music-jingles    |
+- Music (OGG Vorbis + M4A AAC, 144 BPM, A minor): `menu`, `world1_calm`, `world1_big_wave`,
+  `victory`, `defeat`. The three loops are 32 bars (53.333 s) with a seamless whole-bar boundary;
+  the stings are 3.000 s.
+- SFX (36 ids, M4A AAC 96 kbps): 0.09-1.90 s each, all under 50 KB, peak at or below -1 dBFS.
+- The generator is deterministic (seeded PRNG); `npm run audio:verify` rebuilds the files and checks
+  exact loop lengths, true peak, bitrate and loop seams. Rebuilds are byte-identical.
+- The old Kenney CC0 placeholder set was removed together with the procedural replacement.
 
-Derivation: the Kenney OGG files were decoded, trimmed, resampled to mono 32 kHz WAV sources in
-[`assets-src/audio/`](assets-src/audio/) and then encoded to the committed M4A/OGG files by
-`tools/build-assets/audio.ts` (spec 12.11). The looping tracks are 8 s placeholder edits that
-crossfade several jingles from one family; the two stings are trimmed to 3 s (spec 9.9). The exact
-mapping and ffmpeg commands are documented in [`assets-src/audio/README.md`](assets-src/audio/README.md).
-These are derivative works of CC0 audio, so they remain CC0.
+The generated waveform data is not a derivative of any third-party recording.
 
 ## Other assets
 

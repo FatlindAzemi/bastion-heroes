@@ -12,11 +12,12 @@ export const vfx: VfxDefinition = {
   id: 'status_burn',
   sprite: 0,
   colors: [0xff8a2b, 0xff4d4d, 0xffcc00],
-  count: 3,
+  count: 4,
   speed: 0.5,
   upward: 1.2,
   gravity: -1.5,
   lifeMin: 0.35,
   lifeMax: 0.6,
   size: 0.16,
+  glow: 1.32,
 };

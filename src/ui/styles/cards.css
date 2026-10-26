@@ -68,6 +68,28 @@
   object-fit: cover;
 }
 
+/* Pixel-art portraits of the 2.5D pipeline: crisp nearest-neighbour scaling. */
+.card-portrait__image--pixel {
+  image-rendering: pixelated;
+  object-fit: contain;
+  object-position: 50% 100%;
+  transform: scale(1.08);
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35));
+}
+
+/* Soft inner shadow so the pixel portrait sits inside the frame, not on it. */
+.card-portrait__inner-shadow {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 14px rgba(8, 6, 16, 0.5),
+    inset 0 -12px 20px rgba(8, 6, 16, 0.35);
+  pointer-events: none;
+}
+
 /* Soft top-left sheen and bottom vignette so the portrait pops inside the frame (9.2). */
 .card-portrait__sheen {
   position: absolute;

@@ -4,6 +4,7 @@ import { levelById } from '../../src/data';
 import { LevelDef } from '../../src/data/schemas';
 import {
   armorTypesForLevel,
+  counterHintsForLevel,
   enemyTypesForLevel,
   laneSummary,
   terrainSummary,
@@ -38,5 +39,18 @@ describe('Scouting helpers (spec 3.12 rule 1, issue #49)', () => {
 
   it('3.12: the terrain summary describes the level terrain overrides', () => {
     expect(terrainSummary(parsedLevel('w1_l05'))).toBe('Open ground, no obstacles');
+  });
+
+  it('4.1: counter hints pick the strongest damage type per armor from the rules table', () => {
+    const hints = counterHintsForLevel(parsedLevel('w1_l05'));
+    expect(hints).toEqual([
+      { armor: 'light', damageType: 'pierce', multiplier: 1.25 },
+      { armor: 'armored', damageType: 'blast', multiplier: 1.25 },
+    ]);
+    expect(counterHintsForLevel(parsedLevel('w1_l06'))).toEqual([
+      { armor: 'light', damageType: 'pierce', multiplier: 1.25 },
+      { armor: 'spectral', damageType: 'arcane', multiplier: 1.5 },
+      { armor: 'armored', damageType: 'blast', multiplier: 1.25 },
+    ]);
   });
 });

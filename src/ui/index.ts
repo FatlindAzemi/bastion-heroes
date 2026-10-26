@@ -4,11 +4,13 @@ import { App } from './app';
 import { Hud } from './hud/Hud';
 import type { HudBus, HudHandle, HudOptions } from './hud/types';
 import type { ScoutFlowHandle, ScoutFlowOptions } from './screens/types';
+import type { ResultHandle, ResultOptions, ShellHandle, ShellOptions } from './screens/shellTypes';
 import './styles/tokens.css';
 import './styles/global.css';
 import './styles/cards.css';
 import './styles/hud.css';
 import './styles/screens.css';
+import './styles/meta.css';
 
 /** Mounts the Preact UI overlay on top of the 3D canvas (spec 11.8). */
 export function mountUi(container: HTMLElement): void {
@@ -21,14 +23,51 @@ export function mountUi(container: HTMLElement): void {
 /**
  * Mounts the Scouting -> Loadout screen flow (spec 11.8, issue #49) as an opaque
  * Preact overlay over the canvas. The temporary `?level=<id>&scout=1` debug entry
- * (spec 13.7) uses it; the World Map that replaces it is M4. Returns a handle so
- * `src/main.ts` can remove the screens before the HUD mounts.
+ * (spec 13.7) uses it; the playable shell replaces it for the normal flow. Returns
+ * a handle so `src/main.ts` can remove the screens before the HUD mounts.
  */
 export function mountScoutFlow(container: HTMLElement, options: ScoutFlowOptions): ScoutFlowHandle {
   const uiRoot = document.createElement('div');
   uiRoot.className = 'ui-root screens-root';
   container.appendChild(uiRoot);
   render(createElement(App, { flow: options }), uiRoot);
+  return {
+    dispose: (): void => {
+      render(null, uiRoot);
+      uiRoot.remove();
+    },
+  };
+}
+
+/**
+ * Mounts the playable shell of issue #113: Title -> Level Select -> Scouting ->
+ * Loadout -> `onFight(levelId, loadout)`. The shell is transparent on the title
+ * screen so the 3D title scene keeps drawing behind the logo. `src/main.ts` owns
+ * the level run and disposes this shell while a level is active.
+ */
+export function mountShell(container: HTMLElement, options: ShellOptions): ShellHandle {
+  const uiRoot = document.createElement('div');
+  uiRoot.className = 'ui-root shell-root';
+  container.appendChild(uiRoot);
+  render(createElement(App, { shell: options }), uiRoot);
+  return {
+    dispose: (): void => {
+      render(null, uiRoot);
+      uiRoot.remove();
+    },
+  };
+}
+
+/**
+ * Mounts the Victory/Defeat result overlay of issue #113 over the frozen level
+ * canvas: the 0-3 star rating plus Retry and Levels. The caller disposes it before
+ * starting the next level or remounting the shell.
+ */
+export function mountResult(container: HTMLElement, options: ResultOptions): ResultHandle {
+  const uiRoot = document.createElement('div');
+  uiRoot.className = 'ui-root result-root';
+  container.appendChild(uiRoot);
+  render(createElement(App, { result: options }), uiRoot);
   return {
     dispose: (): void => {
       render(null, uiRoot);
@@ -67,5 +106,16 @@ export type {
   HudHandle,
   HudOptions,
   HudStateView,
+  HudTipView,
 } from './hud/types';
+export type {
+  ResultHandle,
+  ResultOptions,
+  ResultOutcome,
+  ResultStars,
+  ShellHandle,
+  ShellLevel,
+  ShellOptions,
+  ShellScreenName,
+} from './screens/shellTypes';
 export type { LoadoutChoice, ScoutFlowHandle, ScoutFlowOptions } from './screens/types';

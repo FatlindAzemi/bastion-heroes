@@ -56,10 +56,10 @@ test('defender models: Rune Archer and Pyro Fox render in W1-L01', async ({ page
   const stats = (await overlay.textContent()) ?? '';
   console.log(`RUNE_PYRO_STATS ${stats.replace(/\s+/g, ' ').trim()}`);
 
-  await page.screenshot({ path: 'test-results/screens/m3-defenders-rune-pyro-844x390.png' });
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.screenshot({ path: 'test-results/screens/m3-defenders-rune-pyro-390x844.png' });
+  await page.setViewportSize({ width: 834, height: 1194 });
   await page.waitForTimeout(500);
-  await page.screenshot({ path: 'test-results/screens/m3-defenders-rune-pyro-1280x720.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-defenders-rune-pyro-834x1194.png' });
 
   expect(consoleErrors, 'browser console errors').toEqual([]);
   expect(pageErrors, 'uncaught page errors').toEqual([]);

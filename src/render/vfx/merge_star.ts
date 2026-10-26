@@ -12,11 +12,12 @@ export const vfx: VfxDefinition = {
   id: 'merge_star',
   sprite: 1,
   colors: [0xffd54a, 0xffcc00, 0xfff2b0, 0xffffff],
-  count: 22,
+  count: 28,
   speed: 1.8,
   upward: 1.7,
   gravity: 4.0,
   lifeMin: 0.6,
   lifeMax: 0.9,
   size: 0.2,
+  glow: 1.52,
 };

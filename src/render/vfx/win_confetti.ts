@@ -12,11 +12,12 @@ export const vfx: VfxDefinition = {
   id: 'win_confetti',
   sprite: 2,
   colors: [0xff4d4d, 0xffcc00, 0x4cd964, 0x3fa9f5, 0x7c4dff, 0xf4fbff],
-  count: 10,
+  count: 12,
   speed: 2.2,
   upward: 1.2,
   gravity: 5.5,
   lifeMin: 1.0,
   lifeMax: 1.6,
   size: 0.24,
+  glow: 1.2,
 };

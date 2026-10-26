@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 112" width="96" height="112">
+  <defs>
+    <linearGradient id="gold" x1="0.12" y1="0" x2="0.84" y2="1">
+      <stop offset="0" stop-color="#FFF6C4" />
+      <stop offset="0.28" stop-color="#FFDE72" />
+      <stop offset="0.58" stop-color="#FFC12E" />
+      <stop offset="0.82" stop-color="#EF9A08" />
+      <stop offset="1" stop-color="#B96800" />
+    </linearGradient>
+    <linearGradient id="goldFace" x1="0.16" y1="0.02" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#FFDD66" />
+      <stop offset="0.45" stop-color="#FFC12E" />
+      <stop offset="1" stop-color="#C97900" />
+    </linearGradient>
+    <linearGradient id="goldTrim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF3B0" />
+      <stop offset="0.5" stop-color="#FFC12E" />
+      <stop offset="1" stop-color="#8F5300" />
+    </linearGradient>
+    <linearGradient id="tower" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#37306B" />
+      <stop offset="0.5" stop-color="#211A45" />
+      <stop offset="1" stop-color="#0E0A1F" />
+    </linearGradient>
+    <linearGradient id="gem" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#D6FFF7" />
+      <stop offset="0.3" stop-color="#7CFFE4" />
+      <stop offset="0.62" stop-color="#3BF0C8" />
+      <stop offset="1" stop-color="#0E9C85" />
+    </linearGradient>
+    <filter id="ds" x="-40%" y="-40%" width="180%" height="190%">
+      <feDropShadow dx="0" dy="1.6" stdDeviation="1.2" flood-color="#05030C" flood-opacity="0.4" />
+    </filter>
+  </defs>
+  <g filter="url(#ds)">
+    <path d="M 48 4 C 58 4 69.5 6.6 75.5 9.4 Q 80 11.6 80 16 L 79.6 45 C 79 59 70 74 48 88 C 26 74 17 59 16.4 45 L 16 16 Q 16 11.6 20.5 9.4 C 26.5 6.6 38 4 48 4 Z" fill="url(#gold)" stroke="#141326" stroke-width="4" stroke-linejoin="round" />
+    <path d="M 48 11 C 56.5 11 66 13.2 71 15.6 Q 74 17 74 20.2 L 73.6 44 C 73 56 65 69 48 81 C 31 69 23 56 22.4 44 L 22 20.2 Q 22 17 25 15.6 C 30 13.2 39.5 11 48 11 Z" fill="url(#goldFace)" />
+    <path d="M 48 11 C 56.5 11 66 13.2 71 15.6 Q 74 17 74 20.2 L 73.6 44 C 73 56 65 69 48 81 C 31 69 23 56 22.4 44 L 22 20.2 Q 22 17 25 15.6 C 30 13.2 39.5 11 48 11 Z" fill="none" stroke="#A35C00" stroke-width="1.6" opacity="0.35" />
+    <path d="M 23.5 23.5 Q 23.5 18.5 29 16.2 C 34 14.2 40 13.2 46 13.2" fill="none" stroke="#FFF6C4" stroke-width="1.4" stroke-linecap="round" opacity="0.6" />
+    <rect x="31" y="77" width="34" height="6" rx="2.5" fill="url(#goldTrim)" stroke="#141326" stroke-width="2" />
+    <path d="M 33.5 76.5 L 34.2 57 V 51.5 H 38.5 V 57 H 42.2 V 51.5 H 46 V 57 H 49.7 V 51.5 H 54 V 57 H 58 V 51.5 H 62.4 V 57 L 63.2 76.5 Q 63.2 78.2 61.4 78.2 H 35.2 Q 33.4 78.2 33.5 76.5 Z" fill="url(#tower)" stroke="#0A0817" stroke-width="1.8" stroke-linejoin="round" />
+    <path d="M 34.2 57 V 51.5 H 38.5 V 57 H 42.2 V 51.5 H 46 V 57 H 49.7 V 51.5 H 54 V 57 H 58 V 51.5 H 62.4 V 57" fill="none" stroke="#8A79E8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.65" />
+    <path d="M 42 76.5 V 61.5 Q 42 57 48 57 Q 54 57 54 61.5 V 76.5 Z" fill="url(#goldTrim)" stroke="#0A0817" stroke-width="1.8" stroke-linejoin="round" />
+    <circle cx="48" cy="68.5" r="8.5" fill="url(#goldTrim)" stroke="#141326" stroke-width="2" />
+    <circle cx="48" cy="68.5" r="6" fill="#17112E" />
+    <path d="M 48 63.5 L 54 67.3 L 54 71.2 L 48 75 L 42 71.2 L 42 67.3 Z" fill="url(#gem)" stroke="#141326" stroke-width="1.5" stroke-linejoin="round" />
+    <path d="M 48 63.5 L 42 67.3 L 48 69.5 L 54 67.3 Z" fill="#D6FFF7" opacity="0.65" />
+    <path d="M 43.5 24.5 L 40.5 33 L 44.5 33 Z" fill="#FFF6C4" opacity="0.6" />
+  </g>
+</svg>

@@ -50,11 +50,11 @@ test('vfx: a real fight shows damage numbers and health bars over the enemies', 
     )
     .toBeGreaterThan(1320);
   await page.waitForTimeout(600);
-  await page.screenshot({ path: 'test-results/screens/m3-vfx-hits-844x390.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-vfx-hits-390x844.png' });
   await readStats(page);
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.setViewportSize({ width: 834, height: 1194 });
   await page.waitForTimeout(400);
-  await page.screenshot({ path: 'test-results/screens/m3-vfx-hits-1280x720.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-vfx-hits-834x1194.png' });
   expect(errors.console, 'browser console errors').toEqual([]);
   expect(errors.page, 'uncaught page errors').toEqual([]);
 });
@@ -79,12 +79,12 @@ for (const debugCase of DEBUG_CASES) {
     });
     // The debug helper loops the effect every 0.5 s; wait for at least one full burst.
     await page.waitForTimeout(1200);
-    await page.screenshot({ path: `test-results/screens/m3-vfx-${debugCase.name}-844x390.png` });
+    await page.screenshot({ path: `test-results/screens/m3-vfx-${debugCase.name}-390x844.png` });
     const stats = await readStats(page);
     expect(stats.drawCalls).toBeGreaterThan(0);
-    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.setViewportSize({ width: 834, height: 1194 });
     await page.waitForTimeout(500);
-    await page.screenshot({ path: `test-results/screens/m3-vfx-${debugCase.name}-1280x720.png` });
+    await page.screenshot({ path: `test-results/screens/m3-vfx-${debugCase.name}-834x1194.png` });
     expect(errors.console, 'browser console errors').toEqual([]);
     expect(errors.page, 'uncaught page errors').toEqual([]);
   });

@@ -13,8 +13,30 @@ export type IconName =
   | 'flag'
   | 'skull'
   | 'star'
+  | 'starEmpty'
   | 'chest'
-  | 'settings';
+  | 'settings'
+  | 'arrowBack'
+  | 'restart'
+  | 'levels'
+  | 'crest'
+  | 'map'
+  | 'cards'
+  | 'soundOn'
+  | 'soundOff'
+  | 'gem'
+  | 'coin'
+  | 'goldCoin'
+  | 'close'
+  | 'lock'
+  | 'check'
+  | 'timer'
+  | 'shield'
+  | 'home'
+  | 'vibrate'
+  | 'plus'
+  | 'minus'
+  | 'backArrow';
 
 /** File name of each icon (the `essence-orb` file is the Essence currency icon). */
 const ICON_FILES: Readonly<Record<IconName, string>> = {
@@ -26,8 +48,30 @@ const ICON_FILES: Readonly<Record<IconName, string>> = {
   flag: 'flag',
   skull: 'skull',
   star: 'star',
+  starEmpty: 'star-empty',
   chest: 'chest',
   settings: 'settings',
+  arrowBack: 'arrow-back',
+  restart: 'restart',
+  levels: 'levels',
+  crest: 'bastion-crest',
+  map: 'map',
+  cards: 'cards',
+  soundOn: 'sound-on',
+  soundOff: 'sound-off',
+  gem: 'gem',
+  coin: 'coin',
+  goldCoin: 'gold-coin',
+  close: 'close',
+  lock: 'lock',
+  check: 'check',
+  timer: 'timer',
+  shield: 'shield',
+  home: 'home',
+  vibrate: 'vibrate',
+  plus: 'plus',
+  minus: 'minus',
+  backArrow: 'back-arrow',
 };
 
 /** Props of one HUD/UI icon. */

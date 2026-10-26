@@ -71,10 +71,10 @@ test('defender models: Boomcap Brewer and Snowpup Yeti render in W1-L01', async 
   const stats = (await overlay.textContent()) ?? '';
   console.log(`DEFENDER_MODELS_STATS ${stats.replace(/\s+/g, ' ').trim()}`);
 
-  await page.screenshot({ path: 'test-results/screens/m3-defenders-boomcap-snowpup-844x390.png' });
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.screenshot({ path: 'test-results/screens/m3-defenders-boomcap-snowpup-390x844.png' });
+  await page.setViewportSize({ width: 834, height: 1194 });
   await page.waitForTimeout(500);
-  await page.screenshot({ path: 'test-results/screens/m3-defenders-boomcap-snowpup-1280x720.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-defenders-boomcap-snowpup-834x1194.png' });
 
   expect(consoleErrors, 'browser console errors').toEqual([]);
   expect(pageErrors, 'uncaught page errors').toEqual([]);

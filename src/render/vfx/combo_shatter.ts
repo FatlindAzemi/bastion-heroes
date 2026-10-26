@@ -12,11 +12,12 @@ export const vfx: VfxDefinition = {
   id: 'combo_shatter',
   sprite: 2,
   colors: [0x9be7ff, 0xf4fbff, 0x3fa9f5],
-  count: 16,
+  count: 20,
   speed: 2.4,
   upward: 1.4,
   gravity: 6.0,
   lifeMin: 0.35,
   lifeMax: 0.6,
   size: 0.18,
+  glow: 1.39,
 };

@@ -40,9 +40,9 @@ test('scout flow: Scouting -> Loadout -> Recommended -> Fight starts W1-L05 with
   await expect(page.getByTestId('scout-screen')).toContainText('Front shots bounce off the shield');
   await expect(page.getByTestId('scout-screen')).toContainText('Pot-Head Gloomling');
 
-  await page.screenshot({ path: 'test-results/screens/scouting-w1-l05-844x390.png' });
-  await page.setViewportSize({ width: 1194, height: 834 });
-  await page.screenshot({ path: 'test-results/screens/scouting-w1-l05-1194x834.png' });
+  await page.screenshot({ path: 'test-results/screens/scouting-w1-l05-390x844.png' });
+  await page.setViewportSize({ width: 834, height: 1194 });
+  await page.screenshot({ path: 'test-results/screens/scouting-w1-l05-834x1194.png' });
 
   // Continue -> Loadout with the level's 6 empty slots.
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -54,9 +54,9 @@ test('scout flow: Scouting -> Loadout -> Recommended -> Fight starts W1-L05 with
   await page.getByRole('button', { name: 'Recommended' }).click();
   await expect(page.locator('[data-testid="loadout-slot"][data-filled="true"]')).toHaveCount(6);
   await expect(page.getByTestId('loadout-fight')).toBeEnabled();
-  await page.screenshot({ path: 'test-results/screens/loadout-w1-l05-1194x834.png' });
-  await page.setViewportSize({ width: 844, height: 390 });
-  await page.screenshot({ path: 'test-results/screens/loadout-w1-l05-844x390.png' });
+  await page.screenshot({ path: 'test-results/screens/loadout-w1-l05-834x1194.png' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: 'test-results/screens/loadout-w1-l05-390x844.png' });
 
   // Fight! starts the level through the same run path as the direct debug URL.
   await page.getByRole('button', { name: 'Fight!' }).click();

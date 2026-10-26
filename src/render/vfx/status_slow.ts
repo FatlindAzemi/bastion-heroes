@@ -12,11 +12,12 @@ export const vfx: VfxDefinition = {
   id: 'status_slow',
   sprite: 4,
   colors: [0x3fa9f5, 0x9be7ff],
-  count: 4,
+  count: 5,
   speed: 0.6,
   upward: 0.8,
   gravity: -0.4,
   lifeMin: 0.5,
   lifeMax: 0.9,
   size: 0.12,
+  glow: 1.32,
 };

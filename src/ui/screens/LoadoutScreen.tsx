@@ -1,9 +1,8 @@
 import type { LevelDef } from '../../data/schemas';
 import { Button } from '../components/Button';
-import { CardPortrait } from '../components/CardPortrait';
-import { DefenderCard } from '../components/DefenderCard';
-import { Icon } from '../components/Icon';
-import { rarityColor } from '../hud/factionStyles';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { LoadoutCollection } from './LoadoutCollection';
+import { LoadoutSlotsPanel } from './LoadoutSlotsPanel';
 import {
   filledSlotCount,
   hasFixedLoadout,
@@ -12,7 +11,7 @@ import {
 } from './loadoutState';
 import type { CollectionCardView } from './types';
 
-/** Props of the Loadout screen (spec 3.12 rule 2, 11.8). */
+/** Props of the Loadout screen (spec 3.12 rule 2, 11.8, issue #113 portrait). */
 export interface LoadoutScreenProps {
   readonly level: LevelDef;
   readonly collection: readonly CollectionCardView[];
@@ -35,67 +34,11 @@ function selectedCardIds(slots: LoadoutSlots): ReadonlySet<string> {
   return ids;
 }
 
-/** One loadout slot button; tapping a filled slot removes its card (issue #49). */
-function LoadoutSlot({
-  card,
-  index,
-  disabled,
-  onRemove,
-}: {
-  readonly card: CollectionCardView | null;
-  readonly index: number;
-  readonly disabled: boolean;
-  readonly onRemove: () => void;
-}) {
-  if (card === null) {
-    return (
-      <button
-        type="button"
-        class="loadout-slot"
-        data-testid="loadout-slot"
-        data-filled="false"
-        aria-label={`Empty slot ${index + 1}`}
-        disabled={disabled}
-        onClick={onRemove}
-      >
-        <span class="loadout-slot__empty" aria-hidden="true">
-          +
-        </span>
-      </button>
-    );
-  }
-  return (
-    <button
-      type="button"
-      class="loadout-slot"
-      data-testid="loadout-slot"
-      data-filled="true"
-      data-defender-id={card.defenderId}
-      style={{ borderColor: rarityColor(card.rarity) }}
-      aria-label={`Remove ${card.name}`}
-      disabled={disabled}
-      onClick={onRemove}
-    >
-      <CardPortrait
-        defenderId={card.defenderId}
-        faction={card.faction}
-        rarity={card.rarity}
-        class="loadout-slot__portrait"
-      />
-      <span class="loadout-slot__name">{card.name}</span>
-      <span class="loadout-slot__cost essence-badge" aria-hidden="true">
-        <Icon name="essence" class="loadout-slot__essence-icon" />
-        {card.cost}
-      </span>
-    </button>
-  );
-}
-
 /**
- * Loadout screen: the full M2 collection on the left, the level's slots on the
- * right and Back / Recommended / Fight!. Tutorial levels 1-4 have a fixed
- * pre-chosen loadout and a disabled collection (spec 3.12, 7.2). The 6-slot
- * grid is the M2 limit; save-data persistence is the M4 seam.
+ * Portrait Loadout screen: the collection grid on top, the level's slots below and
+ * the Recommended / Fight! actions in thumb reach. Tutorial levels 1-4 have a
+ * fixed pre-chosen loadout and a disabled collection (spec 3.12, 7.2). The 6-slot
+ * limit is the M2 rule; save-data persistence is the M4 seam.
  */
 export function LoadoutScreen({
   level,
@@ -108,76 +51,42 @@ export function LoadoutScreen({
   onBack,
 }: LoadoutScreenProps) {
   const fixed = hasFixedLoadout(level);
-  const selectedIds = selectedCardIds(slots);
   const filledCount = filledSlotCount(slots);
   const complete = isLoadoutComplete(slots);
-  const cardById = new Map(collection.map((card) => [card.defenderId, card] as const));
   return (
     <main class="screen loadout-screen" data-testid="loadout-screen">
       <div class="screen__inner">
-        <header class="screen__header">
-          <p class="screen__eyebrow">
-            World {level.world} - Level {level.number} - {level.name}
-          </p>
-          <h1 class="screen__title">Loadout</h1>
-        </header>
+        <ScreenHeader
+          eyebrow={`World ${level.world} - Level ${level.number} - ${level.name}`}
+          title="Loadout"
+          badge={`${filledCount} / ${slots.length}`}
+          onBack={onBack}
+          backTestId="loadout-back"
+        />
         <div class="screen__body loadout-layout">
-          <section class="loadout-collection" aria-label="Your collection">
-            <h2 class="screen__section-title">Collection</h2>
-            <div class="collection-grid">
-              {collection.map((card) => (
-                <DefenderCard
-                  key={card.defenderId}
-                  card={card}
-                  selected={selectedIds.has(card.defenderId)}
-                  disabled={fixed}
-                  onSelect={() => onAddCard(card)}
-                />
-              ))}
-            </div>
-          </section>
-          <section class="loadout-slots-panel" aria-label="Loadout slots">
-            <header class="loadout-slots-panel__header">
-              <h2 class="screen__section-title">Slots</h2>
-              <span class="loadout-slots-panel__count">
-                {filledCount} / {slots.length}
-              </span>
-            </header>
-            <div class="loadout-slots">
-              {slots.map((slot, index) => (
-                <LoadoutSlot
-                  key={index}
-                  card={slot === null ? null : (cardById.get(slot.defenderId) ?? null)}
-                  index={index}
-                  disabled={fixed}
-                  onRemove={() => onRemoveCard(index)}
-                />
-              ))}
-            </div>
-            {fixed ? (
-              <p class="loadout-note" data-testid="fixed-loadout-note">
-                Tutorial level: this loadout is fixed.
-              </p>
-            ) : null}
-            {!fixed && !complete ? (
-              <p class="loadout-note loadout-note--hint">Fill every slot to fight.</p>
-            ) : null}
-          </section>
+          <LoadoutCollection
+            collection={collection}
+            selectedIds={selectedCardIds(slots)}
+            fixed={fixed}
+            onSelect={onAddCard}
+          />
+          <LoadoutSlotsPanel
+            slots={slots}
+            collection={collection}
+            filledCount={filledCount}
+            fixed={fixed}
+            onRemoveCard={onRemoveCard}
+          />
         </div>
-        <footer class="screen__actions">
-          <Button variant="secondary" onClick={onBack} testId="loadout-back">
-            Back
-          </Button>
-          <div class="screen__actions-group">
-            {fixed ? null : (
-              <Button variant="secondary" onClick={onRecommended} testId="loadout-recommended">
-                Recommended
-              </Button>
-            )}
-            <Button variant="primary" onClick={onFight} disabled={!complete} testId="loadout-fight">
-              Fight!
+        <footer class="screen__actions screen__actions--pinned">
+          {fixed ? null : (
+            <Button variant="secondary" onClick={onRecommended} testId="loadout-recommended">
+              Recommended
             </Button>
-          </div>
+          )}
+          <Button variant="primary" onClick={onFight} disabled={!complete} testId="loadout-fight">
+            Fight!
+          </Button>
         </footer>
       </div>
     </main>

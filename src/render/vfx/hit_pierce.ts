@@ -12,11 +12,12 @@ export const vfx: VfxDefinition = {
   id: 'hit_pierce',
   sprite: 2,
   colors: [0xffcc00, 0xfff2b0, 0xff8a2b],
-  count: 10,
+  count: 14,
   speed: 2.2,
   upward: 1.2,
   gravity: 6.0,
   lifeMin: 0.25,
   lifeMax: 0.45,
   size: 0.18,
+  glow: 1.39,
 };

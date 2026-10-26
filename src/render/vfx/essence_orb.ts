@@ -12,11 +12,12 @@ export const vfx: VfxDefinition = {
   id: 'essence_orb',
   sprite: 1,
   colors: [0x3bf0c8, 0xf4fbff],
-  count: 2,
+  count: 3,
   speed: 0.4,
   upward: 0.8,
   gravity: -0.3,
   lifeMin: 0.5,
   lifeMax: 0.8,
   size: 0.12,
+  glow: 1.58,
 };

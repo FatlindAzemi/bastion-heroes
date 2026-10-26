@@ -27,7 +27,7 @@ export function WaveBanner({ banner }: WaveBannerProps) {
       role="status"
       aria-live="polite"
     >
-      <span class="hud-banner__text hud-outlined-text">{BANNER_TITLES[banner.kind]}</span>
+      <span class="hud-banner__text">{BANNER_TITLES[banner.kind]}</span>
     </div>
   );
 }

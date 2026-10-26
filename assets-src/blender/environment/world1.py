@@ -155,40 +155,44 @@ def build_ground():
 
 
 def build_base_gate():
-    """Stone base platform and the wooden village gate at x = -0.8 (spec 9.1, 9.4)."""
+    """Stone base platform and the low village gate wall at x = -0.8 (spec 9.1, 9.4).
+
+    The portrait 2.5D camera looks over the base from behind (issue #113/#114), so the
+    base is a low crenellated stone wall with two short torch posts and banners instead
+    of the original tall arch: anything taller would hide the bottom board rows.
+    """
     parts = [
         blob("base_platform", size=(1.8, 5.4, 0.36), loc=to_blender(-0.95, 2.5, 0.18), swatch=SW_STONE, bevel=0.06),
         blob("base_step", size=(0.5, 5.2, 0.2), loc=to_blender(-0.15, 2.5, 0.1), swatch=SW_STONE_LIGHT, bevel=0.04),
         blob("base_trim", size=(0.2, 5.4, 0.16), loc=to_blender(-0.05, 2.5, 0.42), swatch=SW_STONE_DARK, bevel=0.03),
-        blob("gate_lintel", size=(0.5, 5.2, 0.34), loc=to_blender(-0.85, 2.5, 2.55), swatch=SW_WOOD_DARK, bevel=0.05),
-        blob(
-            "gate_roof_left",
-            size=(0.8, 5.5, 0.14),
-            loc=to_blender(-1.16, 2.5, 2.84),
-            swatch=SW_WOOD_DARK,
-            bevel=0.03,
-            rot=(0.0, math.radians(22.0), 0.0),
-        ),
-        blob(
-            "gate_roof_right",
-            size=(0.8, 5.5, 0.14),
-            loc=to_blender(-0.54, 2.5, 2.84),
-            swatch=SW_WOOD_DARK,
-            bevel=0.03,
-            rot=(0.0, math.radians(-22.0), 0.0),
-        ),
-        blob("gate_ridge", size=(0.18, 5.5, 0.2), loc=to_blender(-0.85, 2.5, 2.96), swatch=SW_WOOD, bevel=0.02),
-        blob("gate_banner", size=(0.06, 1.3, 1.0), loc=to_blender(-0.55, 2.5, 1.7), swatch=SW_FROST_DEEP, bevel=0.02),
-        blob("gate_banner_trim", size=(0.07, 1.42, 0.14), loc=to_blender(-0.54, 2.5, 2.22), swatch=SW_ESSENCE, bevel=0.01),
-        sphere("gate_gem", radius=0.17, loc=to_blender(-0.5, 2.5, 1.55), swatch=SW_ESSENCE_CORE),
+        # Low wall across the lane width, sitting on the platform.
+        blob("gate_wall", size=(0.44, 5.1, 0.62), loc=to_blender(-0.9, 2.5, 0.67), swatch=SW_STONE_LIGHT, bevel=0.05),
+        # Wooden gate door in front of the wall.
+        blob("gate_door", size=(0.16, 1.5, 1.02), loc=to_blender(-0.64, 2.5, 0.87), swatch=SW_WOOD, bevel=0.03),
+        blob("gate_door_trim", size=(0.18, 1.62, 0.16), loc=to_blender(-0.63, 2.5, 1.4), swatch=SW_WOOD_DARK, bevel=0.02),
+        blob("gate_banner", size=(0.08, 1.2, 0.8), loc=to_blender(-0.9, 2.5, 1.5), swatch=SW_FROST_DEEP, bevel=0.02),
+        blob("gate_banner_trim", size=(0.09, 1.32, 0.12), loc=to_blender(-0.9, 2.5, 1.94), swatch=SW_ESSENCE, bevel=0.01),
+        sphere("gate_gem", radius=0.15, loc=to_blender(-0.83, 2.5, 1.45), swatch=SW_ESSENCE_CORE),
     ]
-    for post_z in (0.22, 4.78):
+    # Crenellations along the top of the wall.
+    for step in range(7):
+        z = 0.42 + step * 0.72
+        parts.append(
+            blob(
+                "gate_crenel_%d" % step,
+                size=(0.5, 0.42, 0.26),
+                loc=to_blender(-0.9, z, 1.11),
+                swatch=SW_STONE,
+                bevel=0.03,
+            )
+        )
+    for post_z in (0.26, 4.74):
         parts.append(
             cylinder(
                 "gate_post_%d" % round(post_z * 100),
-                radius=0.16,
-                depth=2.2,
-                loc=to_blender(-0.85, post_z, 1.46),
+                radius=0.17,
+                depth=1.5,
+                loc=to_blender(-0.9, post_z, 1.11),
                 swatch=SW_WOOD,
                 bevel=0.02,
                 vertices=10,
@@ -198,14 +202,14 @@ def build_base_gate():
             cylinder(
                 "torch_%d" % round(post_z * 100),
                 radius=0.06,
-                depth=0.34,
-                loc=to_blender(-0.52, post_z, 1.82),
+                depth=0.3,
+                loc=to_blender(-0.6, post_z, 1.5),
                 swatch=SW_WOOD_DARK,
                 vertices=8,
             )
         )
-        parts.append(sphere("flame_%d" % round(post_z * 100), radius=0.15, loc=to_blender(-0.52, post_z, 2.06), swatch=SW_FORGE_ORANGE))
-        parts.append(sphere("flame_core_%d" % round(post_z * 100), radius=0.07, loc=to_blender(-0.52, post_z, 2.08), swatch=SW_WARM_WHITE))
+        parts.append(sphere("flame_%d" % round(post_z * 100), radius=0.14, loc=to_blender(-0.6, post_z, 1.72), swatch=SW_FORGE_ORANGE))
+        parts.append(sphere("flame_core_%d" % round(post_z * 100), radius=0.07, loc=to_blender(-0.6, post_z, 1.74), swatch=SW_WARM_WHITE))
     return parts
 
 
@@ -420,8 +424,8 @@ def check_environment_budget():
         "check: environment bounds x %.2f..%.2f, z %.2f..%.2f, height %.2f"
         % (bounds_min.x, bounds_max.x, -bounds_max.y, -bounds_min.y, size.z)
     )
-    if len(character_meshes()) > 4:
-        raise RuntimeError("environment should merge into at most 4 meshes, found %d" % len(character_meshes()))
+    if len(character_meshes()) > 5:
+        raise RuntimeError("environment should merge into at most 5 meshes, found %d" % len(character_meshes()))
 
 
 def main():
@@ -432,11 +436,14 @@ def main():
         raise RuntimeError('usage: world1.py -- --out assets-build/raw/world1.glb')
     reset_scene()
     ground = build_ground()
-    structures = join_meshes(build_base_gate() + build_portal() + build_edges(), "world1_structures")
+    structures = join_meshes(build_base_gate() + build_portal(), "world1_structures")
+    # Trees, bushes, rocks, flowers and mushrooms live in their own mesh: the renderer
+    # hides it and places the 2.5D pixel-art prop sprites instead (issue #114).
+    edges = join_meshes(build_edges(), "world1_edges")
     backdrop = join_meshes(build_backdrop(), "world1_backdrop")
     print(
-        "world1: %d triangles in %d meshes (ground, %s, %s)"
-        % (triangle_count(), len(character_meshes()), structures.name, backdrop.name)
+        "world1: %d triangles in %d meshes (ground, %s, %s, %s)"
+        % (triangle_count(), len(character_meshes()), structures.name, edges.name, backdrop.name)
     )
     check_environment_budget()
     export_glb(output)

@@ -12,11 +12,12 @@ export const vfx: VfxDefinition = {
   id: 'death_poof_defender',
   sprite: 1,
   colors: [0xffd54a, 0xffcc00, 0xfff2b0],
-  count: 20,
+  count: 24,
   speed: 2.0,
   upward: 1.5,
   gravity: 5.0,
   lifeMin: 0.5,
   lifeMax: 0.8,
   size: 0.18,
+  glow: 1.52,
 };

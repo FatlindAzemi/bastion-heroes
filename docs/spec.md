@@ -69,7 +69,8 @@ The peaceful village of Brightvale is attacked by the Gloom, a horde of shadow c
 | Item | Value |
 | --- | --- |
 | Platforms | iOS 16+ and Android 10+ (phones first, tablets supported) |
-| Orientation | Landscape only |
+| Art style | 2.5D HD-2D: low-poly 3D terrain, base and portal plus pixel-art sprite billboards for units and props; bloom and tilt-shift post-processing |
+| Orientation | Portrait only (Hochformat, 19.5:9) |
 | Target frame rate | 60 fps on an iPhone 12 / Pixel 6; never below 30 fps on an iPhone XR |
 | Level length | 3 to 5 minutes |
 | Session length | 10 to 15 minutes (3 levels + meta screens) |
@@ -85,7 +86,7 @@ The peaceful village of Brightvale is attacked by the Gloom, a horde of shadow c
 - **Elemental combos.** Some effects combine (ice + fire = steam burst). Placement next to each other matters.
 - **Damage and armor types.** Each enemy has an armor type; each hero has a damage type. Matching them is the core strategy.
 - **Scouting.** Before each level the player sees which enemy types will appear and picks a loadout to counter them.
-- **Clash Royale look.** Chunky stylized 3D characters, bright colors, heavy UI.
+- **HD-2D look.** Saturated pixel-art sprites on a soft low-poly 3D world, glowing VFX, chunky arcade UI.
 
 ## 3. Core gameplay rules
 
@@ -600,38 +601,47 @@ type SaveData = {
 
 ## 9. Art direction
 
-The look is chunky stylized 3D with toon shading and dark outlines, bright warm heroes against dark purple enemies, viewed from a fixed tilted camera. Readability on a phone beats detail every time. Inspired by mobile hits like Clash Royale, but never copy their characters, logos or UI assets.
+The look is **2.5D HD-2D**: hand-crafted, saturated pixel-art sprites on a soft low-poly 3D world, seen through a fixed, slightly tilted portrait camera. Units, enemies and small props are flat pixel billboards; the terrain, the base gate and the enemy portal are stylized 3D meshes. Bloom, tilt-shift and a warm colour grade make the scene feel like a modern arcade game. Readability on a 6-inch phone beats detail every time. Inspired by mobile hits like Clash Royale and HD-2D role-playing games, but never copy their characters, logos or UI assets.
 
 ### 9.1 Camera and world mapping
 
 - Three.js world: **1 tile = 1.0 unit**. Sim x maps to world x. Sim lane `l` maps to world z = `l + 0.5`. World y is up.
-- Perspective camera, FOV 32°, fixed. Start values: position (4.5, 7.5, 10.5), looking at (4.5, 0, 2.6). Tune so that world x from −2.5 (base) to 11.0 (portal) fits the screen width on a 19.5:9 phone, and the top 14% of the screen stays free for the card bar.
+- The game is **portrait only**. The camera sits on the near (-x) side of the board and looks along +x towards the enemy portal, so the five lanes span the screen width and the nine columns run from the base at the bottom to the portal at the top.
+- Perspective camera, FOV 32°, fixed. The target is (4.5, 0, 2.5); the camera direction from target to camera is (-cos 45°, sin 45°, 0) (45° elevation). Sprite atlases are rendered with an orthographic camera on exactly this direction, so baked sprite shading matches the scene (12.12).
+- `fitLevelCamera` slides the camera along that fixed direction until the whole playfield plus the base apron and the portal fits between the HUD strips: the **top 9 %** of the screen stays free for the status bar, the **bottom 13.5 %** for the card tray (9.8). No playfield tile may be hidden behind the HUD at 390 x 844 (19.5:9) or 834 x 1194 (tablet portrait).
 - The camera never moves during play, except screen shake (9.7).
-- Defenders face +x (right). Enemies face −x (left).
+- Defenders face +x (up-screen), enemies face -x (down-screen). Sprite billboards always face the camera, so the player sees the defenders\' backs and the enemies\' fronts, exactly like the pre-rendered sprites.
+- In a wide desktop browser the game is letterboxed in a centred 9:19.5 portrait frame (9.8); the renderer always sizes itself to that frame.
+- The tilt-shift pass (9.2) blurs the far top band and the extreme foreground, never the playfield.
 
-### 9.2 Lighting and shading
+### 9.2 Lighting, shading and post-processing
 
 - One directional light from the upper left front: color #FFF2D9, intensity 2.2.
 - One hemisphere light: sky #BFE3FF, ground #6B8F4E, intensity 0.9.
-- **No real-time shadows.** Every unit gets a blob shadow: a dark ellipse on the ground (#000000 at 35% opacity), 0.7 units wide.
-- Materials: `MeshToonMaterial` with a 3-step gradient map (shadow 0.55, mid 0.8, light 1.0 brightness).
-- Outline: inverted hull done at runtime. For each character mesh, add a copy with a black (#1B1B2F) back-face-only material, with vertices pushed out along their normals by 0.02 units. One shared function `addOutline(mesh)` in `src/render/outline.ts`.
-- Hit flash: a shader uniform `flash` (0 to 1) that mixes the color toward white. Used for 0.08 s on every hit.
+- 3D terrain, base and portal use `MeshToonMaterial` with a 3-step gradient map (shadow 0.55, mid 0.8, light 1.0 brightness).
+- Sprite billboards are unlit pixel art: shading and a 1 px #1B1B2F outline are baked into the atlas by the sprite pipeline (12.12). Every sheet uses **nearest-neighbour** filtering, no mipmaps and sRGB colours, so the pixels stay crisp. Every unit and tree gets a soft dark ground shadow ellipse (no real-time shadow maps).
+- Post-processing in one `EffectComposer` chain (`src/render/postprocessing.ts`):
+  - `UnrealBloomPass`, threshold 1.0 (only emissive VFX, hit flashes and portal glow bloom), strength 0.8, radius 0.45 at half resolution.
+  - a custom tilt-shift pass with a sharp focus band over the board (screen centre y 0.46, half height 0.30) that blurs up to 1.6 px towards the top and bottom screen edges.
+  - colour grade: saturation x1.10, contrast x1.03, vignette 0.26.
+- `?post=0` disables the chain for debugging and low-end devices; if WebGL2 or the composer is unavailable the renderer falls back to a plain `renderer.render`.
+- Hit flash: the sprite shader mixes the texel towards white with a 0..1 uniform for 0.08 s on every hit (9.6).
 
-### 9.3 Proportions and budgets
+### 9.3 Budgets
 
-| Asset | Height (units) | Triangles | Texture |
-| --- | --- | --- | --- |
-| Common and Rare defender | 0.7–0.9 | 1,500–3,000 | Shared 256×256 palette texture |
-| Epic and Legendary defender | 0.8–1.1 | 3,000–4,500 | Palette texture + optional 256×256 detail texture |
-| Mythic defender | up to 1.3 | up to 6,000 | Palette texture + 512×512 detail texture |
-| Regular enemy | 0.8–1.0 (Ogre 1.4) | 1,000–3,000 | Palette texture |
-| Boss | 2.4 | up to 8,000 | 512×512 |
-| Level environment (one world) | — | up to 30,000 total | Palette texture + 1 ground texture 1024×1024 |
+| Asset | Budget |
+| --- | --- |
+| Unit sprite frame | 64-128 px per axis, 1-12 frames per clip, sheet columns 1-8 |
+| Unit sprite atlas | at most 512 x 512 px and about 120 KB PNG per character |
+| Prop sprite frame | 36-104 px, single frame, at most 512 px atlas width |
+| Palette texture | one shared 256 x 256 palette PNG (9.4) |
+| Level environment (3D part) | at most 30,000 triangles total for ground, base, portal and backdrop |
+| Draw calls | below 150 per frame (one material per sprite sheet, shared) |
+| Triangles | below 300,000 per frame |
+| Post-processing | bloom at half resolution; whole chain under 2 ms on a mid-range phone |
 
-- Head = 40–50% of the total height. Hands, weapons and props are oversized (1.5–2× realistic).
-- Every unit's footprint stays inside a circle of 0.8 units diameter (so it fits its tile).
-- **Palette texture:** one 256×256 PNG made of 16×16 flat color swatches (256 colors). Models are UV-mapped so each face samples the center of one swatch. This lets an AI agent color models by choosing swatch indices instead of painting textures. File: `assets-src/palette/palette.png`, generated by `tools/palette/make_palette.py`.
+- A sprite frame's world height is recorded in the manifest (`worldHeight`) and multiplied by 1.25 at runtime for phone readability; the drawn unit still fits its tile footprint.
+- Pixel art is authored on an integer pixel grid: render at 4x, nearest-downsample to the target frame size, palette-quantise to the 9.4 swatches with the 9.2 toon bands, add the 1 px #1B1B2F outline, then pack the frames row-major into the atlas.
 
 ### 9.4 Color palette
 
@@ -647,40 +657,48 @@ Defenders use warm, saturated colors. Enemies use dark purples with glowing eyes
 | The Gloom (enemies) | Shadow #2B1B3D | Dusk purple #4A2F66 | Eye glow #3CF2FF or #A8FF3C |
 | Essence | Teal #3BF0C8 with a white core | — | — |
 | World 1 ground | Grass #7ED957 and #6CC644 in a checkerboard | Path dirt #D9A066 | Sky #9FD8FF |
+| UI surfaces | Midnight indigo #12111F to #241A3D | Gold #FFCC66 / #FFB020 | Glass rim #F4FBFF at 18 % |
+
+- The post-processing grade raises saturation slightly; the palette values stay the source of truth.
 
 ### 9.5 Shape language
 
 - Producers: round and soft. Shooters: a clear weapon pointing right. Walls: square and wide. Control and magic: flowing lines and floating parts. Legendary and Mythic: tall, asymmetric, unique silhouette.
 - Enemies: spiky, horned, jagged edges, always slightly hunched.
-- **Silhouette test:** render every character as solid black at 80 px tall. A tester must be able to name it and its role. Do this for every new character and attach the image to its pull request.
+- **Pixel-art rules:** chunky 1-3 px clusters, no anti-aliasing, a 1 px #1B1B2F outline around the whole silhouette, light from the upper left, readable at 48 px. Sprites are rendered from the fixed game camera direction so their shading matches the 3D world.
+- **Silhouette test:** render every character as a solid black sprite at 50 px tall. A tester must be able to name it and its role. Do this for every new character and attach the image to its pull request.
 
 ### 9.6 Animations
 
-Skeletal clips come from Blender. Spawn, hit and death are procedural (code) and shared by all units, so they need no clips.
+Sprite clips are generated from the existing rigged Blender models (12.12); the simulation event contract does not change. Procedural animations run on the billboard mesh in code.
 
-| Clip | Who | Source | Length | Notes |
-| --- | --- | --- | --- | --- |
-| `idle` | All | Blender | 2.0 s loop | Breathing, blinking, a character-specific twitch |
-| `attack` | Attackers | Blender | 0.4 s | Wind-up 0.1 s, then the shot. The renderer plays it when the sim emits an `attack` event. |
-| `produce` | Producers | Blender | 0.6 s | Glow pulse when an orb spawns |
-| `walk` | Enemies | Blender | 1.0 s loop | Playback speed scales with the enemy's current speed (Slow halves it) |
-| `eat` | Enemies | Blender | Loop matching `attackInterval` |  |
-| `victory` | Defenders | Blender | 1.2 s | Plays on all living defenders when the level is won |
-| spawn | All | Code | 0.5 s | Drop from 1.5 units above, land with squash (scale y 0.75, x/z 1.15), overshoot to 1.05, settle to 1.0. Dust ring. |
-| hit | All | Code | 0.15 s | Flash to white 0.08 s + squash to 0.92 and back |
-| death | All | Code | 0.4 s | Scale to 0 with a 180° spin, then a poof (purple smoke for enemies, gold stars for defenders) |
-| merge | Defenders | Code | 0.5 s | Jump 0.4 units, spin 360°, grow to the new star scale, star burst VFX |
+| Clip | Who | Source | Notes |
+| --- | --- | --- | --- |
+| `idle` | All | atlas | 1-6 frames at 4-8 fps, loop. A model without an idle clip uses a held frame |
+| `walk` | Enemies | atlas | 4-6 frames at 6 fps, loop; playback speed scales with the enemy's current speed (Slow halves it) |
+| `attack` | Attackers | atlas | 4 frames at 7-8 fps, played on the `attack` event |
+| `eat` | Enemies | atlas | 4-5 frames at 10 fps, loop while eating |
+| `produce` | Producers | atlas | 4-5 frames at 8 fps when an orb spawns |
+| `victory` | Defenders | atlas | 4 frames at 8 fps on `levelWon` |
+| spawn | All | Code | 0.5 s drop from 1.5 units above, land with squash (scale y 0.75, x/z 1.15), overshoot to 1.05, settle to 1.0, dust ring |
+| hit | All | Code | White flash 0.08 s + squash to 0.92 and back, 0.15 s total |
+| death | All | Code | 0.4 s: shrink and spin, then a poof (purple smoke for enemies, gold stars for defenders) |
+| merge | Defenders | Code | 0.5 s: jump 0.4 units, 360° spin, grow to the new star scale, star burst |
 
 ### 9.7 VFX and juice
 
-Every VFX has an id and lives in `src/render/vfx/<id>.ts`. Use simple particle sprites (soft circle, star, spark, smoke puff, snowflake, rune) from one 512×512 sprite sheet.
+Every VFX has an id and lives in `src/render/vfx/<id>.ts`. Effects are bright, additive and bloom-friendly; keep particles capped and reuse geometries (11.7).
 
 | VFX id | Used for |
 | --- | --- |
-| `spawn_dust` | Defender lands |
+| `spawn_dust` | Defender or enemy lands |
 | `hit_pierce` | Yellow spark burst |
 | `hit_blast` | Orange ring + smoke puff |
 | `hit_arcane` | Cyan rune flash |
+| `target_ring` | Radial cooldown/status ring floating over a unit |
+| `aoe_ring` | Flat glowing ground ring with a sharp edge (blast hits, trap) |
+| `aoe_shockwave` | Expanding energy shockwave (Ogre smash, trap fire, boss smash) |
+| `glow_rise` | Rising embers/sparkles from hits and pickups |
 | `status_slow` | Blue sparkles on the enemy, blue tint |
 | `status_freeze` | Translucent ice block mesh around the enemy |
 | `status_burn` | Small flames on the enemy |
@@ -698,39 +716,42 @@ Every VFX has an id and lives in `src/render/vfx/<id>.ts`. Use simple particle s
 
 Juice rules:
 
-- Damage numbers float up 0.6 units in 0.6 s and fade. Colors per 4.1. Font Lilita One with a dark outline.
+- Damage numbers float up 0.6 units in 0.6 s, pop in with a 1.2x overshoot and fade; colour per damage type (pierce #22D3EE, blast #FF8A2B, arcane #7C4DFF), bigger for large hits.
 - Screen shake: 0.05 units amplitude for 0.15 s on hits of 200 or more, trap firing, boss smash and Ogre smash.
-- Slow motion: when the last enemy of the final wave dies, run at 0.3× speed for 0.6 s.
+- Slow motion: when the last enemy of the final wave dies, run at 0.3x speed for 0.6 s.
 - Health bars appear only after a unit has taken damage: green over defenders, red over enemies, 0.6 units wide, above the head.
 - Haptics (device only): light on placement, medium on trap fire, heavy on win and loss.
 
 ### 9.8 UI
 
 - Fonts: **Lilita One** for titles, numbers and buttons; **Nunito** (Bold and ExtraBold) for body text. Both are free (SIL Open Font License). Bundle them in the app; do not load them from the internet at runtime.
-- Text style for titles and numbers: white fill, 3 px outline #1B1B2F, drop shadow 0 3 px rgba(0,0,0,0.35).
-- Buttons: radius 16 px, a 6 px darker bottom edge for a 3D look, pressing moves the face down 4 px. Colors: primary green #4CD964, secondary blue #3FA9F5, buy yellow #FFCC00, danger red #FF4D4D.
-- Minimum touch target: 48 × 48 px. Respect safe areas with `env(safe-area-inset-*)`.
+- Text style for titles and numbers: white fill, 3 px outline #1B1B2F, drop shadow 0 3px rgba(0,0,0,0.35).
+- Arcade UI style: rounded pill surfaces, 2-3 px #1B1B2F outlines, glassy dark panels with a 1 px light rim, layered drop shadows, gold and teal accents, glossy gradient buttons with a 6 px darker bottom edge and a 4 px press travel. Buttons: primary green #4CD964, secondary blue #3FA9F5, buy yellow #FFCC00, danger red #FF4D4D. Non-pixelated, high contrast; the HUD floats above the pixel world.
+- **Minimum touch target: 48 x 48 px.** Respect safe areas with `env(safe-area-inset-*)`.
+- Portrait screens are full-bleed at 390 x 844 and 834 x 1194. A wide desktop browser shows the game in a centred 9:19.5 portrait frame over a dark background (CSS only).
 
-In-level HUD (landscape):
+In-level HUD (portrait):
 
 | Element | Position | Size | Content |
 | --- | --- | --- | --- |
-| Essence counter | Top left | 140 × 72 px | Essence orb icon + number |
-| Card bar | Top, right of the counter | 6 cards of 72 × 96 px, 8 px gaps | Portrait, Essence cost at the bottom, cooldown overlay, star pips |
-| Shovel | End of the card bar | 72 × 72 px | Shovel icon |
-| Speed toggle | Top right, left of pause | 64 × 64 px | "1×" / "2×" |
-| Pause | Top right | 64 × 64 px | Pause icon; opens Resume, Restart, Settings, Quit |
-| Level progress | Bottom right | 220 × 28 px | Fill bar, flag icon per BIG wave, skull for the final wave |
-| Wave banner | Center | Full width, 120 px | "A huge wave is coming!" / "FINAL WAVE", slides in and out |
-| Boss bar | Top center, below card bar | 50% width | Boss name, health, phase markers |
+| Essence counter | Top left in the status bar | pill, 44 px tall | Essence orb icon + number |
+| Level progress | Top centre in the status bar | flexible, about 40 % width | Fill bar with flag icon per BIG wave and skull for the final wave |
+| Speed toggle | Top right in the status bar | 56 x 56 px round | "1x" / "2x" |
+| Pause | Top right, right of speed | 56 x 56 px round | Pause icon; opens Resume, Restart, Quit |
+| Card tray | Bottom, full width | 6 cards about 50 x 65 px at 390 px width + 48 px shovel | Portrait, Essence cost, cooldown overlay, star pips; dark scrim behind the tray |
+| Wave banner | Centre | full width, 120 px | "A huge wave is coming!" / "FINAL WAVE", slides in and out |
+| Boss bar | Below the status bar, centred | 60 % width | Boss name, health, phase markers |
 
-Card visual: portrait rendered from the 3D model (head and shoulders) on a gradient in the rarity color, rarity frame, cost badge with the Essence icon in the bottom left.
+- Screens: **Title/Home** (logo lockup, tagline, pixel-art hero key art in the 3D scene, PLAY CTA, secondary round icon buttons, world info pill), **Level Select** (World 1 map with 10 level medallions, stars, back button), **Scouting** -> **Loadout**, **Level** (HUD), **Pause** overlay (Resume/Restart/Quit), **Result** overlay (Victory/Defeat, 0-3 stars with a pop animation, Retry and Levels).
+- Card visual: pixel-art portrait from the sprite pipeline on a gradient in the rarity color, rarity frame, cost badge with the Essence icon in the bottom left, star pips at ★2/★3.
+- Icons: hand-written SVG files in `public/icons/`, 3 px #141326 outline, gradient fills with a top-left highlight and a soft drop shadow; icons must stay crisp at 32 px.
+- The app icon and splash screen are rendered from the same crest as the title lockup.
 
 ### 9.9 Audio
 
-- Music (loops, OGG and M4A): main menu, World 1 calm, a "big wave" intensity layer that fades in during BIG and FINAL waves, victory sting (3 s), defeat sting (3 s).
-- SFX (about 35): card select, place, merge, shovel, orb drop, orb collect, each attack type, each hit type, each combo, enemy groan, enemy eat, enemy death, defender death, trap, wave horn, boss roar, button tap, chest shake, chest open, card flip per rarity, upgrade, level win, level lose.
-- Placeholder sources: Kenney.nl audio packs (CC0). Final audio is an open decision (section 17).
+- Music (loops, OGG and M4A): main menu, World 1 calm, a "big wave" intensity layer that fades in during BIG and FINAL waves, victory sting (3 s), defeat sting (3 s). Style: fast driving 16-bit chiptune-orchestral hybrid (GBA/SNES-style pulse and triangle synths plus modern punchy drums and bass), 130-150 BPM, energetic and adventurous; loop boundaries land on whole bars.
+- SFX (about 35 ids): punchy retro-arcade with modern bass punch - glittering chime sequences for loot and XP, energetic whooshes for AOE rings, short pitched pops for damage ticks, clicky UI taps, horn, roar, placement and merge sounds.
+- All tracks and SFX are **procedurally generated** by `npm run audio` (12.13): the repository owns the rights and no third-party samples are used.
 - Volume defaults: music 0.6, SFX 0.8. Music ducks to 30% during the victory and defeat stings.
 
 ## 10. Tech stack
@@ -769,12 +790,16 @@ Use exactly these tools. Do not add a dependency that is not in this table witho
 | Asset tooling | `@gltf-transform/core`, `@gltf-transform/functions`, `@gltf-transform/cli` | Optimize .glb files | Used by `tools/build-assets`. |
 | Script runner | `tsx` | Run TypeScript tools (`tools/*.ts`) |  |
 
+Post-processing and billboard rendering use the `EffectComposer`, `UnrealBloomPass` and utility modules that ship with `three` (imported from `three/examples/jsm/`); this adds no new runtime package. The sprite pipeline runs headless Blender plus Python 3 with Pillow/numpy (12.12), and the audio pipeline uses ffmpeg (12.13).
+
 External tools (not npm):
 
 | Tool | Version | Purpose |
 | --- | --- | --- |
-| Blender | 4.x LTS, run headless: `blender -b -P script.py` | Model, rig, animate and export characters from Python scripts |
-| Python | The one bundled with Blender | Blender scripts only. No other Python in the project. |
+| Blender | 5.x LTS, run headless: `blender -b -P script.py` | Model, rig, animate and export characters from Python scripts |
+| Python | The one bundled with Blender | Blender scripts only |
+| Python 3 + Pillow + numpy | System Python 3 | Sprite atlas post-processing (`tools/sprites`, 12.12) |
+| ffmpeg | Current stable | Encode generated music/SFX to OGG and M4A (12.13) |
 | Xcode | Current stable | iOS build (M6, needs a Mac) |
 | Android Studio + JDK 17+ | Current stable | Android build (M6) |
 | Supabase CLI | Current stable | Local backend and migrations (M5) |
@@ -797,6 +822,8 @@ These script names are fixed. Every agent prompt refers to them.
 | `assets` | `tsx tools/build-assets/run.ts` | Run Blender scripts and optimize all models (section 12) |
 | `validate-data` | `tsx tools/validate-data.ts` | Parse every data file with its Zod schema |
 | `check` | `npm run typecheck && npm run lint && npm test && npm run validate-data` | Everything a pull request must pass |
+| `sprites` | `python3 tools/sprites/build_sprites.py` | Render the 2.5D pixel-art sprite atlases and prop sheets (12.12) |
+| `audio` | `tsx tools/audio/generate.ts` | Synthesize music and SFX (12.13) |
 | `cap:sync` | `npm run build && npx cap sync` | Copy the web build into the native projects |
 
 ### 10.4 Import boundaries (enforced by ESLint)
@@ -838,9 +865,12 @@ bastion-heroes/
   index.html
   CLAUDE.md                       # copy of section 1 rules + links to this spec
   public/
+    app-icon/ *.png  app-icon.svg # app icon set (9.8)
+    manifest.webmanifest          # PWA/native shell icon manifest
     models/   *.glb               # output of npm run assets (committed)
     textures/ palette.png  particles.png
-    audio/    music/*.m4a  sfx/*.m4a
+    audio/    music/*.ogg  music/*.m4a  sfx/*.m4a
+    sprites/  <id>.png  prop_<id>.png  portraits/<id>.png  manifest.json
     fonts/    LilitaOne-Regular.woff2  Nunito-Bold.woff2  Nunito-ExtraBold.woff2
   src/
     main.ts                       # boot: load assets, mount UI, start loop
@@ -865,9 +895,15 @@ bastion-heroes/
       economy.ts                  # upgrade costs, chest odds, rewards
       index.ts                    # registry: exports all defs by id
     render/
-      renderer.ts                 # scene, camera, lights, resize
+      renderer.ts                 # scene, camera, lights, resize, post-processing
+      postprocessing.ts           # bloom + tilt-shift + grade + vignette (9.2)
+      cameraFit.ts                # portrait level camera fit (9.1)
       outline.ts  toonMaterial.ts  blobShadow.ts
-      units.ts                    # Map<simId, Object3D>, spawn/despawn
+      units.ts                    # GLB unit fallback layer (M3)
+      sprites/                    # 2.5D pixel-art billboard unit layer (9.2, 11.7)
+      propSprites.ts              # pixel-art tree/bush/rock/flower props
+      backdrop.ts                 # painted portrait far background
+      titleScene.ts  titleHeroes.ts # home-screen diorama + pixel-art key art
       animations.ts               # plays clips from events
       vfx/<vfxId>.ts
       environment/<worldId>.ts
@@ -1026,9 +1062,12 @@ export const EnemyDef = z.object({
 
 ### 11.7 Rendering rules
 
-- The renderer keeps a `Map<simId, Object3D>`. It creates objects on spawn events and removes them on removal events after the death animation.
-- Load every `.glb` once with `GLTFLoader` and clone it with `SkeletonUtils.clone` per unit.
-- Use one `AnimationMixer` per unit. Cap the device pixel ratio at 2.
+- The renderer keeps a `Map<simId, Object3D>`. It creates objects on spawn events and removes them on removal events after the death animation (spec 11.7).
+- Units are animated pixel-art billboards (`src/render/sprites/`): one quad per unit, one material per sheet, frame UVs from the manifest, bottom-centre anchor, camera-facing quaternion, nearest-neighbour textures. Until the atlases load (or when they are missing) the GLB unit layer of M3 stays visible as a fallback; the sprite layer then takes over and the 3D layer is disposed.
+- Trees, bushes, rocks, flowers and mushrooms are sprite billboards too (`src/render/propSprites.ts`); the 3D props mesh of the environment model is hidden.
+- 3D level structures still load once with `GLTFLoader` and keep the palette/toon materials.
+- Cap the device pixel ratio at 2.
+- Draw titles and levels through the post-processing chain (9.2); `?post=0` switches to the plain renderer.
 - Target draw calls below 150 and triangles below 300,000 per frame. Show `renderer.info` in a debug overlay toggled with the backquote key in dev builds.
 
 ### 11.8 Screens
@@ -1037,14 +1076,16 @@ The UI is a simple state machine in `src/ui/app.tsx`. Only one screen is mounted
 
 | Screen | Goes to |
 | --- | --- |
-| Boot (loading bar) | MainMenu |
-| MainMenu | WorldMap, Collection, Shop, Settings |
-| WorldMap | Scouting (tap a level), MainMenu |
+| Title/Home (logo, tagline, key art, PLAY) | Level Select |
+| Level Select (World 1 map, 10 level medallions) | Scouting (tap a level), Title |
 | Scouting (shows the level's enemies and lanes) | Loadout |
 | Loadout (pick 6 cards, Recommended button) | Level, Scouting |
-| Level (HUD over the 3D level) | Result, or WorldMap via Pause → Quit |
-| Result (stars, rewards, chest) | Chest, WorldMap, Level (retry or next) |
-| Collection, Shop, Chest | Back to the previous screen |
+| Level (HUD over the 2.5D level) | Result, or Level Select via Pause -> Quit |
+| Pause (Resume, Restart, Quit) | Level, Level Select |
+| Result (Victory/Defeat, 0-3 stars) | Level (retry), Level Select |
+| Collection, Shop, Chest (M4/M5) | Back to the previous screen |
+
+The playable shell (`mountShell` in `src/ui/index.ts`) owns Title -> Level Select -> Scouting -> Loadout; `src/main.ts` owns the level run, the pause actions and the result overlay (`mountResult`). The 3D title scene stays mounted under the title screen.
 
 ### 11.9 Save data
 
@@ -1177,10 +1218,42 @@ If the human decides that scripted models are not good enough for Epic and highe
 
 ### 12.11 Other assets
 
-- Icons (currencies, buttons, statuses): hand-written SVG files in `public/icons/`, 2 px outline #1B1B2F, colors from 9.4.
+- Icons (currencies, buttons, statuses): hand-written SVG files in `public/icons/`, 3 px outline #141326, gradient fills from 9.4, crisp at 32 px. The app icon/favicon set lives in `public/app-icon/` and `public/favicon.svg`.
 - Particle sprite sheet: generated by `tools/build-assets/particles.ts` (draws soft circle, star, spark, smoke puff, snowflake and rune on a canvas) into `public/textures/particles.png`.
-- Audio: source files in `assets-src/audio/` (WAV). Convert to M4A (AAC 128 kbps for music, 96 kbps for SFX) with ffmpeg in `tools/build-assets/audio.ts`. Keep each SFX under 1.5 s and under 50 KB.
+- Audio: generated by `npm run audio` (12.13) into `public/audio/`: music as OGG Vorbis (~86 kbps) and M4A AAC (~80 kbps), SFX as M4A AAC (96 kbps). Keep each SFX under 1.5 s and under 50 KB; only `chest_open`, `level_win` and `level_lose` may run up to 1.9 s (still under 50 KB), as approved by issue #114.
 - Every third-party asset (fonts, sounds, any model) gets a line in `CREDITS.md` with name, author, license and source URL.
+
+### 12.12 Sprite atlas pipeline (2.5D units and props)
+
+`npm run sprites` renders the pixel-art atlases from the existing rigged GLB models; no model has to be re-authored for the 2.5D look.
+
+1. `tools/sprites/render_sprites.py` runs headless Blender, imports every `public/models/<id>.glb`, plays each clip and renders the sampled frames at 4x the target resolution with an orthographic camera on the 9.1 game direction (elevation 45°, azimuth 0, key light from the upper left front), transparent background.
+2. `tools/sprites/make_atlases.py` (Python 3, Pillow/numpy) samples each 4x block (nearest, no anti-aliasing), alpha-thresholds, quantises to the 9.4 palette with the 9.2 toon bands, adds the 1 px #1B1B2F outline and packs the frames row-major into `public/sprites/<id>.png` plus `public/sprites/manifest.json`.
+3. Props (`prop_round_tree.png`, `prop_pine_tree.png`, `prop_bush.png`, `prop_rock.png`, `prop_mushroom.png`, `prop_flower_cluster.png`) and pixel card portraits (`public/sprites/portraits/<id>.png`, 128 x 128) come from the same pipeline.
+4. `manifest.json` is the contract for the render layer (no other file describes the atlas):
+
+```json
+{
+  "version": 1,
+  "characters": {
+    "<id>": {
+      "image": "/sprites/<id>.png",
+      "frameWidth": 96, "frameHeight": 112, "columns": 8, "worldHeight": 0.9,
+      "clips": { "idle": { "frames": [0, 1, 2, 3], "fps": 8, "loop": true } }
+    }
+  },
+  "props": {
+    "<id>": { "image": "/sprites/prop_<id>.png", "frameWidth": 80, "frameHeight": 104, "columns": 1, "worldHeight": 2.6 }
+  }
+}
+```
+
+- The build is deterministic and rerunnable; the raw 4x renders are a cache and are never committed, only the atlases and the manifest.
+- The silhouette test (9.5) is part of the generated contact sheet `docs/screenshots/m3b-sprites-contact-sheet.png`.
+
+### 12.13 Audio generation pipeline
+
+`npm run audio` synthesizes the complete soundtrack and SFX set in `tools/audio/` (TypeScript, deterministic): a small synth engine (pulse, triangle, noise, filtered saw), a composition layer with chord progressions, bass, drums and a recurring motif, then WAV -> OGG/M4A conversion with ffmpeg into `public/audio/`. The ids in `src/platform/audioManifest.ts` stay unchanged, so game code never cares that the assets are generated. Loops are rendered on whole bars and checked for a seamless boundary; peak level stays at or below -1 dBFS. No third-party samples are used.
 
 ## 13. Workflow
 
@@ -1291,8 +1364,8 @@ Short description.
 | Any | `npm run check` passes with zero warnings |
 | Sim rules (`src/sim/`) | New or updated Vitest tests for the rule; golden replays still pass or are regenerated with a reason |
 | Data / balance (`src/data/`) | `npm run validate-data` and `npm run balance` for the affected world; paste the summary table into the PR |
-| Render or VFX | Playwright screenshot of the scene in a fixed state (use the debug URL `?level=w1-l01&tick=900&seed=10001`), viewed by you before opening the PR |
-| UI | Playwright screenshots at 844 × 390 (phone landscape) and 1194 × 834 (tablet), viewed by you; all touch targets at least 48 px |
+| Render or VFX | Playwright screenshot of the scene in a fixed state (use the debug URLs `?level=w1-l01&tick=900&seed=10001` and `?result=won&level=w1_l01&stars=3`), viewed by you before opening the PR |
+| UI | Playwright screenshots at 390 × 844 (phone portrait) and 834 × 1194 (tablet portrait), viewed by you; no element may leave the screen and all touch targets must be at least 48 px |
 | Models | `npm run assets -- <id>`, check script passes, 4 preview images attached, label `needs:art-review` |
 | Platform / native | Web build still works with the platform stub; label `needs:device-test` |
 | Backend | Supabase migration runs on a fresh local database; function unit tests pass |
@@ -1410,7 +1483,7 @@ Goal: World 1 looks like the final game.
 | 3.9 | Procedural animations: spawn, hit, death, merge (9.6) and clip playback from events | render | 3.4 |
 | 3.10 | VFX set (9.7) and damage numbers, screen shake, slow motion | render | 3.9 |
 | 3.11 | Final HUD styling and card visuals (9.8), fonts, icons | ui | 3.5 approved |
-| 3.12 | Placeholder audio (9.9) through `src/platform/audio.ts` | platform | M1 |
+| 3.12 | Audio pipeline `src/platform/audio.ts`; final placeholder set replaced by the generated chiptune score (9.9, 12.13) | platform | M1 |
 
 Exit criteria:
 
@@ -1418,6 +1491,31 @@ Exit criteria:
 - [ ] Every M2 character passes the silhouette test (9.5).
 - [ ] Playwright screenshots of W1-L05 at tick 900 attached to the milestone's last PR.
 - [ ] Draw calls and triangles within 11.7 during the final wave of W1-L10.
+
+### M3b — Portrait 2.5D relaunch (owner decision, 2026-10-24)
+
+Goal: the game becomes a proper portrait mobile game with the HD-2D look from section 9. Supersedes the landscape-only parts of 2.3, 9.1, 9.8 and 17.1. Issues #113 and #114.
+
+| # | Issue | Area | Depends on |
+| --- | --- | --- | --- |
+| 3b.1 | Portrait camera, full-bleed board and painted backdrop (9.1, 9.2) | render | M3 |
+| 3b.2 | Portrait arcade HUD: status bar, card tray, safe areas (9.8) | ui | 3b.1 |
+| 3b.3 | Playable shell: Title, Level Select, Scouting, Loadout, Pause, Result (11.8) | ui | 3b.2 |
+| 3b.4 | Sprite atlas pipeline for all M2 units and props (12.12) | assets, tools | M3 |
+| 3b.5 | 2.5D sprite billboard unit and prop layers with fallback (9.2, 11.7) | render | 3b.4 |
+| 3b.6 | Bloom, tilt-shift and colour-grade post-processing (9.2) | render | 3b.1 |
+| 3b.7 | VFX pass: bouncing damage numbers, target rings, AOE rings/shockwaves (9.7) | render | 3b.5 |
+| 3b.8 | Generated chiptune soundtrack and retro-arcade SFX (9.9, 12.13) | platform, tools | M3 |
+| 3b.9 | App icon, favicon and premium UI icon set (9.8) | ui, assets | 3b.3 |
+| 3b.10 | Premium visual pass on every menu screen and the HUD (9.8) | ui | 3b.3, 3b.9 |
+
+Exit criteria:
+
+- [ ] The game is playable from `/` on a 390 x 844 phone: Title -> Level Select -> Scouting -> Loadout -> Level -> Result, and back.
+- [ ] All M2 defenders and enemies render as animated pixel-art sprites; the base, portal and ground stay 3D.
+- [ ] Bloom + tilt-shift is active and `?post=0` disables it without losing playability.
+- [ ] Playwright screenshots at 390 x 844 and 834 x 1194 of every screen are attached to the last PR and viewed.
+- [ ] `npm run check` and `npm run e2e` pass; draw calls and triangles stay inside 11.7.
 
 ### M4 — Meta game
 
@@ -1468,7 +1566,7 @@ Goal: installable, smooth builds on real phones.
 
 | # | Issue | Area | Depends on |
 | --- | --- | --- | --- |
-| 6.1 | Add Capacitor iOS and Android projects, landscape lock, safe areas, status bar hidden | platform | M5 |
+| 6.1 | Add Capacitor iOS and Android projects, portrait lock, safe areas, status bar hidden | platform | M5 |
 | 6.2 | App icon and splash screen from a 1024 × 1024 source (human approves the icon) | assets | 6.1 |
 | 6.3 | Haptics, background pause, audio unlock on first touch | platform | 6.1 |
 | 6.4 | Performance pass on the lowest target device: texture sizes, pixel ratio, particle caps | render | 6.1 |
@@ -1511,7 +1609,8 @@ Copy these prompts as they are. Replace only the parts in angle brackets. Always
 ```text
 You are working on "Bastion Heroes", a single-player mobile lane-defense game
 in the style of Plants vs. Zombies, with collectible hero cards and a rarity
-system, and a chunky, colorful stylized 3D look.
+system, and a colorful 2.5D HD-2D look: pixel-art sprite billboards for units and
+props on a soft low-poly 3D world, viewed through a fixed portrait camera.
 
 Core loop: the player defends a 5-lane x 9-column lawn-like grid against waves
 of shadow creatures ("the Gloom") walking from right to left. Before each level
@@ -1528,7 +1627,9 @@ winnable with Common and Rare cards only.
 
 Tech: TypeScript, Vite, three.js, Preact, Capacitor. A deterministic 30 Hz
 simulation in src/sim is separate from rendering. All game numbers live in
-src/data. 3D models are built by Python scripts run in headless Blender.
+src/data. 3D models are built by Python scripts run in headless Blender; the
+pixel-art sprite atlases and the soundtrack are generated by the same kind of
+scripted pipeline (sections 12.12 and 12.13). The game is portrait-only.
 
 The full spec is in docs/spec.md. It is the source of truth. Never guess: if
 the spec does not answer a question, open a GitHub issue labeled
@@ -1737,18 +1838,21 @@ The bot writes `balance-report/<world>.md` and `balance-report/<world>.json`. Th
 
 ### 16.5 End-to-end tests
 
-Playwright runs against `npm run build && npx vite preview` in Chromium with a 844 × 390 viewport and mobile emulation.
+Playwright runs against `npm run build && npx vite preview` in Chromium with a 390 × 844 portrait viewport and mobile emulation; the desktop-frame test uses 1280 × 900.
 
 | Test | Steps | Checks |
 | --- | --- | --- |
-| `boot.spec.ts` | Open the app | Main menu visible within 5 s, no console errors |
-| `first-level.spec.ts` | New save, start W1-L01, follow the tutorial taps | The level starts, a card can be placed, Essence goes down by its cost |
-| `win-flow.spec.ts` | Open `?level=w1-l01&seed=10001&autoplay=recommended` | Result screen shows a win, gold increases, save persists after reload |
-| `loadout.spec.ts` | Open Scouting for W1-L05, go to Loadout, press Recommended | 6 cards selected, Start enabled |
-| `chest.spec.ts` | Give a test save a Wooden chest, open it | Card flip animation plays, cards are added to the collection |
-| `screens.spec.ts` | Visit every screen | One screenshot per screen in `test-results/screens/` |
+| `boot.spec.ts` | Open `/` | Title screen visible within 5 s, PLAY button and logo present, no console errors |
+| `shell.spec.ts` | `/` -> PLAY -> Level Select -> Level 1 -> Scouting -> Loadout -> Fight, then pause and the result preview | The whole portrait shell flow works; HUD, pause overlay and result overlay are visible; no horizontal overflow; desktop 1280 x 900 shows the centred phone frame |
+| `hud.spec.ts` | Open `?level=w1-l05&seed=10005&tick=900` | Essence counter, card tray, cooldown, rejection message, wave banner and progress bar behave as in 3.4, 3.5, 3.10 |
+| `debug.spec.ts` | Exercise the `?level=&seed=&tick=&cards=&place=&autocollect=` contract | Levels start at the requested tick, placements appear, malformed values show the readable error panel |
+| `loadout.spec.ts` | Open Scouting for W1-L05, go to Loadout, press Recommended | 6 cards selected, Fight enabled |
+| `animations.spec.ts`, `vfx.spec.ts` | Event-driven visuals with the debug hooks | Spawn/hit/death/merge animations and the 9.7 VFX are on screen; draw calls and triangles stay inside 11.7 (measured with `?perf=1&post=0`) |
+| `models*.spec.ts`, `stylePilot.spec.ts` | Model preview URLs | In-game model/sprite offsets, previews and the art-pilot checks do not regress |
+| `audio.spec.ts` | Toggle music/SFX | Every manifest id resolves, volumes and mute states follow 9.9 |
+| `screens.spec.ts` | Visit every screen at 390 x 844 | One screenshot per screen in `test-results/screens/`, no overflow |
 
-The `autoplay` URL parameter runs the `recommended` bot inside the real game, so a full visual playthrough can be recorded. It exists only in dev and test builds.
+Debug-only previews used by the tests and the PR screenshots: `?level=<id>&seed=<n>&tick=<n>` freezes a level run, `?result=won|lost&level=<id>&stars=<n>` shows the result overlay over a frozen level, `?finalwave=1` plays only the level's last wave with pre-placed defenders for the final-wave screenshot, and `?scout=1` opens the Scouting -> Loadout flow directly. They exist only in the web build.
 
 ### 16.6 Performance checks
 
@@ -1763,12 +1867,13 @@ The `autoplay` URL parameter runs the `recommended` bot inside the real game, so
 Do not build any of these, even partly. If a task seems to need one, open a `needs:decision` issue.
 
 - PvP, multiplayer, leaderboards, guilds, chat or friends.
-- Portrait orientation.
+- Landscape orientation.
 - Endless mode, level editor, user-generated content.
 - Energy or stamina systems that block playing.
 - Loot boxes bought directly with real money (chests are bought with gems; gems are bought with money; odds are always shown).
 - Any form of tracking beyond the PostHog events in M5. No ad personalization without consent.
 - Web release as a public product (the browser build is for development and testing).
+- Replacing the pixel-art sprite pipeline with hand-painted sprite assets (the scripted Blender render pipeline of 12.12 is the source of truth until the human decides otherwise).
 
 ### 17.2 Things only the human can do
 
@@ -1792,7 +1897,7 @@ Each of these becomes a `needs:decision` issue when its milestone starts. The de
 | --- | --- | --- | --- |
 | Final game name | "Bastion Heroes" or a new name | Bastion Heroes (working title) | M7 |
 | Model source for Epic and above | Scripted Blender only, or AI image-to-3D with cleanup (12.10) | Scripted Blender only | End of M3 style pilot |
-| Music and SFX source | Kenney CC0 packs, a paid asset store pack, or a commissioned composer | Kenney CC0 | M7 |
+| Music and SFX source | Procedurally generated in-repo (`tools/audio`), a paid asset store pack, or a commissioned composer | Procedurally generated in-repo (12.13) | M7 |
 | Rewarded ads | On (5.6) or off entirely | On, never forced | M5 |
 | Battle pass | Free + premium track, or no battle pass in version 1 | Free + premium | M5 |
 | Second language | German, Spanish, French or none | None until decided | M7 |

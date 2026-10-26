@@ -1,21 +1,21 @@
 /*
- * Final in-level HUD (spec 9.8, issue #76): Essence counter, 6-card bar with the shovel,
- * speed/pause controls, level progress, wave banner, boss bar, rejected-command feedback
- * and the pause overlay. Typography is Lilita One for titles/numbers/buttons and Nunito
- * for body text; text uses the 9.8 white fill, 3 px #1B1B2F outline and drop shadow.
- * Buttons use the 9.8 3D style (16 px radius, 6 px bottom edge, 4 px press travel) and
- * every control stays above the 48 x 48 px minimum touch target.
+ * Premium in-level HUD of the portrait shell (issue #113 / #114): the layout
+ * contract of task-3 (top status bar, boss bar, mid-screen banner, bottom card
+ * tray, pause menu) restyled in the shared "modern fantasy arcade" language:
+ * frosted glass pills with a light rim, gold cost badges, emissive teal and gold
+ * accents and ornate boss / banner chrome. Never pixelated.
  */
 
 .hud {
   position: absolute;
   inset: 0;
-  pointer-events: none;
+  z-index: 2;
   color: #ffffff;
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -webkit-user-select: none;
   user-select: none;
+  pointer-events: none;
 }
 
 /* Full-field tap layer: turns taps into tile placements, shovel removals and orb picks. */
@@ -26,99 +26,512 @@
   touch-action: manipulation;
 }
 
-/* Spec 9.8 text style: white fill, 3 px #1B1B2F outline, drop shadow 0 3px rgba(0,0,0,0.35). */
-.hud-outlined-text {
-  text-shadow:
-    3px 0 0 var(--color-shadow),
-    -3px 0 0 var(--color-shadow),
-    0 3px 0 var(--color-shadow),
-    0 -3px 0 var(--color-shadow),
-    2px 2px 0 var(--color-shadow),
-    -2px -2px 0 var(--color-shadow),
-    2px -2px 0 var(--color-shadow),
-    -2px 2px 0 var(--color-shadow),
-    0 3px 3px rgba(0, 0, 0, 0.35);
-}
-
-/* ---------- Essence counter (top left, 140 x 72 px) ---------- */
-
-.hud-essence {
+/* Soft dark scrim behind the top status bar so bright VFX cannot fight the HUD. */
+.hud::before {
+  content: '';
   position: absolute;
-  top: calc(10px + env(safe-area-inset-top, 0px));
-  left: calc(10px + env(safe-area-inset-left, 0px));
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 140px;
-  height: 72px;
-  padding: 0 8px;
-  border: 3px solid var(--color-shadow);
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(43, 32, 64, 0.95) 0%, rgba(27, 27, 47, 0.95) 100%);
-  box-shadow:
-    0 4px 0 rgba(0, 0, 0, 0.32),
-    inset 0 2px 0 rgba(244, 251, 255, 0.16);
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 150px;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 6, 16, 0.5) 0%,
+    rgba(8, 6, 16, 0.24) 52%,
+    rgba(8, 6, 16, 0) 100%
+  );
   pointer-events: none;
 }
 
-.hud-essence__orb {
+/* Strong outlined display text for the floating battle text. */
+.hud-outlined-text {
+  text-shadow:
+    2px 0 0 rgba(13, 11, 26, 0.92),
+    -2px 0 0 rgba(13, 11, 26, 0.92),
+    0 2px 0 rgba(13, 11, 26, 0.92),
+    0 -2px 0 rgba(13, 11, 26, 0.92),
+    2px 2px 0 rgba(13, 11, 26, 0.92),
+    -2px -2px 0 rgba(13, 11, 26, 0.92),
+    2px -2px 0 rgba(13, 11, 26, 0.92),
+    -2px 2px 0 rgba(13, 11, 26, 0.92),
+    0 4px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- Top status bar ---------- */
+
+.hud-top {
+  position: absolute;
+  top: calc(10px + var(--safe-top));
+  right: calc(10px + var(--safe-right));
+  left: calc(10px + var(--safe-left));
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+/* Essence pill: frosted glass, teal orb glow, big Lilita One number. */
+.hud-essence {
+  display: flex;
   flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  height: 52px;
+  padding: 0 15px 0 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 46%),
+    linear-gradient(180deg, rgba(52, 43, 92, 0.82) 0%, rgba(20, 16, 40, 0.88) 100%);
+  box-shadow:
+    0 5px 0 rgba(6, 5, 14, 0.55),
+    0 14px 26px rgba(3, 2, 10, 0.4),
+    0 0 22px rgba(59, 240, 200, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  backdrop-filter: blur(12px) saturate(1.15);
+  pointer-events: none;
+}
+
+.hud-essence__orb-ring {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
   width: 38px;
   height: 38px;
-  filter: drop-shadow(0 0 9px rgba(59, 240, 200, 0.7));
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(143, 251, 230, 0.4) 0%, rgba(143, 251, 230, 0) 60%),
+    radial-gradient(circle at 50% 40%, #1b5450 0%, #0e2a2a 82%);
+  box-shadow:
+    inset 0 0 0 1px rgba(59, 240, 200, 0.5),
+    inset 0 2px 6px rgba(0, 0, 0, 0.5),
+    0 0 12px rgba(59, 240, 200, 0.4);
+}
+
+.hud-essence__orb {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 0 7px rgba(59, 240, 200, 0.9));
 }
 
 .hud-essence__value {
-  flex: 1 1 auto;
+  min-width: 1.4em;
   font-family: var(--font-title);
-  font-size: 34px;
+  font-size: 29px;
   font-weight: 400;
-  letter-spacing: -0.5px;
+  letter-spacing: 0.5px;
   line-height: 1;
   text-align: center;
-  white-space: nowrap;
+  text-shadow:
+    2px 0 0 rgba(9, 7, 18, 0.9),
+    -2px 0 0 rgba(9, 7, 18, 0.9),
+    0 2px 0 rgba(9, 7, 18, 0.9),
+    0 -2px 0 rgba(9, 7, 18, 0.9),
+    0 4px 6px rgba(0, 0, 0, 0.45);
 }
 
-/* ---------- Card bar (top, right of the counter; 6 cards of 72 x 96 px, 8 px gaps) ---------- */
+/* Compact level progress: glass track, emissive fill, gold wave medallions. */
+.hud-progress {
+  position: relative;
+  flex: 1 1 auto;
+  height: 38px;
+  min-width: 0;
+  pointer-events: none;
+}
 
-.hud-card-bar {
+.hud-progress__track {
   position: absolute;
-  top: calc(10px + env(safe-area-inset-top, 0px));
-  right: calc(156px + env(safe-area-inset-right, 0px));
-  left: calc(160px + env(safe-area-inset-left, 0px));
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 40%),
+    rgba(11, 9, 22, 0.82);
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.32),
+    0 8px 16px rgba(3, 2, 10, 0.3),
+    inset 0 2px 6px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.hud-progress__fill {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 1px;
+  max-width: calc(100% - 2px);
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    #c8ffe0 0%,
+    #6bf0a5 28%,
+    var(--color-primary-green) 58%,
+    #21a05a 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 0 12px rgba(76, 217, 150, 0.55);
+  transition: width 0.25s ease-out;
+}
+
+.hud-progress__mark {
+  position: absolute;
+  bottom: -1px;
   z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 204, 0, 0.8);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 32%, #4c3f7d 0%, #241a3d 82%);
+  box-shadow:
+    0 0 8px rgba(255, 204, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.hud-progress__icon {
+  width: 11px;
+  height: 11px;
+}
+
+.hud-progress__mark--final {
+  border-color: rgba(255, 122, 122, 0.85);
+  background: radial-gradient(circle at 50% 32%, #6a2740 0%, #2c0f1d 82%);
+  box-shadow:
+    0 0 9px rgba(255, 77, 77, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* Round glass speed and pause buttons: 56 x 56 px targets (spec 9.8). */
+.hud-controls {
   display: flex;
-  flex-wrap: nowrap;
-  align-items: flex-start;
-  gap: 8px;
+  flex: 0 0 auto;
+  gap: 6px;
   pointer-events: auto;
 }
 
-/* 844 x 390 phones: the 6 cards + shovel only fit next to the counter and controls with
-   the card gap tightened to 4 px, so the 9.8 element sizes are kept (see PR). */
-@media (max-width: 900px) {
-  .hud-card-bar {
-    right: calc(156px + env(safe-area-inset-right, 0px));
-    left: calc(154px + env(safe-area-inset-left, 0px));
-    gap: 4px;
-  }
+.hud-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.02) 40%),
+    linear-gradient(180deg, #56baff 0%, var(--color-secondary-blue) 42%, #246f9e 100%);
+  box-shadow:
+    0 5px 0 rgba(6, 34, 54, 0.75),
+    0 12px 22px rgba(3, 2, 10, 0.4),
+    0 0 18px rgba(63, 169, 245, 0.25),
+    inset 0 2px 0 rgba(255, 255, 255, 0.38);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    filter 0.12s ease;
 }
 
-/* Spec 9.8: card 72 x 96 px, rarity frame, portrait, cost badge, cooldown, star pips. */
+.hud-button::before {
+  content: '';
+  position: absolute;
+  inset: 2px 2px 48% 2px;
+  border-radius: 999px 999px 40% 40% / 999px 999px 22px 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
+.hud-button:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 2px 0 rgba(6, 34, 54, 0.75),
+    0 6px 12px rgba(3, 2, 10, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.22);
+}
+
+.hud-button:hover {
+  filter: brightness(1.06);
+}
+
+.hud-button:focus-visible,
+.hud-card:focus-visible,
+.hud-shovel:focus-visible {
+  outline: 3px solid var(--color-buy-yellow);
+  outline-offset: 3px;
+}
+
+.hud-button__icon {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+
+.hud-button--speed .hud-button__icon {
+  width: 19px;
+  height: 19px;
+}
+
+.hud-button__label {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-title);
+  font-size: 17px;
+  line-height: 1;
+  text-shadow:
+    1px 0 0 rgba(9, 7, 18, 0.9),
+    -1px 0 0 rgba(9, 7, 18, 0.9),
+    0 1px 0 rgba(9, 7, 18, 0.9),
+    0 -1px 0 rgba(9, 7, 18, 0.9);
+}
+
+.hud-button--selected {
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 8px 14px rgba(0, 0, 0, 0.42),
+    inset 0 3px 0 rgba(255, 255, 255, 0.3);
+}
+
+.hud-button--shake {
+  animation: hud-shake 0.3s linear;
+}
+
+/* ---------- Ornate boss bar (below the status bar, 60 % width, centred) ---------- */
+
+.hud-boss {
+  position: absolute;
+  top: calc(10px + var(--safe-top) + 64px);
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: min(60%, 320px);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.hud-boss__name {
+  padding: 2px 14px;
+  border: 1px solid var(--glass-rim-gold);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 52%),
+    rgba(12, 10, 26, 0.86);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.4),
+    0 0 14px rgba(255, 204, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  font-family: var(--font-title);
+  font-size: 16px;
+  letter-spacing: 0.6px;
+  line-height: 1.3;
+}
+
+.hud-boss__track {
+  position: relative;
+  width: 100%;
+  height: 17px;
+  border: 1px solid rgba(255, 204, 0, 0.5);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 40%),
+    rgba(10, 8, 20, 0.88);
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.32),
+    0 0 16px rgba(255, 77, 77, 0.18),
+    inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Gold diamond end caps. */
+.hud-boss__track::before,
+.hud-boss__track::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  transform: translateY(-50%) rotate(45deg);
+  border: 1px solid rgba(20, 14, 8, 0.8);
+  background: linear-gradient(160deg, #fff0a6 0%, var(--gold) 46%, #b06d00 100%);
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.55);
+}
+
+.hud-boss__track::before {
+  left: -5px;
+}
+
+.hud-boss__track::after {
+  right: -5px;
+}
+
+.hud-boss__fill {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 1px;
+  max-width: calc(100% - 2px);
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    #ffc2c2 0%,
+    #ff7a7a 26%,
+    var(--color-danger-red) 56%,
+    #a81f1f 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 0 12px rgba(255, 77, 77, 0.5);
+}
+
+.hud-boss__phase {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  border-radius: 1px;
+  background: rgba(255, 240, 160, 0.85);
+  box-shadow: 0 0 6px rgba(255, 204, 0, 0.6);
+}
+
+/* ---------- Wave banner (mid-screen, spec 3.10, 9.8) ---------- */
+
+.hud-banner {
+  position: absolute;
+  top: 40%;
+  right: 0;
+  left: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    90deg,
+    rgba(14, 11, 28, 0) 0%,
+    rgba(20, 16, 40, 0.78) 14%,
+    rgba(32, 24, 58, 0.9) 50%,
+    rgba(20, 16, 40, 0.78) 86%,
+    rgba(14, 11, 28, 0) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  animation: hud-banner-slide 3.2s ease-in-out both;
+  pointer-events: none;
+}
+
+.hud-banner--big {
+  box-shadow:
+    inset 0 3px 0 rgba(255, 204, 0, 0.65),
+    inset 0 -3px 0 rgba(255, 204, 0, 0.65),
+    0 0 30px rgba(255, 204, 0, 0.18);
+}
+
+.hud-banner--final {
+  background: linear-gradient(
+    90deg,
+    rgba(20, 8, 16, 0) 0%,
+    rgba(70, 20, 42, 0.82) 14%,
+    rgba(96, 26, 48, 0.94) 50%,
+    rgba(70, 20, 42, 0.82) 86%,
+    rgba(20, 8, 16, 0) 100%
+  );
+  box-shadow:
+    inset 0 3px 0 rgba(255, 77, 77, 0.7),
+    inset 0 -3px 0 rgba(255, 77, 77, 0.7),
+    0 0 30px rgba(255, 77, 77, 0.2);
+}
+
+.hud-banner__text {
+  padding: 0 8px;
+  background: linear-gradient(180deg, #ffffff 12%, #ffe9a8 58%, var(--gold-soft) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(2px 0 0 rgba(12, 9, 24, 0.92)) drop-shadow(-2px 0 0 rgba(12, 9, 24, 0.92))
+    drop-shadow(0 3px 0 rgba(12, 9, 24, 0.92)) drop-shadow(0 10px 16px rgba(0, 0, 0, 0.55));
+  font-family: var(--font-title);
+  font-size: clamp(27px, 7.8vw, 44px);
+  font-weight: 400;
+  letter-spacing: 1.2px;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.hud-banner--final .hud-banner__text {
+  background: linear-gradient(180deg, #fff1f1 10%, #ffb3b3 52%, #ff5c5c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* ---------- Bottom card tray: 6 cards + shovel in thumb reach ---------- */
+
+.hud-tray {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 62px 8px calc(8px + var(--safe-bottom));
+  background: linear-gradient(
+    180deg,
+    rgba(8, 6, 16, 0) 0%,
+    rgba(8, 6, 16, 0.5) 26%,
+    rgba(8, 6, 16, 0.86) 60%,
+    rgba(5, 4, 10, 0.97) 100%
+  );
+  pointer-events: none;
+}
+
+.hud-card-bar {
+  --tray-gap: 4px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--tray-gap);
+  width: 100%;
+  pointer-events: auto;
+}
+
+/* Loadout card: rarity frame, glossy rim, portrait, gold cost badge, cooldown. */
 .hud-card {
   position: relative;
   flex: 0 0 auto;
-  width: 72px;
-  height: 96px;
+  width: min(64px, calc((100% - 6 * var(--tray-gap)) / 7));
+  aspect-ratio: 39 / 50;
   padding: 0;
   overflow: hidden;
-  border: 3px solid var(--color-secondary-blue);
-  border-radius: 16px;
-  background: var(--color-shadow);
+  border: 2px solid var(--color-secondary-blue);
+  border-radius: 13px;
+  background: var(--night-2);
   box-shadow:
-    0 6px 0 rgba(0, 0, 0, 0.32),
-    inset 0 2px 0 rgba(244, 251, 255, 0.14);
+    0 5px 0 rgba(5, 4, 12, 0.68),
+    0 12px 20px rgba(3, 2, 10, 0.45),
+    inset 0 2px 0 rgba(255, 255, 255, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   cursor: pointer;
   touch-action: manipulation;
   transition:
@@ -129,299 +542,317 @@
 
 .hud-card__portrait {
   position: absolute;
-  inset: 3px 3px 22px;
-  border-radius: 11px;
+  inset: 2px;
+  border-radius: 9px;
 }
 
 .hud-card--selected {
-  z-index: 3;
-  transform: translateY(-6px) scale(1.04);
+  z-index: 5;
+  transform: translateY(-8px) scale(1.05);
   box-shadow:
-    0 0 0 3px var(--color-buy-yellow),
-    0 12px 18px rgba(0, 0, 0, 0.45),
-    inset 0 2px 0 rgba(244, 251, 255, 0.2);
+    0 0 0 2px var(--gold),
+    0 0 20px rgba(255, 204, 0, 0.6),
+    0 14px 22px rgba(0, 0, 0, 0.55);
 }
 
 .hud-card--selected .hud-card__portrait {
-  box-shadow: inset 0 0 12px rgba(255, 204, 0, 0.6);
+  box-shadow: inset 0 0 12px rgba(255, 204, 0, 0.65);
 }
 
 .hud-card--cooling .hud-card__portrait {
-  filter: saturate(0.6) brightness(0.85);
+  filter: saturate(0.55) brightness(0.78);
 }
 
-/* Star pips at ★2/★3 (spec 3.6, 9.8). */
 .hud-card__stars {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 3px;
+  right: 3px;
   z-index: 4;
   display: flex;
   gap: 1px;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6));
+  padding: 1px 3px;
+  border: 1px solid rgba(255, 204, 0, 0.35);
+  border-radius: 999px;
+  background: rgba(10, 8, 20, 0.82);
+  filter: drop-shadow(0 0 5px rgba(255, 204, 0, 0.4));
 }
 
 .hud-card__star {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
 }
 
+/* Gold cost badge in the bottom left (spec 9.8 card visual). */
 .hud-card__cost {
   position: absolute;
   bottom: 3px;
-  left: 4px;
+  left: 3px;
   z-index: 4;
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 5px 1px 3px;
+  border: 1px solid rgba(255, 204, 0, 0.55);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(30, 23, 60, 0.96) 0%, rgba(14, 11, 28, 0.96) 100%);
+  color: var(--gold-soft);
+  font-family: var(--font-title);
+  font-size: 13px;
+  line-height: 1.2;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+  box-shadow:
+    0 0 8px rgba(255, 204, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.hud-card__essence-icon {
+  width: 12px;
+  height: 12px;
+  filter: drop-shadow(0 0 4px rgba(59, 240, 200, 0.8));
 }
 
 .hud-card__cooldown {
   position: absolute;
+  top: 0;
   right: 0;
-  bottom: 0;
   left: 0;
   z-index: 2;
-  border-radius: 0 0 13px 13px;
-  background: linear-gradient(180deg, rgba(27, 27, 47, 0.82) 0%, rgba(27, 27, 47, 0.92) 100%);
+  border-radius: 9px 9px 0 0;
+  background: linear-gradient(180deg, rgba(10, 8, 22, 0.94) 0%, rgba(10, 8, 22, 0.72) 100%);
+  box-shadow: inset 0 0 12px rgba(109, 77, 255, 0.25);
   pointer-events: none;
 }
 
 .hud-card__cooldown-label {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 4;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
   font-family: var(--font-title);
-  font-size: 30px;
+  font-size: 22px;
   line-height: 1;
   text-shadow:
-    2px 0 0 var(--color-shadow),
-    -2px 0 0 var(--color-shadow),
-    0 2px 0 var(--color-shadow),
-    0 -2px 0 var(--color-shadow),
-    0 3px 4px rgba(0, 0, 0, 0.4);
+    2px 0 0 rgba(9, 7, 18, 0.92),
+    -2px 0 0 rgba(9, 7, 18, 0.92),
+    0 2px 0 rgba(9, 7, 18, 0.92),
+    0 -2px 0 rgba(9, 7, 18, 0.92),
+    0 0 10px rgba(109, 77, 255, 0.55);
   pointer-events: none;
 }
 
-/* ---------- Buttons (spec 9.8: radius 16, 6 px bottom edge, 4 px press travel) ---------- */
-
-.hud-button {
+/* Shovel: the 7th tray slot, glass card with a dashed gold rim. */
+.hud-shovel {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 64px;
-  height: 64px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: min(64px, calc((100% - 6 * var(--tray-gap)) / 7));
+  aspect-ratio: 39 / 50;
   padding: 0;
-  border: 3px solid var(--color-shadow);
-  border-radius: 16px;
-  background: var(--color-secondary-blue);
-  color: #ffffff;
-  font-family: var(--font-title);
-  font-size: 24px;
-  line-height: 1;
+  overflow: hidden;
+  border: 1px solid rgba(255, 204, 0, 0.4);
+  border-radius: 13px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.01) 46%),
+    linear-gradient(180deg, #37306a 0%, #1c1736 100%);
   box-shadow:
-    0 6px 0 rgba(0, 0, 0, 0.34),
-    inset 0 2px 0 rgba(244, 251, 255, 0.2);
+    0 5px 0 rgba(5, 4, 12, 0.68),
+    0 12px 20px rgba(3, 2, 10, 0.42),
+    inset 0 2px 0 rgba(255, 255, 255, 0.18);
   cursor: pointer;
   touch-action: manipulation;
-  transition:
-    transform 0.08s ease,
-    box-shadow 0.08s ease;
 }
 
-.hud-button:active {
-  transform: translateY(4px);
-  box-shadow:
-    0 2px 0 rgba(0, 0, 0, 0.34),
-    inset 0 2px 0 rgba(244, 251, 255, 0.15);
-}
-
-.hud-button--primary {
-  background: var(--color-primary-green);
-}
-
-.hud-button--secondary {
-  background: var(--color-secondary-blue);
-}
-
-.hud-button--buy {
-  background: var(--color-buy-yellow);
-}
-
-.hud-button--danger {
-  background: var(--color-danger-red);
-}
-
-.hud-button--selected {
-  transform: translateY(-4px);
-  box-shadow:
-    0 0 0 3px var(--color-buy-yellow),
-    0 10px 16px rgba(0, 0, 0, 0.4),
-    inset 0 2px 0 rgba(244, 251, 255, 0.2);
-}
-
-.hud-button--shake {
-  animation: hud-shake 0.3s linear;
-}
-
-.hud-button__icon {
-  width: 32px;
-  height: 32px;
-  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.25));
-}
-
-.hud-button__icon--speed {
-  width: 20px;
-  height: 20px;
-}
-
-.hud-button__label {
-  font-family: var(--font-title);
-  font-size: 15px;
-  line-height: 1;
-}
-
-/* ---------- Shovel (end of the card bar, 72 x 72 px) ---------- */
-
-.hud-shovel {
-  width: 72px;
-  height: 72px;
+.hud-shovel::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px dashed rgba(255, 224, 130, 0.42);
+  border-radius: 9px;
+  background: linear-gradient(180deg, rgba(255, 204, 0, 0.14) 0%, rgba(255, 204, 0, 0) 72%);
 }
 
 .hud-shovel__icon {
-  width: 42px;
-  height: 42px;
+  position: relative;
+  z-index: 2;
+  width: 56%;
+  height: 56%;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.45));
 }
 
-/* ---------- Speed toggle and pause (top right, 64 x 64 px each) ---------- */
+.hud-shovel.hud-button--selected {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, #544a93 0%, #2b2547 100%);
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 0 18px rgba(255, 204, 0, 0.5),
+    0 10px 16px rgba(0, 0, 0, 0.45);
+}
 
-.hud-controls {
+/* ---------- Rejected command feedback: toast just above the tray (spec 3.4) ---------- */
+
+.hud-rejection {
+  z-index: 4;
+  padding: 6px 16px;
+  border: 1px solid rgba(255, 122, 122, 0.55);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 50%),
+    linear-gradient(180deg, rgba(104, 30, 52, 0.96) 0%, rgba(58, 17, 32, 0.96) 100%);
+  box-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(255, 77, 77, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hud-rejection-pop 0.18s ease-out;
+}
+
+.hud-rejection__text {
+  color: #ffd9d9;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+/* ---------- Pause menu (Resume, Restart, Quit; spec 9.8, 11.8) ---------- */
+
+.hud-paused {
   position: absolute;
-  top: calc(10px + env(safe-area-inset-top, 0px));
-  right: calc(10px + env(safe-area-inset-right, 0px));
-  z-index: 2;
-  display: flex;
-  gap: 8px;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(
+      ellipse 80% 55% at 50% 42%,
+      rgba(109, 77, 255, 0.16) 0%,
+      rgba(109, 77, 255, 0) 70%
+    ),
+    radial-gradient(ellipse 120% 100% at 50% 45%, rgba(8, 6, 16, 0.55) 0%, rgba(5, 4, 10, 0.9) 100%);
+  -webkit-backdrop-filter: blur(10px) saturate(1.05);
+  backdrop-filter: blur(10px) saturate(1.05);
   pointer-events: auto;
 }
 
-.hud-button--speed {
-  gap: 2px;
-}
-
-/* ---------- Level progress (bottom right, 220 x 28 px; spec 3.10, 9.8) ---------- */
-
-.hud-progress {
-  position: absolute;
-  right: calc(10px + env(safe-area-inset-right, 0px));
-  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-  z-index: 2;
-  width: 220px;
-  height: 28px;
-  pointer-events: none;
-}
-
-.hud-progress__track {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 16px;
-  border: 2px solid var(--color-shadow);
-  border-radius: 10px;
-  background: rgba(27, 27, 47, 0.8);
-  box-shadow:
-    0 3px 0 rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(244, 251, 255, 0.12);
-}
-
-.hud-progress__fill {
-  position: absolute;
-  top: 1px;
-  bottom: 1px;
-  left: 1px;
-  max-width: calc(100% - 2px);
-  border-radius: 7px;
-  background: linear-gradient(180deg, #7ef08b 0%, var(--color-primary-green) 55%, #2f9e45 100%);
-  box-shadow: inset 0 1px 0 rgba(244, 251, 255, 0.5);
-  transition: width 0.25s ease-out;
-}
-
-.hud-progress__mark {
-  position: absolute;
-  bottom: 12px;
-  transform: translateX(-50%);
-  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45));
-}
-
-.hud-progress__icon {
-  width: 18px;
-  height: 18px;
-}
-
-.hud-progress__mark--final .hud-progress__icon {
-  width: 20px;
-  height: 20px;
-}
-
-/* ---------- Wave banner (center, full width, 120 px; spec 3.10, 9.8) ---------- */
-
-.hud-banner {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  left: 0;
-  z-index: 3;
+.hud-paused__panel {
+  position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 120px;
-  transform: translateY(-50%);
+  flex-direction: column;
+  gap: 16px;
+  width: min(100%, 330px);
+  padding: 34px 22px 22px;
+  border: 1px solid var(--glass-rim-gold);
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 22%),
+    linear-gradient(
+      160deg,
+      rgba(58, 47, 100, 0.84) 0%,
+      rgba(29, 24, 56, 0.92) 58%,
+      rgba(15, 12, 30, 0.95) 100%
+    );
+  box-shadow:
+    var(--shadow-modal),
+    0 0 40px rgba(255, 204, 0, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  animation: hud-panel-pop 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.hud-paused__trim {
+  position: absolute;
+  top: -1px;
+  right: 16%;
+  left: 16%;
+  height: 3px;
+  border-radius: 3px;
   background: linear-gradient(
     90deg,
-    rgba(27, 27, 47, 0) 0%,
-    rgba(27, 27, 47, 0.86) 14%,
-    rgba(43, 32, 64, 0.92) 50%,
-    rgba(27, 27, 47, 0.86) 86%,
-    rgba(27, 27, 47, 0) 100%
+    rgba(255, 204, 0, 0) 0%,
+    var(--gold) 30%,
+    #fff3b8 50%,
+    var(--gold) 70%,
+    rgba(255, 204, 0, 0) 100%
   );
-  animation: hud-banner-slide 3.2s ease-in-out both;
-  pointer-events: none;
+  box-shadow: 0 0 16px rgba(255, 204, 0, 0.55);
 }
 
-.hud-banner--big {
+.hud-paused__crest {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  transform: translateX(-50%);
+  border: 2px solid rgba(255, 204, 0, 0.75);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 34%, #3c3270 0%, #16122c 80%);
   box-shadow:
-    inset 0 3px 0 rgba(255, 204, 0, 0.55),
-    inset 0 -3px 0 rgba(255, 204, 0, 0.55);
+    0 8px 18px rgba(3, 2, 10, 0.55),
+    0 0 20px rgba(255, 204, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-.hud-banner--final {
-  background: linear-gradient(
-    90deg,
-    rgba(27, 27, 47, 0) 0%,
-    rgba(64, 27, 47, 0.9) 14%,
-    rgba(92, 27, 47, 0.94) 50%,
-    rgba(64, 27, 47, 0.9) 86%,
-    rgba(27, 27, 47, 0) 100%
-  );
-  box-shadow:
-    inset 0 3px 0 rgba(255, 77, 77, 0.6),
-    inset 0 -3px 0 rgba(255, 77, 77, 0.6);
+.hud-paused__crest-icon {
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45));
 }
 
-.hud-banner__text {
+.hud-paused__header {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.hud-paused__title {
+  margin: 0;
+  background: linear-gradient(180deg, #ffffff 14%, #e6ddff 62%, #b9a7ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(12, 9, 26, 0.7)) drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5));
   font-family: var(--font-title);
-  font-size: clamp(30px, 5.6vw, 76px);
+  font-size: 46px;
   font-weight: 400;
-  letter-spacing: 1px;
+  letter-spacing: 0.6px;
   line-height: 1;
   text-align: center;
-  white-space: nowrap;
 }
+
+.hud-paused__subtitle {
+  margin: 0;
+  color: #b9a7ff;
+  font-family: var(--font-body);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1.3;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.hud-paused__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hud-paused__actions .screen-button {
+  width: 100%;
+  min-height: 54px;
+}
+
+/* ---------- Shared animations ---------- */
 
 @keyframes hud-banner-slide {
   0% {
@@ -442,93 +873,25 @@
   }
 }
 
-/* ---------- Boss bar (top center below the card bar, 50 % width; spec 6.3, 9.8) ---------- */
-
-.hud-boss {
-  position: absolute;
-  top: calc(118px + env(safe-area-inset-top, 0px));
-  left: 50%;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  width: 50%;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-.hud-boss__name {
-  font-family: var(--font-title);
-  font-size: 20px;
-  line-height: 1;
-}
-
-.hud-boss__track {
-  position: relative;
-  width: 100%;
-  height: 18px;
-  border: 2px solid var(--color-shadow);
-  border-radius: 9px;
-  background: rgba(27, 27, 47, 0.85);
-  box-shadow:
-    0 3px 0 rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(244, 251, 255, 0.12);
-}
-
-.hud-boss__fill {
-  position: absolute;
-  top: 1px;
-  bottom: 1px;
-  left: 1px;
-  max-width: calc(100% - 2px);
-  border-radius: 7px;
-  background: linear-gradient(180deg, #ff8a8a 0%, var(--color-danger-red) 45%, #a81f1f 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
-}
-
-.hud-boss__phase {
-  position: absolute;
-  top: -3px;
-  bottom: -3px;
-  width: 2px;
-  border-radius: 1px;
-  background: rgba(244, 251, 255, 0.75);
-}
-
-/* ---------- Rejected command feedback (spec 3.4) ---------- */
-
-.hud-rejection {
-  position: absolute;
-  top: calc(120px + env(safe-area-inset-top, 0px));
-  left: 50%;
-  z-index: 4;
-  padding: 6px 18px;
-  transform: translateX(-50%);
-  border: 3px solid var(--color-shadow);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(92, 27, 47, 0.95) 0%, rgba(64, 20, 36, 0.95) 100%);
-  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
-  white-space: nowrap;
-  pointer-events: none;
-  animation: hud-rejection-pop 0.18s ease-out;
-}
-
-.hud-rejection__text {
-  color: #ffd4d4;
-  font-family: var(--font-title);
-  font-size: 22px;
-  line-height: 1.1;
-}
-
 @keyframes hud-rejection-pop {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-8px) scale(0.92);
+    transform: translateY(8px) scale(0.92);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hud-panel-pop {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -551,272 +914,181 @@
   }
 }
 
-/* ---------- Pause overlay (Resume now; Restart/Settings/Quit are M4) ---------- */
+/* ---------- Narrow phones (360 x 800): keep the 48 px targets in one row ---------- */
 
-.hud-paused {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  display: grid;
-  place-items: center;
-  background: rgba(27, 27, 47, 0.62);
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
-  pointer-events: auto;
-}
-
-.hud-paused__panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  padding: 24px 40px 30px;
-  border: 3px solid var(--color-shadow);
-  border-radius: 20px;
-  background: linear-gradient(180deg, #2b2140 0%, #1b1b2f 100%);
-  box-shadow:
-    0 10px 0 rgba(0, 0, 0, 0.35),
-    inset 0 2px 0 rgba(244, 251, 255, 0.12);
-}
-
-.hud-paused__title {
-  margin: 0;
-  font-family: var(--font-title);
-  font-size: 46px;
-  font-weight: 400;
-  line-height: 1;
-}
-
-/* ---------- Tablets and desktop (1280 x 720 and up): keep the layout proportionate ---------- */
-
-@media (min-width: 1000px) and (min-height: 600px) {
-  .hud-essence {
-    top: calc(14px + env(safe-area-inset-top, 0px));
-    left: calc(14px + env(safe-area-inset-left, 0px));
-    gap: 8px;
-    width: 189px;
-    height: 97px;
-    padding: 0 11px;
-  }
-
-  .hud-essence__orb {
-    width: 51px;
-    height: 51px;
-  }
-
-  .hud-essence__value {
-    font-size: 46px;
+@media (max-width: 379px) {
+  .hud-tray {
+    padding-right: 2px;
+    padding-left: 2px;
   }
 
   .hud-card-bar {
-    top: calc(14px + env(safe-area-inset-top, 0px));
-    right: calc(211px + env(safe-area-inset-right, 0px));
-    left: calc(216px + env(safe-area-inset-left, 0px));
-    gap: 11px;
+    --tray-gap: 2px;
+  }
+}
+
+/* ---------- Portrait tablets (834 x 1194): larger chrome, same layout ---------- */
+
+@media (min-width: 700px) and (max-aspect-ratio: 3 / 4) {
+  .hud-top {
+    top: calc(16px + var(--safe-top));
+    right: calc(18px + var(--safe-right));
+    left: calc(18px + var(--safe-left));
+    gap: 12px;
   }
 
-  .hud-card {
-    width: 97px;
-    height: 130px;
-    border-radius: 21px;
+  .hud-essence {
+    height: 62px;
+    gap: 9px;
+    padding: 0 20px 0 8px;
   }
 
-  .hud-card__portrait {
-    inset: 4px 4px 30px;
-    border-radius: 15px;
+  .hud-essence__orb-ring {
+    width: 46px;
+    height: 46px;
   }
 
-  .hud-card__cost {
-    bottom: 4px;
-    left: 5px;
-    font-size: 20px;
+  .hud-essence__orb {
+    width: 37px;
+    height: 37px;
   }
 
-  .hud-card__stars {
-    top: 5px;
-    right: 5px;
+  .hud-essence__value {
+    font-size: 36px;
   }
 
-  .hud-card__star {
-    width: 16px;
-    height: 16px;
+  .hud-progress {
+    height: 46px;
   }
 
-  .hud-card__cooldown {
-    border-radius: 0 0 18px 18px;
+  .hud-progress__track {
+    height: 22px;
   }
 
-  .hud-card__cooldown-label {
-    font-size: 40px;
+  .hud-progress__mark {
+    width: 24px;
+    height: 24px;
+  }
+
+  .hud-progress__icon {
+    width: 13px;
+    height: 13px;
   }
 
   .hud-controls {
-    top: calc(14px + env(safe-area-inset-top, 0px));
-    right: calc(14px + env(safe-area-inset-right, 0px));
-    gap: 11px;
+    gap: 10px;
   }
 
   .hud-button {
-    width: 86px;
-    height: 86px;
-    border-radius: 21px;
+    width: 64px;
+    height: 64px;
   }
 
   .hud-button__icon {
-    width: 43px;
-    height: 43px;
+    width: 31px;
+    height: 31px;
   }
 
-  .hud-button__icon--speed {
-    width: 27px;
-    height: 27px;
+  .hud-button--speed .hud-button__icon {
+    width: 23px;
+    height: 23px;
   }
 
   .hud-button__label {
     font-size: 20px;
   }
 
-  .hud-shovel {
-    width: 97px;
-    height: 97px;
-  }
-
-  .hud-shovel__icon {
-    width: 57px;
-    height: 57px;
-  }
-
-  .hud-progress {
-    right: calc(14px + env(safe-area-inset-right, 0px));
-    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-    width: 297px;
-    height: 38px;
-  }
-
-  .hud-progress__track {
-    height: 22px;
-    border-radius: 13px;
-  }
-
-  .hud-progress__fill {
-    border-radius: 10px;
-  }
-
-  .hud-progress__mark {
-    bottom: 16px;
-  }
-
-  .hud-progress__icon {
-    width: 24px;
-    height: 24px;
-  }
-
-  .hud-progress__mark--final .hud-progress__icon {
-    width: 27px;
-    height: 27px;
-  }
-
   .hud-boss {
-    top: calc(159px + env(safe-area-inset-top, 0px));
+    top: calc(16px + var(--safe-top) + 78px);
+    width: min(60%, 460px);
   }
 
   .hud-boss__name {
-    font-size: 27px;
+    font-size: 20px;
   }
 
   .hud-boss__track {
-    height: 24px;
-    border-radius: 12px;
+    height: 21px;
   }
 
   .hud-banner {
-    height: 162px;
+    height: 132px;
   }
 
-  .hud-rejection {
-    top: calc(162px + env(safe-area-inset-top, 0px));
-    padding: 8px 24px;
-    border-radius: 19px;
+  .hud-banner__text {
+    font-size: clamp(38px, 5.6vw, 64px);
   }
 
-  .hud-rejection__text {
-    font-size: 30px;
-  }
-
-  .hud-paused__title {
-    font-size: 62px;
-  }
-
-  .hud-paused__panel {
-    padding: 32px 54px 40px;
-  }
-}
-
-/* ---------- Short screens (below the 844 x 390 target): scale down, keep 48 px targets ---------- */
-
-@media (max-height: 340px) {
-  .hud-essence {
-    width: 120px;
-    height: 62px;
-    gap: 6px;
-    padding: 0 8px;
-  }
-
-  .hud-essence__orb {
-    width: 34px;
-    height: 34px;
-  }
-
-  .hud-essence__value {
-    font-size: 30px;
+  .hud-tray {
+    gap: 12px;
+    padding: 78px 20px calc(14px + var(--safe-bottom));
   }
 
   .hud-card-bar {
-    left: calc(134px + env(safe-area-inset-left, 0px));
-    gap: 4px;
+    --tray-gap: 8px;
   }
 
-  .hud-card {
-    width: 62px;
-    height: 82px;
-    border-radius: 13px;
-  }
-
-  .hud-card__portrait {
-    inset: 2px 2px 20px;
+  .hud-card,
+  .hud-shovel {
+    width: 64px;
+    border-radius: 15px;
   }
 
   .hud-card__cost {
-    font-size: 13px;
+    font-size: 15px;
   }
 
-  .hud-button {
-    width: 54px;
-    height: 54px;
+  .hud-card__essence-icon {
+    width: 14px;
+    height: 14px;
   }
 
-  .hud-shovel {
+  .hud-card__star {
+    width: 12px;
+    height: 12px;
+  }
+
+  .hud-card__cooldown-label {
+    font-size: 26px;
+  }
+
+  .hud-rejection {
+    padding: 8px 22px;
+  }
+
+  .hud-rejection__text {
+    font-size: 16px;
+  }
+
+  .hud-paused__panel {
+    width: min(100%, 430px);
+    padding: 44px 30px 28px;
+  }
+
+  .hud-paused__crest {
+    top: -32px;
     width: 62px;
     height: 62px;
   }
 
-  .hud-shovel__icon {
-    width: 34px;
-    height: 34px;
+  .hud-paused__title {
+    font-size: 58px;
   }
 
-  .hud-boss {
-    top: calc(104px + env(safe-area-inset-top, 0px));
+  .hud-paused__subtitle {
+    font-size: 11px;
   }
 
-  .hud-progress {
-    width: 178px;
+  .hud-paused__actions .screen-button {
+    min-height: 62px;
+    font-size: 28px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hud-button--shake,
-  .hud-rejection {
+  .hud-rejection,
+  .hud-paused__panel {
     animation: none;
   }
 

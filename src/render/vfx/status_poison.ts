@@ -12,11 +12,12 @@ export const vfx: VfxDefinition = {
   id: 'status_poison',
   sprite: 0,
   colors: [0x7cff6b, 0x2e7d32],
-  count: 4,
+  count: 5,
   speed: 0.4,
   upward: 1.0,
   gravity: -0.8,
   lifeMin: 0.5,
   lifeMax: 0.9,
   size: 0.13,
+  glow: 1.26,
 };

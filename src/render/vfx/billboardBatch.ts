@@ -1,19 +1,25 @@
 /**
  * One instanced batch of camera-facing textured quads (spec 9.7): damage numbers,
- * combo popups and the Essence orb glow use this so every text/glow layer stays at
- * one draw call. Positions and sizes are per-instance attributes; the vertex shader
- * billboards the quad in view space, so the batch needs no per-frame CPU matrices.
+ * combo popups, the Essence orb glow and the hit impact flashes use this so every
+ * text/glow layer stays at one draw call. Positions, sizes, atlas cell, tint and
+ * opacity are per-instance attributes; the vertex shader billboards the quad in
+ * view space, so the batch needs no per-frame CPU matrices. The optional view-space
+ * offset keeps multi-quad layouts (the digits of one number) screen-aligned on any
+ * camera; the optional intensity writes HDR colours that the bloom pass picks up.
  */
 
 import {
+  AdditiveBlending,
   BufferAttribute,
   Color,
   DoubleSide,
   InstancedBufferAttribute,
   InstancedBufferGeometry,
   Mesh,
+  NormalBlending,
   ShaderMaterial,
   Texture,
+  type Blending,
 } from 'three';
 
 /** One quad instance: world centre, world size, atlas cell, tint and opacity. */
@@ -26,6 +32,21 @@ export interface BillboardQuad {
   cell: number;
   color: number;
   alpha: number;
+  /** Screen-space offset in world units, applied after billboarding (0 = centre). */
+  offsetX?: number;
+  offsetY?: number;
+  /** Colour multiplier for HDR glow (1 = plain colour, > 1 blooms). */
+  intensity?: number;
+}
+
+/** Optional material configuration of a batch. */
+export interface BillboardBatchOptions {
+  /** Additive blending for glows and flashes; normal blending for text (default). */
+  readonly blending?: Blending;
+  /** Depth test against the 3D scene; text is always on top (default false). */
+  readonly depthTest?: boolean;
+  /** Render order of the batch inside the transparent pass. */
+  readonly renderOrder?: number;
 }
 
 /** A pooled batch of billboard quads; `begin`/`add`/`end` per frame, no allocations. */
@@ -48,6 +69,7 @@ export function createBillboardBatch(
   columns: number,
   rows: number,
   texture: Texture | null,
+  options: BillboardBatchOptions = {},
 ): BillboardBatch {
   const geometry = new InstancedBufferGeometry();
   const quad = new Float32Array([-0.5, -0.5, 0, 0.5, -0.5, 0, 0.5, 0.5, 0, -0.5, 0.5, 0]);
@@ -60,17 +82,20 @@ export function createBillboardBatch(
   const cells = new InstancedBufferAttribute(new Float32Array(capacity), 1);
   const colors = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
   const alphas = new InstancedBufferAttribute(new Float32Array(capacity), 1);
+  const viewOffsets = new InstancedBufferAttribute(new Float32Array(capacity * 2), 2);
   geometry.setAttribute('aCenter', centers);
   geometry.setAttribute('aSize', sizes);
   geometry.setAttribute('aCell', cells);
   geometry.setAttribute('aColor', colors);
   geometry.setAttribute('aAlpha', alphas);
+  geometry.setAttribute('aViewOffset', viewOffsets);
 
   const material = new ShaderMaterial({
     transparent: true,
     depthWrite: false,
-    depthTest: false,
+    depthTest: options.depthTest ?? false,
     side: DoubleSide,
+    blending: options.blending ?? NormalBlending,
     uniforms: {
       map: { value: texture },
       atlas: { value: { x: columns, y: rows } },
@@ -81,6 +106,7 @@ export function createBillboardBatch(
       attribute float aCell;
       attribute vec3 aColor;
       attribute float aAlpha;
+      attribute vec2 aViewOffset;
       varying vec2 vQuad;
       varying float vCell;
       varying vec3 vColor;
@@ -91,7 +117,7 @@ export function createBillboardBatch(
         vColor = aColor;
         vAlpha = aAlpha;
         vec4 view = modelViewMatrix * vec4(aCenter, 1.0);
-        view.xy += position.xy * aSize;
+        view.xy += position.xy * aSize + aViewOffset;
         gl_Position = projectionMatrix * view;
       }
     `,
@@ -117,7 +143,7 @@ export function createBillboardBatch(
 
   const mesh = new Mesh(geometry, material);
   mesh.frustumCulled = false;
-  mesh.renderOrder = 900;
+  mesh.renderOrder = options.renderOrder ?? 900;
   mesh.visible = false;
   let cursor = 0;
   const scratch = new Color();
@@ -136,12 +162,14 @@ export function createBillboardBatch(
         return;
       }
       const index = cursor;
+      const intensity = quadItem.intensity ?? 1;
       centers.setXYZ(index, quadItem.x, quadItem.y, quadItem.z);
       sizes.setXY(index, quadItem.width, quadItem.height);
       cells.setX(index, quadItem.cell);
       scratch.setHex(quadItem.color);
-      colors.setXYZ(index, scratch.r, scratch.g, scratch.b);
+      colors.setXYZ(index, scratch.r * intensity, scratch.g * intensity, scratch.b * intensity);
       alphas.setX(index, quadItem.alpha);
+      viewOffsets.setXY(index, quadItem.offsetX ?? 0, quadItem.offsetY ?? 0);
       cursor += 1;
     },
     end: (): void => {
@@ -155,6 +183,7 @@ export function createBillboardBatch(
       cells.needsUpdate = true;
       colors.needsUpdate = true;
       alphas.needsUpdate = true;
+      viewOffsets.needsUpdate = true;
     },
     dispose: (): void => {
       geometry.dispose();
@@ -163,3 +192,6 @@ export function createBillboardBatch(
     },
   };
 }
+
+/** Convenience blending constant re-export so effect layers need no three import. */
+export const ADDITIVE_BLENDING: Blending = AdditiveBlending;

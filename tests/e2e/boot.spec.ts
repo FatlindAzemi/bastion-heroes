@@ -15,9 +15,9 @@ test('boot: shows the title on a full-screen canvas without console errors', asy
   });
 
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Bastion Heroes' })).toBeVisible({
-    timeout: 5000,
-  });
+  await expect(page.getByTestId('title-screen')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('.title-lockup__title')).toContainText('Bastion');
+  await expect(page.locator('.title-lockup__title')).toContainText('Heroes');
 
   const canvas = page.locator('#app canvas');
   await expect(canvas).toBeVisible();
@@ -29,7 +29,7 @@ test('boot: shows the title on a full-screen canvas without console errors', asy
   expect(Math.round(canvasBox.width)).toBe(viewport.width);
   expect(Math.round(canvasBox.height)).toBe(viewport.height);
 
-  await page.screenshot({ path: 'test-results/screens/boot-844x390.png' });
+  await page.screenshot({ path: 'test-results/screens/boot-390x844.png' });
 
   expect(consoleErrors, 'browser console errors').toEqual([]);
   expect(pageErrors, 'uncaught page errors').toEqual([]);

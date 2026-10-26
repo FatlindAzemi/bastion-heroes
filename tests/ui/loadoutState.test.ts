@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { levelById } from '../../src/data';
+import { questById } from '../../src/data/economy';
 import { LevelDef } from '../../src/data/schemas';
-import { createM2Collection } from '../../src/ui/screens/collection';
+import { createDefaultSave } from '../../src/meta/save';
+import { createM2Collection, createOwnedCollection } from '../../src/ui/screens/collection';
 import {
   addCardToLoadout,
   chosenLoadout,
@@ -32,6 +34,8 @@ function collectionCard(index: number): CollectionCardView {
   }
   return card;
 }
+
+const DATE = '2026-10-26';
 
 describe('Loadout slot state (spec 3.12 rules 2 and 4, issue #49)', () => {
   it('3.12: tutorial levels 1-4 start with their fixed loadout pre-filled', () => {
@@ -101,5 +105,80 @@ describe('Loadout slot state (spec 3.12 rules 2 and 4, issue #49)', () => {
     // The 7th and 8th cards of the roster do not fit into 6 slots.
     expect(slots.some((slot) => slot?.defenderId === collection[5]?.defenderId)).toBe(true);
     expect(slots.some((slot) => slot?.defenderId === collection[6]?.defenderId)).toBe(false);
+  });
+});
+
+describe('initialLoadout with the M4 save (spec 3.12 rule 4, 8.7)', () => {
+  it('uses the saved card levels of the fixed tutorial loadout', () => {
+    const save = createDefaultSave(DATE);
+    save.cards.sparkbolt_gremlin = { level: 2, shards: 0 };
+    save.cards.glowshroom_monk = { level: 3, shards: 0 };
+    const slots = initialLoadout(parsedLevel('w1_l02'), {
+      collection: createOwnedCollection(save),
+    });
+    expect(slots).toEqual([
+      { defenderId: 'sparkbolt_gremlin', cardLevel: 2 },
+      { defenderId: 'glowshroom_monk', cardLevel: 3 },
+    ]);
+    expect(isLoadoutComplete(slots)).toBe(true);
+  });
+
+  it('falls back to card level 1 when a fixed card is missing from the collection', () => {
+    const slots = initialLoadout(parsedLevel('w1_l01'), { collection: [] });
+    expect(slots).toEqual([{ defenderId: 'sparkbolt_gremlin', cardLevel: 1 }]);
+  });
+
+  it('restores a saved free loadout in slot order at saved card levels', () => {
+    const save = createDefaultSave(DATE);
+    save.cards.snowpup_yeti = { level: 2, shards: 0 };
+    save.cards.pyro_fox = { level: 3, shards: 0 };
+    save.cards.boomcap_brewer = { level: 1, shards: 0 };
+    const slots = initialLoadout(parsedLevel('w1_l05'), {
+      collection: createOwnedCollection(save),
+      savedIds: ['snowpup_yeti', 'pyro_fox', 'boomcap_brewer'],
+    });
+    expect(slots).toEqual([
+      { defenderId: 'snowpup_yeti', cardLevel: 2 },
+      { defenderId: 'pyro_fox', cardLevel: 3 },
+      { defenderId: 'boomcap_brewer', cardLevel: 1 },
+      null,
+      null,
+      null,
+    ]);
+  });
+
+  it('drops unknown and duplicate saved ids and pads the empty slots', () => {
+    const save = createDefaultSave(DATE);
+    const slots = initialLoadout(parsedLevel('w1_l05'), {
+      collection: createOwnedCollection(save),
+      savedIds: ['pyro_fox', 'unknown_card', 'pyro_fox', 'frost_witch'],
+    });
+    expect(slots).toEqual([
+      { defenderId: 'pyro_fox', cardLevel: 1 },
+      { defenderId: 'frost_witch', cardLevel: 1 },
+      null,
+      null,
+      null,
+      null,
+    ]);
+    expect(isLoadoutComplete(slots)).toBe(false);
+  });
+
+  it('ignores saved ids on a fixed-loadout tutorial level', () => {
+    const save = createDefaultSave(DATE);
+    const slots = initialLoadout(parsedLevel('w1_l01'), {
+      collection: createOwnedCollection(save),
+      savedIds: ['pyro_fox'],
+    });
+    expect(slots).toEqual([{ defenderId: 'sparkbolt_gremlin', cardLevel: 1 }]);
+  });
+
+  it('keeps daily quest progress records aligned with the quest definitions', () => {
+    // Guard the fixture assumption used by the e2e/screenshot save seeds: progress
+    // records only carry { id, progress, done }, the target lives in questById.
+    const save = createDefaultSave(DATE);
+    for (const progress of save.dailyQuests.quests) {
+      expect(questById[progress.id]?.target).toBeGreaterThan(0);
+    }
   });
 });

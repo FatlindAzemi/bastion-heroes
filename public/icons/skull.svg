@@ -1,12 +1,116 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <g stroke="#1b1b2f" stroke-width="2.2" stroke-linejoin="round">
-    <path
-      d="M16 3 C8 3 4 9 4 16 C4 21 6 24 9 26 V29 H23 V26 C26 24 28 21 28 16 C28 9 24 3 16 3 Z"
-      fill="#efe6d2"
-    />
-    <circle cx="11" cy="16" r="3" fill="#1b1b2f" stroke="none" />
-    <circle cx="21" cy="16" r="3" fill="#1b1b2f" stroke="none" />
-    <path d="M16 19 L13 24 H19 Z" fill="#1b1b2f" stroke="none" />
-    <path d="M12 26 V29 M16 26 V29 M20 26 V29" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+    <defs>
+    <linearGradient id="gold" x1="0.12" y1="0" x2="0.84" y2="1">
+      <stop offset="0" stop-color="#FFF6C4" />
+      <stop offset="0.25" stop-color="#FFDE72" />
+      <stop offset="0.55" stop-color="#FFC12E" />
+      <stop offset="0.8" stop-color="#EF9A08" />
+      <stop offset="1" stop-color="#B96800" />
+    </linearGradient>
+    <linearGradient id="goldTrim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF3B0" />
+      <stop offset="0.5" stop-color="#FFC12E" />
+      <stop offset="1" stop-color="#8F5300" />
+    </linearGradient>
+    <radialGradient id="goldGloss" cx="0.34" cy="0.22" r="0.82">
+      <stop offset="0" stop-color="#FFFBE0" />
+      <stop offset="0.32" stop-color="#FFE58C" />
+      <stop offset="0.68" stop-color="#FFC12E" />
+      <stop offset="1" stop-color="#D98A00" />
+    </radialGradient>
+    <linearGradient id="bone" x1="0.16" y1="0" x2="0.82" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" />
+      <stop offset="0.45" stop-color="#E7F1FA" />
+      <stop offset="0.8" stop-color="#B7C9DC" />
+      <stop offset="1" stop-color="#8FA4BA" />
+    </linearGradient>
+    <radialGradient id="tealOrb" cx="0.36" cy="0.3" r="0.82">
+      <stop offset="0" stop-color="#E8FFF9" />
+      <stop offset="0.3" stop-color="#7CFFE4" />
+      <stop offset="0.68" stop-color="#3BF0C8" />
+      <stop offset="1" stop-color="#0B8E78" />
+    </radialGradient>
+    <linearGradient id="teal" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#D6FFF7" />
+      <stop offset="0.25" stop-color="#7CFFE4" />
+      <stop offset="0.6" stop-color="#3BF0C8" />
+      <stop offset="1" stop-color="#0E9C85" />
+    </linearGradient>
+    <linearGradient id="steel" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#EAF3FA" />
+      <stop offset="0.45" stop-color="#B9CBDB" />
+      <stop offset="0.78" stop-color="#7C90A2" />
+      <stop offset="1" stop-color="#4E5F70" />
+    </linearGradient>
+    <linearGradient id="wood" x1="0.16" y1="0" x2="0.84" y2="1">
+      <stop offset="0" stop-color="#F2BC80" />
+      <stop offset="0.45" stop-color="#D08648" />
+      <stop offset="0.8" stop-color="#A9581F" />
+      <stop offset="1" stop-color="#7E3D12" />
+    </linearGradient>
+    <linearGradient id="violet" x1="0.12" y1="0" x2="0.88" y2="1">
+      <stop offset="0" stop-color="#D9C3FF" />
+      <stop offset="0.3" stop-color="#A57CFF" />
+      <stop offset="0.62" stop-color="#7C4DFF" />
+      <stop offset="1" stop-color="#43249B" />
+    </linearGradient>
+    <linearGradient id="green" x1="0.12" y1="0" x2="0.88" y2="1">
+      <stop offset="0" stop-color="#D6FFDF" />
+      <stop offset="0.3" stop-color="#7BF29B" />
+      <stop offset="0.62" stop-color="#4CD964" />
+      <stop offset="1" stop-color="#1E8C36" />
+    </linearGradient>
+    <linearGradient id="red" x1="0.12" y1="0" x2="0.88" y2="1">
+      <stop offset="0" stop-color="#FFD0D0" />
+      <stop offset="0.3" stop-color="#FF7A7A" />
+      <stop offset="0.6" stop-color="#FF4D4D" />
+      <stop offset="1" stop-color="#A81E2C" />
+    </linearGradient>
+    <linearGradient id="gloom" x1="0.14" y1="0" x2="0.86" y2="1">
+      <stop offset="0" stop-color="#B9A0EA" />
+      <stop offset="0.4" stop-color="#7A5BB8" />
+      <stop offset="0.75" stop-color="#4A2F66" />
+      <stop offset="1" stop-color="#251735" />
+    </linearGradient>
+    <linearGradient id="parchment" x1="0.14" y1="0" x2="0.86" y2="1">
+      <stop offset="0" stop-color="#FFF8E2" />
+      <stop offset="0.45" stop-color="#F0E2C2" />
+      <stop offset="0.8" stop-color="#CDB88E" />
+      <stop offset="1" stop-color="#A28858" />
+    </linearGradient>
+    <linearGradient id="ice" x1="0.16" y1="0" x2="0.84" y2="1">
+      <stop offset="0" stop-color="#F2FCFF" />
+      <stop offset="0.35" stop-color="#CFF3FF" />
+      <stop offset="0.7" stop-color="#9BE7FF" />
+      <stop offset="1" stop-color="#4FA9D8" />
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFFFFF" />
+      <stop offset="0.45" stop-color="#D6FFF7" stop-opacity="0.9" />
+      <stop offset="0.75" stop-color="#7CFFE4" stop-opacity="0.45" />
+      <stop offset="1" stop-color="#3BF0C8" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="tealGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7CFFE4" stop-opacity="0.9" />
+      <stop offset="0.55" stop-color="#3BF0C8" stop-opacity="0.35" />
+      <stop offset="1" stop-color="#3BF0C8" stop-opacity="0" />
+    </radialGradient>
+    <filter id="ds" x="-40%" y="-40%" width="180%" height="190%">
+      <feDropShadow dx="0" dy="1.4" stdDeviation="1.1" flood-color="#05030C" flood-opacity="0.42" />
+    </filter>
+    <filter id="glowTeal" x="-90%" y="-90%" width="280%" height="280%">
+      <feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="#3CF2FF" flood-opacity="0.85" />
+    </filter>
+  </defs>
+  <g filter="url(#ds)">
+    <path d="M 32 5.5 C 18.5 5.5 11 14 11 24 C 11 30 13.6 34.8 17.5 37.8 L 17.5 46 Q 17.5 51.5 23 51.5 H 41 Q 46.5 51.5 46.5 46 L 46.5 37.8 C 50.4 34.8 53 30 53 24 C 53 14 45.5 5.5 32 5.5 Z" fill="url(#bone)" stroke="#141326" stroke-width="3" stroke-linejoin="round" />
+    <ellipse cx="23.5" cy="25" rx="6.4" ry="7.4" fill="#17122B" />
+    <ellipse cx="40.5" cy="25" rx="6.4" ry="7.4" fill="#17122B" />
+    <circle cx="23.5" cy="25.5" r="2.6" fill="#3CF2FF" filter="url(#glowTeal)" />
+    <circle cx="40.5" cy="25.5" r="2.6" fill="#3CF2FF" />
+    <path d="M 32 30 L 28.6 36.5 H 35.4 Z" fill="#17122B" />
+    <path d="M 22.5 42.5 V 49 M 27.5 43 V 50 M 32 43 V 50.5 M 36.5 43 V 50 M 41.5 42.5 V 49" fill="none" stroke="#141326" stroke-width="2" stroke-linecap="round" />
+    <ellipse cx="23" cy="15.5" rx="7" ry="4.2" fill="#FFFFFF" opacity="0.32" transform="rotate(-22 23 15.5)" />
+    <path d="M 18 33 C 21 36 26 37.5 32 37.5" fill="none" stroke="#A89878" stroke-width="2" opacity="0.45" />
   </g>
 </svg>

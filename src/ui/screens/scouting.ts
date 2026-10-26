@@ -5,7 +5,7 @@
  */
 import { enemyById, rules } from '../../data';
 import type { EnemyDef, LevelDef } from '../../data/schemas';
-import type { ArmorType } from './types';
+import type { ArmorType, DamageType } from './types';
 
 /** Terrain labels of spec 3.1, in the order the summary lists them. */
 const TERRAIN_LABELS: Readonly<Record<string, string>> = {
@@ -42,6 +42,37 @@ export function armorTypesForLevel(level: LevelDef): readonly ArmorType[] {
     seen.add(enemy.armor);
   }
   return [...seen];
+}
+
+/** The best damage type against one armor type, read from the spec 4.1 rules. */
+export interface CounterHint {
+  readonly armor: ArmorType;
+  readonly damageType: DamageType;
+  readonly multiplier: number;
+}
+
+/** Damage types in the order the counter hints try them (spec 4.1). */
+const DAMAGE_TYPES: readonly DamageType[] = ['pierce', 'blast', 'arcane'];
+
+/**
+ * The strongest damage type against every armor type in the level (spec 4.1).
+ * Reads the 3x3 combat table from `src/data/rules.ts` so the screen can never
+ * disagree with the sim balance.
+ */
+export function counterHintsForLevel(level: LevelDef): readonly CounterHint[] {
+  const multipliers = rules.combat.damageMultipliers;
+  return armorTypesForLevel(level).map((armor) => {
+    let best: DamageType = 'pierce';
+    let bestMultiplier = 0;
+    for (const damageType of DAMAGE_TYPES) {
+      const multiplier = multipliers[damageType][armor];
+      if (multiplier > bestMultiplier) {
+        best = damageType;
+        bestMultiplier = multiplier;
+      }
+    }
+    return { armor, damageType: best, multiplier: bestMultiplier };
+  });
 }
 
 /** Lane summary from the level's active lanes (spec 7.1, lanes are shown 1-based). */

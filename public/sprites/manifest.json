@@ -1,0 +1,685 @@
+{
+  "version": 1,
+  "characters": {
+    "glowshroom_monk": {
+      "image": "/sprites/glowshroom_monk.png",
+      "frameWidth": 104,
+      "frameHeight": 96,
+      "columns": 4,
+      "worldHeight": 0.851,
+      "clips": {
+        "idle": {
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "fps": 4.0,
+          "loop": true
+        },
+        "produce": {
+          "frames": [
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 5.0,
+          "loop": false
+        },
+        "victory": {
+          "frames": [
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "fps": 3.33,
+          "loop": false
+        }
+      }
+    },
+    "sparkbolt_gremlin": {
+      "image": "/sprites/sparkbolt_gremlin.png",
+      "frameWidth": 100,
+      "frameHeight": 88,
+      "columns": 5,
+      "worldHeight": 0.81,
+      "clips": {
+        "idle": {
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "fps": 4.0,
+          "loop": true
+        },
+        "attack": {
+          "frames": [
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 7.5,
+          "loop": false
+        },
+        "victory": {
+          "frames": [
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "fps": 3.33,
+          "loop": false
+        }
+      }
+    },
+    "boomcap_brewer": {
+      "image": "/sprites/boomcap_brewer.png",
+      "frameWidth": 96,
+      "frameHeight": 84,
+      "columns": 5,
+      "worldHeight": 0.885,
+      "clips": {
+        "idle": {
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "fps": 4.0,
+          "loop": true
+        },
+        "attack": {
+          "frames": [
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 7.5,
+          "loop": false
+        },
+        "victory": {
+          "frames": [
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "fps": 3.33,
+          "loop": false
+        }
+      }
+    },
+    "snowpup_yeti": {
+      "image": "/sprites/snowpup_yeti.png",
+      "frameWidth": 96,
+      "frameHeight": 88,
+      "columns": 5,
+      "worldHeight": 0.86,
+      "clips": {
+        "idle": {
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "fps": 4.0,
+          "loop": true
+        },
+        "attack": {
+          "frames": [
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 7.5,
+          "loop": false
+        },
+        "victory": {
+          "frames": [
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "fps": 3.33,
+          "loop": false
+        }
+      }
+    },
+    "rune_archer": {
+      "image": "/sprites/rune_archer.png",
+      "frameWidth": 80,
+      "frameHeight": 84,
+      "columns": 6,
+      "worldHeight": 0.8825,
+      "clips": {
+        "idle": {
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "fps": 4.0,
+          "loop": true
+        },
+        "attack": {
+          "frames": [
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 7.5,
+          "loop": false
+        },
+        "victory": {
+          "frames": [
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "fps": 3.33,
+          "loop": false
+        }
+      }
+    },
+    "pyro_fox": {
+      "image": "/sprites/pyro_fox.png",
+      "frameWidth": 104,
+      "frameHeight": 96,
+      "columns": 4,
+      "worldHeight": 1.0467,
+      "clips": {
+        "idle": {
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "fps": 4.0,
+          "loop": true
+        },
+        "attack": {
+          "frames": [
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 7.5,
+          "loop": false
+        },
+        "victory": {
+          "frames": [
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "fps": 3.33,
+          "loop": false
+        }
+      }
+    },
+    "iron_granny": {
+      "image": "/sprites/iron_granny.png",
+      "frameWidth": 112,
+      "frameHeight": 84,
+      "columns": 4,
+      "worldHeight": 0.885,
+      "clips": {
+        "idle": {
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "fps": 4.0,
+          "loop": true
+        },
+        "victory": {
+          "frames": [
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "fps": 3.33,
+          "loop": false
+        }
+      }
+    },
+    "frost_witch": {
+      "image": "/sprites/frost_witch.png",
+      "frameWidth": 104,
+      "frameHeight": 140,
+      "columns": 4,
+      "worldHeight": 1.05,
+      "clips": {
+        "idle": {
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "fps": 4.0,
+          "loop": true
+        },
+        "attack": {
+          "frames": [
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 7.5,
+          "loop": false
+        },
+        "victory": {
+          "frames": [
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "fps": 3.33,
+          "loop": false
+        }
+      }
+    },
+    "gloomling": {
+      "image": "/sprites/gloomling.png",
+      "frameWidth": 64,
+      "frameHeight": 68,
+      "columns": 8,
+      "worldHeight": 0.8299,
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "fps": 1.0,
+          "loop": true
+        },
+        "walk": {
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "fps": 6.0,
+          "loop": true
+        },
+        "eat": {
+          "frames": [
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 10.0,
+          "loop": true
+        }
+      }
+    },
+    "shade_wisp": {
+      "image": "/sprites/shade_wisp.png",
+      "frameWidth": 84,
+      "frameHeight": 96,
+      "columns": 6,
+      "worldHeight": 0.9651,
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "fps": 1.0,
+          "loop": true
+        },
+        "walk": {
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "fps": 6.0,
+          "loop": true
+        },
+        "eat": {
+          "frames": [
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 10.0,
+          "loop": true
+        }
+      }
+    },
+    "bat_swarm": {
+      "image": "/sprites/bat_swarm.png",
+      "frameWidth": 116,
+      "frameHeight": 68,
+      "columns": 4,
+      "worldHeight": 0.8252,
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "fps": 1.0,
+          "loop": true
+        },
+        "walk": {
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "fps": 6.0,
+          "loop": true
+        },
+        "eat": {
+          "frames": [
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 10.0,
+          "loop": true
+        }
+      }
+    },
+    "gloom_priest": {
+      "image": "/sprites/gloom_priest.png",
+      "frameWidth": 80,
+      "frameHeight": 88,
+      "columns": 6,
+      "worldHeight": 0.954,
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "fps": 1.0,
+          "loop": true
+        },
+        "walk": {
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "fps": 6.0,
+          "loop": true
+        },
+        "eat": {
+          "frames": [
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 10.0,
+          "loop": true
+        }
+      }
+    },
+    "gloom_ogre": {
+      "image": "/sprites/gloom_ogre.png",
+      "frameWidth": 132,
+      "frameHeight": 128,
+      "columns": 3,
+      "worldHeight": 1.5013,
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "fps": 1.0,
+          "loop": true
+        },
+        "walk": {
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "fps": 6.0,
+          "loop": true
+        },
+        "eat": {
+          "frames": [
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 5.0,
+          "loop": true
+        }
+      }
+    },
+    "pothead": {
+      "image": "/sprites/pothead.png",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "columns": 6,
+      "worldHeight": 0.8893,
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "fps": 1.0,
+          "loop": true
+        },
+        "walk": {
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "fps": 6.0,
+          "loop": true
+        },
+        "eat": {
+          "frames": [
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 10.0,
+          "loop": true
+        }
+      }
+    },
+    "shieldbearer": {
+      "image": "/sprites/shieldbearer.png",
+      "frameWidth": 88,
+      "frameHeight": 92,
+      "columns": 5,
+      "worldHeight": 0.935,
+      "clips": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "fps": 1.0,
+          "loop": true
+        },
+        "walk": {
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "fps": 6.0,
+          "loop": true
+        },
+        "eat": {
+          "frames": [
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "fps": 10.0,
+          "loop": true
+        }
+      }
+    }
+  },
+  "props": {
+    "tree_round": {
+      "image": "/sprites/props_tree_round.png",
+      "frameWidth": 164,
+      "frameHeight": 220,
+      "columns": 1,
+      "worldHeight": 2.6123
+    },
+    "tree_pine": {
+      "image": "/sprites/props_tree_pine.png",
+      "frameWidth": 152,
+      "frameHeight": 184,
+      "columns": 1,
+      "worldHeight": 2.475
+    },
+    "bush": {
+      "image": "/sprites/props_bush.png",
+      "frameWidth": 108,
+      "frameHeight": 116,
+      "columns": 1,
+      "worldHeight": 0.952
+    },
+    "rock": {
+      "image": "/sprites/props_rock.png",
+      "frameWidth": 92,
+      "frameHeight": 132,
+      "columns": 1,
+      "worldHeight": 0.62
+    },
+    "mushroom": {
+      "image": "/sprites/props_mushroom.png",
+      "frameWidth": 56,
+      "frameHeight": 44,
+      "columns": 1,
+      "worldHeight": 0.395
+    },
+    "flower_cluster": {
+      "image": "/sprites/props_flower_cluster.png",
+      "frameWidth": 56,
+      "frameHeight": 52,
+      "columns": 1,
+      "worldHeight": 0.3
+    },
+    "grass_tuft_a": {
+      "image": "/sprites/props_grass_tuft_a.png",
+      "frameWidth": 36,
+      "frameHeight": 44,
+      "columns": 1,
+      "worldHeight": 0.3465
+    },
+    "grass_tuft_b": {
+      "image": "/sprites/props_grass_tuft_b.png",
+      "frameWidth": 44,
+      "frameHeight": 48,
+      "columns": 1,
+      "worldHeight": 0.4407
+    },
+    "grass_tuft_c": {
+      "image": "/sprites/props_grass_tuft_c.png",
+      "frameWidth": 48,
+      "frameHeight": 44,
+      "columns": 1,
+      "worldHeight": 0.2434
+    }
+  }
+}

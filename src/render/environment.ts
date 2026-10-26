@@ -59,6 +59,11 @@ function loadWorld1(): Promise<Group | null> {
           child.material = toonMaterialsForMesh(child);
         }
       });
+      // The 3D edge props are replaced by the 2.5D pixel-art prop sprites (issue #114).
+      const edgesMesh = root.getObjectByName('world1_edges');
+      if (edgesMesh !== undefined) {
+        edgesMesh.visible = false;
+      }
       console.log('environment: loaded world1');
       return root;
     })

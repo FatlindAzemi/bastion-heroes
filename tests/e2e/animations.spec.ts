@@ -6,8 +6,13 @@ import { expect, test } from '@playwright/test';
 // the Playwright stills are deterministic; `?cards=&place=&autocollect=1` come from
 // issue #66. Every test also checks the 11.7 draw budgets and zero console errors.
 
-/** Screen point of tile lane 0, column 0 at 844x390 (projected 9.1 camera, no sky drop tile). */
-const MERGE_TILE = { x: 277, y: 160 };
+/**
+ * Screen point of the middle playfield tile (lane 2, column 4) at 390x844: the portrait
+ * 9.1 camera centres the board between the top status bar and the bottom card tray, so
+ * the screen centre maps to a free tile. The same point is tapped twice so the second
+ * placement merges into the first (spec 3.11).
+ */
+const MERGE_TILE = { x: 195, y: 403 };
 
 /** Records browser console errors and uncaught page errors for the final assertions. */
 function trackErrors(page: import('@playwright/test').Page): {
@@ -53,7 +58,7 @@ async function waitForDefendersGone(page: import('@playwright/test').Page): Prom
 // clip playback; under CI load they can exceed Playwright's default 30 s timeout.
 test.setTimeout(90_000);
 
-test('procedural animations: spawn drop is visible at 844x390 and 1280x720', async ({ page }) => {
+test('procedural animations: spawn drop is visible at 390x844 and 834x1194', async ({ page }) => {
   const errors = trackErrors(page);
   const url =
     '/?level=w1-l05&seed=10005&tick=900&perf=1' +
@@ -64,10 +69,10 @@ test('procedural animations: spawn drop is visible at 844x390 and 1280x720', asy
   await expect(page.locator('.hud-card')).toHaveCount(2, { timeout: 10_000 });
   await page.waitForTimeout(900);
   await expectDrawBudget(page);
-  await page.screenshot({ path: 'test-results/screens/m3-anim-spawn-844x390.png' });
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.screenshot({ path: 'test-results/screens/m3-anim-spawn-390x844.png' });
+  await page.setViewportSize({ width: 834, height: 1194 });
   await page.waitForTimeout(400);
-  await page.screenshot({ path: 'test-results/screens/m3-anim-spawn-1280x720.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-anim-spawn-834x1194.png' });
 
   expect(errors.consoleErrors, 'browser console errors').toEqual([]);
   expect(errors.pageErrors, 'uncaught page errors').toEqual([]);
@@ -92,10 +97,10 @@ test('procedural animations: a real merge jumps, spins and shows ★2 pips', asy
   await expect(page.locator('.hud-card__star')).toHaveCount(2);
   await expectDrawBudget(page);
   await page.waitForTimeout(400);
-  await page.screenshot({ path: 'test-results/screens/m3-anim-merge-844x390.png' });
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.screenshot({ path: 'test-results/screens/m3-anim-merge-390x844.png' });
+  await page.setViewportSize({ width: 834, height: 1194 });
   await page.waitForTimeout(300);
-  await page.screenshot({ path: 'test-results/screens/m3-anim-merge-1280x720.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-anim-merge-834x1194.png' });
 
   expect(errors.consoleErrors, 'browser console errors').toEqual([]);
   expect(errors.pageErrors, 'uncaught page errors').toEqual([]);
@@ -115,10 +120,10 @@ test('procedural animations: an eaten defender shrinks and spins before removal'
   await waitForDefendersGone(page);
   await page.waitForTimeout(2500);
   await expectDrawBudget(page);
-  await page.screenshot({ path: 'test-results/screens/m3-anim-death-844x390.png' });
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.screenshot({ path: 'test-results/screens/m3-anim-death-390x844.png' });
+  await page.setViewportSize({ width: 834, height: 1194 });
   await page.waitForTimeout(400);
-  await page.screenshot({ path: 'test-results/screens/m3-anim-death-1280x720.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-anim-death-834x1194.png' });
 
   expect(errors.consoleErrors, 'browser console errors').toEqual([]);
   expect(errors.pageErrors, 'uncaught page errors').toEqual([]);

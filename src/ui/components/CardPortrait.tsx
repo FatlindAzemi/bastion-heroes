@@ -1,10 +1,10 @@
 /**
- * Shared card portrait visual (spec 9.8, issue #76): the M3 Blender portrait on a
- * gradient in the rarity colour inside a rarity frame, with the faction-coloured
- * gradient stand-in while the portrait has not been generated yet (issue #66).
+ * Shared card portrait visual (spec 9.8, issue #76, issue #114): the pixel-art
+ * head-and-shoulders portrait on a gradient in the rarity colour inside a rarity
+ * frame, with the faction-coloured gradient stand-in while no portrait exists.
  */
 import { factionColor, rarityColor, rarityGradient } from '../hud/factionStyles';
-import { portraitUrl } from '../portraits';
+import { portraitSource } from '../portraits';
 
 /** Props of one card portrait area. */
 export interface CardPortraitProps {
@@ -15,9 +15,9 @@ export interface CardPortraitProps {
   readonly class?: string;
 }
 
-/** Card portrait with the Blender portrait or the faction-gradient fallback. */
+/** Card portrait with the pixel-art portrait, the smooth fallback or the faction blob. */
 export function CardPortrait({ defenderId, faction, rarity, class: className }: CardPortraitProps) {
-  const url = portraitUrl(defenderId);
+  const source = portraitSource(defenderId);
   const factionHex = factionColor(faction);
   const classNames = className === undefined ? 'card-portrait' : `card-portrait ${className}`;
   return (
@@ -32,11 +32,17 @@ export function CardPortrait({ defenderId, faction, rarity, class: className }: 
           background: `radial-gradient(circle at 50% 26%, ${factionHex} 0%, ${factionHex}00 72%)`,
         }}
       />
-      {url === null ? (
+      {source === null ? (
         <span class="card-portrait__blob" />
       ) : (
-        <img class="card-portrait__image" src={url} alt="" draggable={false} />
+        <img
+          class={`card-portrait__image${source.pixelated ? ' card-portrait__image--pixel' : ''}`}
+          src={source.url}
+          alt=""
+          draggable={false}
+        />
       )}
+      <span class="card-portrait__inner-shadow" />
       <span class="card-portrait__sheen" />
     </span>
   );

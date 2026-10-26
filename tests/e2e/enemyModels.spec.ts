@@ -51,10 +51,10 @@ test('enemy models: W1-L05 renders the Pot-Head Gloomling and Shieldbearer', asy
   await expect(overlay).toContainText(/status playing/);
   await expect(overlay).toContainText(/enemies [1-9]\d*/);
 
-  await page.screenshot({ path: 'test-results/screens/m3-enemy-models-844x390.png' });
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.screenshot({ path: 'test-results/screens/m3-enemy-models-390x844.png' });
+  await page.setViewportSize({ width: 834, height: 1194 });
   await page.waitForTimeout(500);
-  await page.screenshot({ path: 'test-results/screens/m3-enemy-models-1280x720.png' });
+  await page.screenshot({ path: 'test-results/screens/m3-enemy-models-834x1194.png' });
 
   expect(consoleErrors, 'browser console errors').toEqual([]);
   expect(pageErrors, 'uncaught page errors').toEqual([]);

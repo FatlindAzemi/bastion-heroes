@@ -31,12 +31,24 @@ body {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background: #1b1b2f;
+  background: var(--arcade-deep);
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+button {
+  margin: 0;
+  color: inherit;
+  font: inherit;
 }
 
 #app {
   position: fixed;
   inset: 0;
+  overflow: hidden;
 }
 
 #app canvas {
@@ -51,6 +63,41 @@ body {
   pointer-events: none;
 }
 
+/*
+ * Wide desktop browsers (issue #113): show the game in a centred 9:19.5 portrait
+ * phone frame instead of a stretched canvas. The renderer sizes itself from the
+ * #app container, so constraining #app is enough for the canvas and every UI
+ * overlay (which mounts inside #app). Portrait phones and tablets (aspect ratio
+ * below 3/4, e.g. 390x844 and 834x1194) stay full-bleed.
+ */
+@media (min-aspect-ratio: 3 / 4) {
+  body {
+    background:
+      radial-gradient(ellipse at 50% 8%, rgba(63, 169, 245, 0.22) 0%, rgba(63, 169, 245, 0) 45%),
+      radial-gradient(ellipse at 50% 100%, rgba(166, 77, 255, 0.18) 0%, rgba(166, 77, 255, 0) 55%),
+      linear-gradient(180deg, #16162a 0%, #0b0b14 100%);
+  }
+
+  #app {
+    inset: auto;
+    top: 50%;
+    left: 50%;
+    /* Keep the HUD chrome clear of the rounded frame corners. */
+    --safe-top: 8px;
+    --safe-bottom: 10px;
+    width: min(100vw, calc(100vh * 9 / 19.5));
+    height: min(100vh, calc(100vw * 19.5 / 9));
+    transform: translate(-50%, -50%);
+    border-radius: 30px;
+    box-shadow:
+      0 0 0 10px #191830,
+      0 0 0 12px rgba(255, 255, 255, 0.06),
+      0 34px 90px rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* ---------- Legacy mountUi boot screen (kept for existing debug mounts) ---------- */
+
 .boot-screen {
   position: relative;
   display: flex;
@@ -62,7 +109,6 @@ body {
   padding-top: clamp(16px, 5.5vh, 60px);
 }
 
-/* Soft dark edges keep the eye on the title and the gate (spec 9.8 readability). */
 .boot-screen__vignette {
   position: absolute;
   inset: 0;
@@ -83,7 +129,6 @@ body {
   animation: boot-lockup-float 6s ease-in-out infinite;
 }
 
-/* Warm halo behind the logo so the white fill stays readable on the bright sky. */
 .boot-screen__lockup::before {
   content: '';
   position: absolute;
@@ -99,7 +144,6 @@ body {
   filter: blur(6px);
 }
 
-/* Spec 9.8: title = Lilita One, white fill, 3 px outline #1B1B2F, drop shadow 0 3px rgba(0,0,0,0.35). */
 .boot-screen__title {
   margin: 0;
   color: #ffffff;
@@ -146,5 +190,134 @@ body {
   .boot-screen__lockup,
   .boot-screen__title {
     animation: none;
+  }
+}
+
+/* ---------- Shared premium primitives (issue #114 design language) ---------- */
+
+/*
+ * Frosted glass surface: translucent layered fill, 1 px light rim, gold top
+ * hairline, inner glow and deep layered shadow. Used by the menu panels, the
+ * result / pause modals and the loadout trays.
+ */
+.glass-panel {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 24%),
+    linear-gradient(
+      158deg,
+      rgba(50, 42, 88, 0.74) 0%,
+      rgba(26, 22, 50, 0.82) 58%,
+      rgba(15, 12, 30, 0.88) 100%
+    );
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 24px;
+  box-shadow:
+    0 22px 48px rgba(4, 3, 12, 0.55),
+    0 4px 14px rgba(4, 3, 12, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-panel {
+    background: linear-gradient(158deg, #2e2754 0%, #1a1632 58%, #120f26 100%);
+  }
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 12%;
+  left: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 204, 0, 0.5), transparent);
+  pointer-events: none;
+}
+
+.glass-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 14px 28px rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+
+/* Small uppercase glass pill for meta information (stars, counts, chapters). */
+.glass-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 60%),
+    rgba(18, 15, 34, 0.66);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: #eaf2ff;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.glass-pill__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.glass-pill__icon--gold {
+  filter: drop-shadow(0 0 6px rgba(255, 204, 0, 0.55));
+}
+
+/* Shared shimmer sweep for glossy primary call-to-action buttons. */
+@keyframes ui-sheen {
+  0%,
+  62% {
+    transform: translateX(-160%) skewX(-18deg);
+    opacity: 0;
+  }
+  68% {
+    opacity: 0.55;
+  }
+  82% {
+    transform: translateX(320%) skewX(-18deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(320%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes ui-pulse-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px rgba(255, 204, 0, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(255, 204, 0, 0.85));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-panel,
+  .glass-pill {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }

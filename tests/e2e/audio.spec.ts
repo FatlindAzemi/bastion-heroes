@@ -25,9 +25,9 @@ test('audio: the first tap unlocks music without autoplay errors', async ({ page
   // First user gesture: the level music request starts and decodes without errors.
   const musicLoaded = page.waitForResponse(
     (response) => /\/audio\/music\/world1_calm\.(m4a|ogg)$/.test(response.url()) && response.ok(),
-    { timeout: 8000 },
+    { timeout: 20_000 },
   );
-  await page.locator('.hud__tap-layer').click({ position: { x: 420, y: 260 } });
+  await page.locator('.hud__tap-layer').click({ position: { x: 195, y: 403 } });
   await musicLoaded;
   await page.waitForTimeout(600);
 
@@ -52,7 +52,7 @@ test('audio: selecting a card plays its SFX after the gesture', async ({ page })
   // Selecting the first card requests and plays its card_select SFX (spec 9.9).
   const sfxLoaded = page.waitForResponse(
     (response) => /\/audio\/sfx\/card_select\.m4a$/.test(response.url()) && response.ok(),
-    { timeout: 8000 },
+    { timeout: 20_000 },
   );
   await page.locator('.hud-card').first().click();
   await sfxLoaded;

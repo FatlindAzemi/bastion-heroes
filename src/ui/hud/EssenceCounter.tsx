@@ -5,12 +5,18 @@ export interface EssenceCounterProps {
   readonly essence: number;
 }
 
-/** Essence counter (spec 9.8): the teal Essence orb icon plus the outlined number. */
+/**
+ * Essence counter of the portrait top status bar (spec 9.8): a rounded dark pill
+ * with the teal Essence orb and the big outlined number. The pill yields the
+ * counter's width so the progress bar and the controls fit one row at 390 px.
+ */
 export function EssenceCounter({ essence }: EssenceCounterProps) {
   return (
     <div class="hud-essence" role="status" aria-label={`Essence ${essence}`}>
-      <Icon name="essence" class="hud-essence__orb" />
-      <span class="hud-essence__value hud-outlined-text">{essence}</span>
+      <span class="hud-essence__orb-ring" aria-hidden="true">
+        <Icon name="essence" class="hud-essence__orb" />
+      </span>
+      <span class="hud-essence__value">{essence}</span>
     </div>
   );
 }

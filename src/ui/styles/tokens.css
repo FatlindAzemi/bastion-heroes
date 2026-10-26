@@ -1,4 +1,9 @@
-/* Design tokens from spec 9.4 (palette) and 9.8 (UI). */
+/*
+ * Design tokens of the premium "modern fantasy arcade" UI (issue #114, owner
+ * feedback 2026-10-24): midnight indigo/violet surfaces, frosted glass, gold and
+ * teal emissive accents, Lilita One display type and Nunito ExtraBold body text.
+ * Palette values follow spec 9.4 where a game colour exists.
+ */
 :root {
   --color-shadow: #1b1b2f;
   --color-sky: #9fd8ff;
@@ -9,4 +14,53 @@
   --color-danger-red: #ff4d4d;
   --font-title: 'Lilita One', 'Arial Black', sans-serif;
   --font-body: 'Nunito', system-ui, sans-serif;
+
+  /* Night surfaces: #12111f to #241a3d with deeper pockets for panels. */
+  --night-0: #0a0912;
+  --night-1: #12111f;
+  --night-2: #1a1630;
+  --night-3: #241a3d;
+  --night-4: #2f2350;
+  --violet: #6d4dff;
+  --violet-soft: #a78bfa;
+  --violet-deep: #3b2b73;
+  --teal: #3bf0c8;
+  --teal-soft: #8ffbe6;
+  --teal-deep: #12665c;
+  --gold: #ffcc00;
+  --gold-deep: #ff9f1a;
+  --gold-soft: #ffe680;
+
+  /* Frosted glass surfaces: translucent fill, 1 px light rim, inner top glow. */
+  --glass: rgba(28, 24, 52, 0.58);
+  --glass-strong: rgba(20, 17, 38, 0.82);
+  --glass-deep: rgba(12, 10, 24, 0.9);
+  --glass-rim: rgba(255, 255, 255, 0.16);
+  --glass-rim-gold: rgba(255, 204, 0, 0.42);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --glass-blur: blur(14px) saturate(1.08);
+
+  /* Elevation: layered soft shadows, never a single flat drop shadow. */
+  --shadow-soft: 0 2px 6px rgba(4, 3, 10, 0.35);
+  --shadow-panel:
+    0 18px 42px rgba(4, 3, 12, 0.55), 0 4px 12px rgba(4, 3, 12, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --shadow-modal:
+    0 34px 90px rgba(3, 2, 8, 0.75), 0 10px 30px rgba(3, 2, 8, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --glow-gold: 0 0 22px rgba(255, 204, 0, 0.45);
+  --glow-teal: 0 0 20px rgba(59, 240, 200, 0.45);
+  --glow-violet: 0 0 26px rgba(109, 77, 255, 0.5);
+
+  --arcade-ink: #1b1b2f;
+  --arcade-outline: 2px solid rgba(13, 11, 26, 0.9);
+  --arcade-radius-lg: 28px;
+  --arcade-radius: 20px;
+  --arcade-radius-sm: 14px;
+
+  /* Safe areas: every overlay keeps its chrome inside these insets (spec 9.8). */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
 }

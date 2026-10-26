@@ -59,6 +59,12 @@ export interface VfxDefinition {
   readonly lifeMax: number;
   /** Sprite size in world units. */
   readonly size: number;
+  /**
+   * HDR brightness multiplier of the palette colours (issue #114 §3): values above
+   * 1 write linear colours above white so the bloom pass turns the burst into light.
+   * Defaults to 1 for every definition that does not set it.
+   */
+  readonly glow?: number;
 }
 
 /** One spawned effect at a world position. */

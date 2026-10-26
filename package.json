@@ -19,6 +19,9 @@
     "balance": "tsx tools/balance-sim/run.ts",
     "assets": "tsx tools/build-assets/run.ts",
     "assets:check": "tsx tools/build-assets/check.ts",
+    "sprites": "python3 tools/sprites/build_sprites.py",
+    "audio": "tsx tools/audio/generate.ts",
+    "audio:verify": "tsx tools/audio/generate.ts --verify-only",
     "check": "npm run typecheck && npm run lint && npm test && npm run validate-data",
     "textures:particles": "tsx tools/particles-texture.ts"
   },

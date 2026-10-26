@@ -22,7 +22,7 @@ test('debug URL: boots W1-L01 at tick 900 with the HUD', async ({ page }) => {
   await expect(page.getByRole('status', { name: /Essence/ })).toBeVisible({ timeout: 5000 });
   await expect(page.getByRole('button', { name: 'Sparkbolt Gremlin, 150 Essence' })).toBeVisible();
 
-  await page.screenshot({ path: 'test-results/screens/debug-url-w1-l01-844x390.png' });
+  await page.screenshot({ path: 'test-results/screens/debug-url-w1-l01-390x844.png' });
 
   expect(consoleErrors, 'browser console errors').toEqual([]);
   expect(pageErrors, 'uncaught page errors').toEqual([]);
@@ -85,7 +85,7 @@ test('debug overlay: shows sim tick, status, stars and entity counts for a level
   await expect(overlay).toContainText(/stars [0-3]/);
   await expect(overlay).toContainText(/enemies \d+ \| defenders \d+ \| orbs \d+/);
 
-  await page.screenshot({ path: 'test-results/screens/debug-overlay-w1-l01-844x390.png' });
+  await page.screenshot({ path: 'test-results/screens/debug-overlay-w1-l01-390x844.png' });
 
   expect(consoleErrors, 'browser console errors').toEqual([]);
   expect(pageErrors, 'uncaught page errors').toEqual([]);
