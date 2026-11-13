@@ -67,6 +67,21 @@ export function canMerge(defender: DefenderState, defenderDef: DefenderDef): boo
 }
 
 /**
+ * Rescales the time left on a pending timer when its interval changes: the
+ * remaining share stays the same, so a half-finished timer stays half finished
+ * instead of firing early or late.
+ */
+export function rescaleTimer(
+  nextTick: number,
+  tick: number,
+  previousIntervalTicks: number,
+  intervalTicks: number,
+): number {
+  const remaining = Math.max(0, nextTick - tick);
+  return tick + Math.round((remaining * intervalTicks) / previousIntervalTicks);
+}
+
+/**
  * Rebases a pending producer orb timer when a merge shortens the interval
  * (spec 3.6): the remaining time scales with the new interval length, so a
  * half-finished timer stays half finished instead of firing early or late.
@@ -80,6 +95,5 @@ export function rebaseProducerTimer(
 ): number {
   const previousInterval = producerIntervalTicks(baseIntervalS, previousStars);
   const interval = producerIntervalTicks(baseIntervalS, stars);
-  const remaining = Math.max(0, nextOrbTick - tick);
-  return tick + Math.round((remaining * interval) / previousInterval);
+  return rescaleTimer(nextOrbTick, tick, previousInterval, interval);
 }
