@@ -23,5 +23,7 @@ export const pyroFox: DefenderDef = {
   statusOnHit: { status: 'burn', durationS: 3, value: 6 },
   star3Bonus: 'fire_patch',
   star3Params: { firePatchRadiusTiles: 0.5, firePatchDurationS: 2 },
+  // 18.8: Duel cost and Duel-only changes.
+  duel: { kind: 'defender', cost: 4 },
   milestone: 'M2',
 };

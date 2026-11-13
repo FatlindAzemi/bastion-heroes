@@ -16,6 +16,48 @@ const laneIndex = z.number().int().min(0).max(4);
 /** Column index on the 9-column grid, 0 = next to the base (spec 3.1). */
 const columnIndex = z.number().int().min(0).max(8);
 
+/** The two sides of a Duel (spec 18.1). */
+export const duelSide = z.enum(['south', 'north']);
+
+/**
+ * The `duel` block of a card file (spec 18, 18.8): kind, Duel cost and the
+ * Duel-only changes. Health, damage, intervals and ranges of the campaign
+ * def apply unless a field here overrides them.
+ */
+export const DuelCardDef = z.object({
+  kind: z.enum(['defender', 'raider']),
+  cost: z.number().int().positive(),
+  /** Overrides the campaign `hp` in the Duel (Iron Granny: 2400). */
+  hp: z.number().int().positive().optional(),
+  /** Overrides the campaign `damage` in the Duel (Snaptrap Bertie: 900). */
+  damage: z.number().int().positive().optional(),
+  /** Overrides the campaign trap arm delay (Snaptrap Bertie: 6 s). */
+  armDelayS: z.number().positive().optional(),
+  /** Producer: Essence added per pulse at ★1 to ★3 (Glowshroom Monk, 18.8). */
+  producer: z
+    .object({
+      essence: z.number().int().positive(),
+      firstDelayS: z.number().positive(),
+      intervalSByStar: z.tuple([
+        z.number().positive(),
+        z.number().positive(),
+        z.number().positive(),
+      ]),
+    })
+    .optional(),
+  /** Maximum copies of this defender on one side (King Borrowbones, Aurora Dragon: 1). */
+  maxPerPlayer: z.number().int().positive().optional(),
+  /** Raider: how many units one card summons (Gloomling: 2). */
+  summonCount: z.number().int().positive().optional(),
+  /** Raider: seconds between two summoned units (Gloomling: 0.6). */
+  summonGapS: z.number().positive().optional(),
+  /** Raider: health of the enemy gate removed when this raider reaches the base line. */
+  gateDamage: z.number().int().positive().optional(),
+});
+
+/** A parsed Duel card block (spec 18.8). */
+export type DuelCardDef = z.infer<typeof DuelCardDef>;
+
 /**
  * A defender definition (spec 11.5). Stats are section 5.1, the attack pattern
  * and bonuses are section 5.2; all values are card level 1 and ★1.
@@ -77,6 +119,11 @@ export const DefenderDef = z.object({
    * "Cannot be merged" defenders (Aurora, section 5.2), set by M7 data.
    */
   maxStars: z.number().int().min(1).max(3).optional(),
+  /**
+   * The Duel block of spec 18.8: kind, Duel cost and Duel-only changes. Optional in the
+   * schema so campaign test fixtures stay valid; a test requires it on every registry card.
+   */
+  duel: DuelCardDef.optional(),
   milestone: z.enum(['M1', 'M2', 'M7']),
 });
 
@@ -121,6 +168,8 @@ export const EnemyDef = z.object({
   /** Extension: how many tiles the thrown enemy lands forward (Gloom Ogre: 3, section 6.2). */
   throwDistanceTiles: z.number().positive().optional(),
   isBoss: z.boolean().default(false),
+  /** The Duel block of spec 18.8; absent for cards that are not Duel cards (Morvak). */
+  duel: DuelCardDef.optional(),
   /** Extension: the "Build in" column of section 6.1, like DefenderDef.milestone. */
   milestone: z.enum(['M1', 'M2', 'M7']),
 });
@@ -322,3 +371,69 @@ export const LevelDef = z.object({
 
 /** A parsed and validated level definition (spec 7.1). */
 export type LevelDef = z.infer<typeof LevelDef>;
+
+/**
+ * Duel rules and defaults (spec 18.1 to 18.7, 20.2): every number of the Duel
+ * that is not a card number. Read by the Duel sim and the Duel UI.
+ */
+export const DuelRulesDef = z.object({
+  board: z.object({
+    southColumns: z.array(columnIndex).min(1),
+    northColumns: z.array(columnIndex).min(1),
+    midlineColumn: columnIndex,
+    southBaseLineX: z.number(),
+    northBaseLineX: z.number(),
+    southRaiderSpawnX: z.number(),
+    northRaiderSpawnX: z.number(),
+  }),
+  match: z.object({
+    countdownS: z.number().positive(),
+    regularTimeS: z.number().positive(),
+    overdriveTimeS: z.number().positive(),
+    suddenDeathMaxS: z.number().positive(),
+  }),
+  essence: z.object({
+    startingEssence: z.number().int().nonnegative(),
+    maxEssence: z.number().int().positive(),
+    regularIncomeIntervalS: z.number().positive(),
+    overdriveIncomeIntervalS: z.number().positive(),
+  }),
+  deck: z.object({
+    deckSize: z.number().int().positive(),
+    handSize: z.number().int().positive(),
+    minDefenders: z.number().int().nonnegative(),
+    minRaiders: z.number().int().nonnegative(),
+    excludedCardIds: z.array(z.string()),
+  }),
+  raiders: z.object({
+    speedMultiplier: z.number().positive(),
+    summonDelayS: z.number().positive(),
+    raiderBlockDistance: z.number().positive(),
+    maxLivingRaiders: z.number().int().positive(),
+    burrowerSurfaceDistanceTiles: z.number().positive(),
+    ogreThrowDistanceTiles: z.number().positive(),
+    /** Raider attacks ignore the 4.1 damage/armor table (18.6). */
+    attackDamageMultiplier: z.number().positive(),
+  }),
+  standard: z.object({
+    cardLevel: z.number().int().min(1),
+  }),
+  gate: z.object({
+    gateHealth: z.number().int().positive(),
+    trapSpeedTilesPerS: z.number().positive(),
+  }),
+  arenas: z
+    .array(
+      z.object({
+        arena: z.number().int().positive(),
+        name: z.string(),
+        trophyFloor: z.number().int().nonnegative(),
+        unlocksCardIds: z.array(z.string()),
+        firstTimeChest: z.enum(['silver', 'gold']).optional(),
+      }),
+    )
+    .min(1),
+});
+
+/** A parsed Duel rules definition (spec 18, 20.2). */
+export type DuelRulesDef = z.infer<typeof DuelRulesDef>;

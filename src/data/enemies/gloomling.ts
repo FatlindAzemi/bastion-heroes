@@ -14,5 +14,7 @@ export const gloomling: EnemyDef = {
   biteIntervalS: 0.5,
   isFlying: false,
   isBoss: false,
+  // 18.8: Duel cost and gate damage.
+  duel: { kind: 'raider', cost: 2, summonCount: 2, summonGapS: 0.6, gateDamage: 1 },
   milestone: 'M1',
 };

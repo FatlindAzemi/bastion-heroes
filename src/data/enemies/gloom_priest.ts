@@ -18,5 +18,7 @@ export const gloomPriest: EnemyDef = {
   healRadiusTiles: 1.5,
   healIntervalS: 3,
   isBoss: false,
+  // 18.8: Duel cost and gate damage.
+  duel: { kind: 'raider', cost: 3, gateDamage: 1 },
   milestone: 'M2',
 };

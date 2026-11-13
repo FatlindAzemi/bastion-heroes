@@ -21,5 +21,7 @@ export const ironGranny: DefenderDef = {
   crackedArmorRatios: [0.66, 0.33],
   star3Bonus: 'reflect_melee',
   star3Params: { reflectRatio: 0.2 },
+  // 18.8: Duel cost and Duel-only changes.
+  duel: { kind: 'defender', cost: 3, hp: 2400 },
   milestone: 'M2',
 };

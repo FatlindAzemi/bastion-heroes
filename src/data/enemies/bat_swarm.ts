@@ -14,5 +14,7 @@ export const batSwarm: EnemyDef = {
   biteDamage: 0,
   isFlying: true,
   isBoss: false,
+  // 18.8: Duel cost and gate damage.
+  duel: { kind: 'raider', cost: 2, gateDamage: 1 },
   milestone: 'M2',
 };

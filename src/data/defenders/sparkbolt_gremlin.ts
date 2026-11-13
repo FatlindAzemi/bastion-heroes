@@ -22,5 +22,7 @@ export const sparkboltGremlin: DefenderDef = {
   element: 'none',
   star3Bonus: 'double_bolt',
   star3Params: { boltCount: 2, boltGapSeconds: 0.15 },
+  // 18.8: Duel cost and Duel-only changes.
+  duel: { kind: 'defender', cost: 2 },
   milestone: 'M2',
 };

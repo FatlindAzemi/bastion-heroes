@@ -29,6 +29,7 @@ import { w1_l07 } from './levels/w1_l07';
 import { w1_l08 } from './levels/w1_l08';
 import { w1_l09 } from './levels/w1_l09';
 import { w1_l10 } from './levels/w1_l10';
+import { duelRules } from './duelRules';
 import { rules } from './rules';
 
 /** Builds an id -> definition record; duplicate ids fail the tests in `tests/data/`. */
@@ -85,4 +86,14 @@ export const levelById = byId(levels);
 /** Global gameplay rules and defaults (spec 3, 4): the one source of balance numbers. */
 export { rules };
 
-export type { DefenderDef, EnemyDef, LevelDef, RulesDef } from './schemas';
+/** Duel rules and defaults (spec 18, 20.2): every Duel number that is not a card number. */
+export { duelRules };
+
+export type {
+  DefenderDef,
+  DuelCardDef,
+  DuelRulesDef,
+  EnemyDef,
+  LevelDef,
+  RulesDef,
+} from './schemas';

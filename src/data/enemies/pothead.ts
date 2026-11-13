@@ -18,5 +18,7 @@ export const pothead: EnemyDef = {
   armorBreakHp: 200,
   armorAfterBreak: 'light',
   isBoss: false,
+  // 18.8: Duel cost and gate damage.
+  duel: { kind: 'raider', cost: 2, gateDamage: 1 },
   milestone: 'M2',
 };
