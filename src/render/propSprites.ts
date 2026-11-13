@@ -53,69 +53,60 @@ const PROP_MANIFEST_KEYS = {
 } as const;
 
 /**
- * The prop placements mirror the authored positions of `build_edges()` in
- * `assets-src/blender/environment/world1.py` (1 tile = 1 unit, lane l at z = l + 0.5).
- * Heights match the old 3D silhouettes so the framing does not change.
+ * Prop composition for the portrait camera (issue #115). The camera looks along +x, so
+ * world z is the screen's horizontal axis: z < 0 is the left edge, z > 5 the right edge,
+ * x > 9 the far side behind the portal and x < 0 the foreground at the base.
+ *
+ * The props frame the board like a stage: a tree wall on both sides, a few trees behind
+ * the portal, low growth hugging the board edges and nothing on or in front of the base.
  */
 const PROP_PLACEMENTS: readonly PropPlacement[] = [
-  // Far tree line behind the field.
+  // Left tree wall.
   { prop: 'tree_round', x: 0.55, z: -1.25, height: 2.6, shadow: true },
   { prop: 'tree_round', x: 3.0, z: -1.5, height: 3.3, shadow: true },
   { prop: 'tree_pine', x: 5.6, z: -1.15, height: 2.9, shadow: true },
   { prop: 'tree_round', x: 7.9, z: -1.7, height: 3.5, shadow: true },
-  // Side framing trees at the base and the portal.
-  { prop: 'tree_round', x: -2.85, z: 0.7, height: 2.8, shadow: true },
-  { prop: 'tree_pine', x: 12.4, z: 5.5, height: 2.4, shadow: true },
-  // Bushes softening the corners and borders.
-  { prop: 'bush', x: 1.7, z: -0.9, height: 0.62, shadow: true },
-  { prop: 'bush', x: 4.4, z: -0.95, height: 0.5, shadow: true },
-  { prop: 'bush', x: 7.0, z: -0.9, height: 0.68, shadow: true },
-  { prop: 'bush', x: -2.35, z: 2.3, height: 0.56, shadow: true },
-  { prop: 'bush', x: 11.1, z: 1.2, height: 0.62, shadow: true },
-  // Boulders.
-  { prop: 'rock', x: 1.15, z: -1.9, height: 0.42 },
-  { prop: 'rock', x: 6.9, z: -1.85, height: 0.36 },
-  { prop: 'rock', x: -3.0, z: 4.4, height: 0.5 },
-  { prop: 'rock', x: 10.6, z: 5.3, height: 0.34 },
-  { prop: 'rock', x: 2.1, z: 5.75, height: 0.3 },
-  { prop: 'rock', x: 6.4, z: 5.8, height: 0.34 },
-  // Front border flowers and mushrooms.
-  { prop: 'flower_cluster', x: 1.1, z: 5.65, height: 0.3 },
-  { prop: 'flower_cluster', x: 3.2, z: 5.9, height: 0.3 },
-  { prop: 'flower_cluster', x: 4.9, z: 5.6, height: 0.3 },
-  { prop: 'flower_cluster', x: 7.4, z: 5.85, height: 0.3 },
-  { prop: 'flower_cluster', x: 8.6, z: 5.55, height: 0.3 },
-  { prop: 'mushroom', x: 0.3, z: 5.35, height: 0.48, flip: true },
-  { prop: 'mushroom', x: 5.6, z: 6.0, height: 0.4 },
-  { prop: 'mushroom', x: 9.4, z: 5.5, height: 0.44, flip: true },
-  { prop: 'mushroom', x: 2.2, z: -0.75, height: 0.52 },
-  { prop: 'rock', x: 2.2, z: 6.15, height: 0.12 },
-  { prop: 'rock', x: 4.0, z: 6.15, height: 0.12 },
-  { prop: 'rock', x: 5.8, z: 6.15, height: 0.12 },
-  { prop: 'rock', x: 7.6, z: 6.15, height: 0.12 },
-  { prop: 'rock', x: 9.4, z: 6.15, height: 0.12 },
-  // Grass tufts break up the flat dirt apron on the near and far borders.
-  { prop: 'grass_tuft_b', x: 0.2, z: 6.3, height: 0.44 },
-  { prop: 'grass_tuft_a', x: 0.7, z: 5.9, height: 0.32 },
-  { prop: 'grass_tuft_c', x: 1.5, z: 6.25, height: 0.24 },
-  { prop: 'grass_tuft_b', x: 2.8, z: 5.85, height: 0.4 },
-  { prop: 'grass_tuft_a', x: 3.6, z: 6.3, height: 0.34 },
-  { prop: 'grass_tuft_c', x: 4.5, z: 5.95, height: 0.26 },
-  { prop: 'grass_tuft_b', x: 5.3, z: 6.35, height: 0.42 },
-  { prop: 'grass_tuft_a', x: 6.2, z: 6.0, height: 0.3 },
-  { prop: 'grass_tuft_c', x: 7.1, z: 6.3, height: 0.24 },
-  { prop: 'grass_tuft_b', x: 8.0, z: 5.95, height: 0.45 },
-  { prop: 'grass_tuft_a', x: 8.9, z: 6.25, height: 0.33 },
-  { prop: 'grass_tuft_c', x: 9.7, z: 5.9, height: 0.27 },
-  { prop: 'grass_tuft_b', x: -2.4, z: 1.6, height: 0.4 },
-  { prop: 'grass_tuft_a', x: -2.55, z: 3.2, height: 0.31 },
-  { prop: 'grass_tuft_c', x: -2.3, z: 4.6, height: 0.25 },
-  { prop: 'grass_tuft_b', x: 11.3, z: 0.4, height: 0.42 },
-  { prop: 'grass_tuft_a', x: 11.5, z: 3.8, height: 0.32 },
-  { prop: 'grass_tuft_c', x: 11.15, z: 4.9, height: 0.26 },
-  { prop: 'grass_tuft_b', x: 1.1, z: -0.3, height: 0.38 },
-  { prop: 'grass_tuft_a', x: 4.8, z: -0.35, height: 0.3 },
-  { prop: 'grass_tuft_c', x: 8.4, z: -0.25, height: 0.25 },
+  // Right tree wall, mirrored with different species so the frame is not symmetric.
+  { prop: 'tree_pine', x: 0.9, z: 6.3, height: 2.7, shadow: true, flip: true },
+  { prop: 'tree_round', x: 3.4, z: 6.55, height: 3.2, shadow: true, flip: true },
+  { prop: 'tree_round', x: 5.9, z: 6.2, height: 2.8, shadow: true },
+  { prop: 'tree_pine', x: 8.2, z: 6.7, height: 3.4, shadow: true, flip: true },
+  // Trees behind the portal close the far end of the stage.
+  { prop: 'tree_pine', x: 11.8, z: -0.4, height: 3.1, shadow: true },
+  { prop: 'tree_round', x: 12.4, z: 1.3, height: 3.4, shadow: true },
+  { prop: 'tree_round', x: 12.2, z: 3.9, height: 3.3, shadow: true, flip: true },
+  { prop: 'tree_pine', x: 11.7, z: 5.5, height: 3.0, shadow: true, flip: true },
+  // Bushes at the feet of the tree walls and at the two foreground corners.
+  { prop: 'bush', x: 1.8, z: -0.95, height: 0.62, shadow: true },
+  { prop: 'bush', x: 4.5, z: -1.0, height: 0.54, shadow: true },
+  { prop: 'bush', x: 7.0, z: -0.95, height: 0.68, shadow: true },
+  { prop: 'bush', x: 2.2, z: 6.0, height: 0.6, shadow: true, flip: true },
+  { prop: 'bush', x: 4.8, z: 6.05, height: 0.66, shadow: true },
+  { prop: 'bush', x: 7.3, z: 5.95, height: 0.56, shadow: true, flip: true },
+  { prop: 'bush', x: -1.75, z: -0.75, height: 0.74, shadow: true },
+  { prop: 'bush', x: -1.75, z: 5.75, height: 0.74, shadow: true, flip: true },
+  // Boulders anchoring the portal pillars.
+  { prop: 'rock', x: 9.2, z: -0.75, height: 0.46 },
+  { prop: 'rock', x: 9.3, z: 5.8, height: 0.42 },
+  // Mushrooms and flowers in small deliberate clusters along both board edges.
+  { prop: 'mushroom', x: 2.6, z: -0.55, height: 0.44 },
+  { prop: 'flower_cluster', x: 3.05, z: -0.5, height: 0.3 },
+  { prop: 'mushroom', x: 6.2, z: 5.6, height: 0.46, flip: true },
+  { prop: 'flower_cluster', x: 5.7, z: 5.55, height: 0.3 },
+  { prop: 'flower_cluster', x: 0.7, z: 5.5, height: 0.3 },
+  { prop: 'flower_cluster', x: 7.9, z: -0.5, height: 0.3 },
+  // Grass tufts soften the seam between the board and the dirt on both edges.
+  { prop: 'grass_tuft_b', x: 0.4, z: -0.4, height: 0.4 },
+  { prop: 'grass_tuft_a', x: 1.3, z: -0.32, height: 0.3 },
+  { prop: 'grass_tuft_a', x: 3.7, z: -0.36, height: 0.26 },
+  { prop: 'grass_tuft_b', x: 4.9, z: -0.42, height: 0.38 },
+  { prop: 'grass_tuft_a', x: 6.4, z: -0.34, height: 0.3 },
+  { prop: 'grass_tuft_b', x: 8.5, z: -0.38, height: 0.26 },
+  { prop: 'grass_tuft_b', x: 1.6, z: 5.42, height: 0.4 },
+  { prop: 'grass_tuft_a', x: 2.9, z: 5.34, height: 0.3 },
+  { prop: 'grass_tuft_a', x: 4.3, z: 5.38, height: 0.26 },
+  { prop: 'grass_tuft_b', x: 7.2, z: 5.42, height: 0.38 },
+  { prop: 'grass_tuft_a', x: 8.4, z: 5.34, height: 0.3 },
 ];
 
 /** Top of the World 1 grass tiles in world units (world1 environment build). */

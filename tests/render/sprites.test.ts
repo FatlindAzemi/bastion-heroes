@@ -219,12 +219,12 @@ describe('Sprite billboard maths (issue #114)', () => {
   });
 
   it('scales the manifest world height for portrait readability', () => {
-    expect(DEFAULT_WORLD_SCALE).toBe(1.25);
-    expect(resolveSpriteWorldScale(undefined)).toBe(1.25);
+    expect(DEFAULT_WORLD_SCALE).toBe(1.5);
+    expect(resolveSpriteWorldScale(undefined)).toBe(1.5);
     expect(resolveSpriteWorldScale(1.5)).toBe(1.5);
     expect(resolveSpriteWorldScale(0.6)).toBe(1);
     expect(resolveSpriteWorldScale(9)).toBe(MAX_WORLD_SCALE);
-    expect(resolveSpriteWorldScale(Number.NaN)).toBe(1.25);
+    expect(resolveSpriteWorldScale(Number.NaN)).toBe(1.5);
   });
 
   it('anchors the quad at its bottom center', () => {

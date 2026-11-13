@@ -13,13 +13,15 @@
  * screen while the model loads and if loading fails, so the level is always
  * playable.
  */
-import { BufferGeometry, Group, Mesh } from 'three';
+import { BufferGeometry, Group, Mesh, MeshToonMaterial } from 'three';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 import { rockTileGeometries, type LevelViewOptions } from './grid';
 import { GREYBOX_COLORS } from './greyboxPalette';
+import { applyGroundSurface } from './groundSurface';
+import { applyMasonrySurface } from './masonrySurface';
 import { toonMaterialsForMesh } from './models';
 import { createToonMaterial } from './toonMaterial';
 
@@ -59,6 +61,17 @@ function loadWorld1(): Promise<Group | null> {
           child.material = toonMaterialsForMesh(child);
         }
       });
+      // The ground paints its detail procedurally from the world position (issue #115).
+      for (const name of ['world1_ground', 'world1_backdrop']) {
+        const groundMesh = root.getObjectByName(name);
+        if (groundMesh instanceof Mesh && groundMesh.material instanceof MeshToonMaterial) {
+          applyGroundSurface(groundMesh.material);
+        }
+      }
+      const structures = root.getObjectByName('world1_structures');
+      if (structures instanceof Mesh && structures.material instanceof MeshToonMaterial) {
+        applyMasonrySurface(structures.material);
+      }
       // The 3D edge props are replaced by the 2.5D pixel-art prop sprites (issue #114).
       const edgesMesh = root.getObjectByName('world1_edges');
       if (edgesMesh !== undefined) {

@@ -2,13 +2,16 @@ import { DirectionalLight, Group, HemisphereLight, PerspectiveCamera, Scene, Vec
 
 import { rules } from '../data/rules';
 import type { SimEvent, SimState } from '../sim/types';
+import { createAmbientMotes } from './ambientMotes';
 import { applySky } from './backdrop';
 import { fitLevelCamera } from './cameraFit';
 import { readDebugAnimationHold } from './debugAnimation';
 import { createEnvironmentLayer } from './environment';
 import { createGrid, type Grid, type LevelViewOptions } from './grid';
+import { setGroundSurfaceTime } from './groundSurface';
 import { createOrbLayer } from './orbs';
 import { createParticleBursts, type ParticleBursts } from './particles';
+import { createPortalVortex } from './portalVortex';
 import { createPropSpriteLayer } from './propSprites';
 import { createProjectileLayer } from './projectiles';
 import { createSpriteUnitLayer } from './sprites';
@@ -118,6 +121,11 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
   // 2.5D pixel-art props replace the hidden 3D edge props (issue #114).
   const propSprites = createPropSpriteLayer(camera);
   scene.add(propSprites.group);
+  // Living scene (issue #115): animated portal swirl and drifting ambient motes.
+  const portalVortex = createPortalVortex();
+  const ambientMotes = createAmbientMotes(Math.min(window.devicePixelRatio, 2));
+  scene.add(portalVortex.group, ambientMotes.object);
+  const sceneStartMs = performance.now();
   void environment.ready.then((loaded) => {
     if (!loaded || grid === null) {
       return;
@@ -162,8 +170,8 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
     camera,
     particles,
     debugAnimationHold,
-    // Phone readability: sprites draw 25 % taller than their measured model height.
-    worldScale: 1.25,
+    // Phone readability: sprites draw 50 % taller than their measured model height.
+    worldScale: 1.5,
   });
   const unitLayers: UnitLayer[] = [glbUnits, spriteUnits];
   void spriteUnits.ready.then((available) => {
@@ -230,6 +238,10 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
       const deltaSeconds = Math.min(Math.max((now - lastDrawMs) / 1000, 0), 0.1);
       lastDrawMs = now;
       propSprites.update(camera);
+      const sceneSeconds = (now - sceneStartMs) / 1000;
+      setGroundSurfaceTime(sceneSeconds);
+      portalVortex.update(sceneSeconds);
+      ambientMotes.update(sceneSeconds);
       vfx.update(state, deltaSeconds, camera);
       particles.update(deltaSeconds);
       // Spec 9.7: 0.05 unit camera shake for 0.15 s on heavy hits, trap fire and
@@ -256,6 +268,8 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
       projectiles.dispose();
       orbs.dispose();
       propSprites.dispose();
+      portalVortex.dispose();
+      ambientMotes.dispose();
       environment.dispose();
       grid?.dispose();
       grid = null;

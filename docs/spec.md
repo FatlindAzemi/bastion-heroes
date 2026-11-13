@@ -625,6 +625,9 @@ The look is **2.5D HD-2D**: hand-crafted, saturated pixel-art sprites on a soft 
   - a custom tilt-shift pass with a sharp focus band over the board (screen centre y 0.46, half height 0.30) that blurs up to 1.6 px towards the top and bottom screen edges.
   - colour grade: saturation x1.10, contrast x1.03, vignette 0.26.
 - `?post=0` disables the chain for debugging and low-end devices; if WebGL2 or the composer is unavailable the renderer falls back to a plain `renderer.render`.
+- Procedural surfaces (no textures, no extra draw calls): the World 1 ground material paints grass mottling, bevelled tiles, pebbled dirt, ambient occlusion around the raised board, a focus falloff away from the playfield, the portal's violet corruption on the far columns and slow drifting cloud shadows from the world position (`src/render/groundSurface.ts`); grey structure surfaces are painted as staggered masonry (`src/render/masonrySurface.ts`).
+- The enemy portal is an animated swirl with a hot core and energy rim that feed the bloom pass, plus a violet ground glow (`src/render/portalVortex.ts`). Ambient pollen and portal sparks drift in one `Points` draw call (`src/render/ambientMotes.ts`).
+- Props frame the board like a stage: tree walls on both screen sides and behind the portal, low growth along the board edges, nothing on or in front of the base.
 - Hit flash: the sprite shader mixes the texel towards white with a 0..1 uniform for 0.08 s on every hit (9.6).
 
 ### 9.3 Budgets
@@ -640,7 +643,7 @@ The look is **2.5D HD-2D**: hand-crafted, saturated pixel-art sprites on a soft 
 | Triangles | below 300,000 per frame |
 | Post-processing | bloom at half resolution; whole chain under 2 ms on a mid-range phone |
 
-- A sprite frame's world height is recorded in the manifest (`worldHeight`) and multiplied by 1.25 at runtime for phone readability; the drawn unit still fits its tile footprint.
+- A sprite frame's world height is recorded in the manifest (`worldHeight`) and multiplied by 1.5 at runtime for phone readability; the drawn unit still fits its tile footprint.
 - Pixel art is authored on an integer pixel grid: render at 4x, nearest-downsample to the target frame size, palette-quantise to the 9.4 swatches with the 9.2 toon bands, add the 1 px #1B1B2F outline, then pack the frames row-major into the atlas.
 
 ### 9.4 Color palette
