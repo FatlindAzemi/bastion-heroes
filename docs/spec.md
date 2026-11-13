@@ -4,7 +4,7 @@ Oct 23, 2026 · @Fatlind Azemi
 
 ## 1. How to use this document
 
-This document is the single source of truth for building Bastion Heroes, a mobile lane-defense game in the style of Plants vs. Zombies with collectible characters. It is written so that any AI coding agent, even a weak one, can follow it step by step without guessing.
+This document is the single source of truth for building Bastion Heroes, a competitive online lane-strategy game for mobile: two players duel in real time with decks of collectible cards, placing defenders and sending raiders across five lanes. It is written so that any AI coding agent, even a weak one, can follow it step by step without guessing.
 
 ### 1.1 Rules for the AI agent (read before every task)
 
@@ -32,8 +32,8 @@ This document is the single source of truth for building Bastion Heroes, a mobil
 
 | Term | Meaning |
 | --- | --- |
-| Defender | A character the player places on the grid. Like a plant in PvZ. |
-| Enemy | A Gloom creature that walks from right to left. Like a zombie in PvZ. |
+| Defender | A character a player places on a tile. It does not move. Like a plant in PvZ. |
+| Enemy | In the campaign: a Gloom creature that walks from the portal to the base. In a Duel: any unit of the other player. |
 | Essence | The currency spent inside a level to place defenders. Like sun in PvZ. |
 | Lane | One horizontal row of the grid. There are 5. |
 | Tile | One cell of the grid. The grid has 5 lanes × 9 columns = 45 tiles. |
@@ -47,48 +47,63 @@ This document is the single source of truth for building Bastion Heroes, a mobil
 | Rarity | Common, Rare, Epic, Legendary or Mythic. |
 | Sim | The pure game-logic layer. No graphics, no DOM, no Three.js. |
 | Tick | One fixed simulation step. 1 tick = 1/30 second. |
+| Duel | The main mode: a real-time online match of two players on one shared board (section 18). |
+| Campaign | The single-player mode against waves of the Gloom (sections 3 to 7). It is the tutorial and the offline mode. |
+| Side | `south` or `north`: the two players of a Duel. Every client shows its own side at the bottom. |
+| Raider | A Gloom creature a player sends down a lane towards the enemy bastion in a Duel. |
+| Gate | The health of a bastion in a Duel. A gate at 0 loses the match. |
+| Deck | The 8 cards a player brings into a Duel. |
+| Hand | The 4 cards of the deck a player can play right now in a Duel. |
+| Trophies | The ranked score of a player. They decide the arena and the matchmaking. |
+| Arena | A trophy range that unlocks cards and changes the Duel environment. |
+| Match server | The Node.js program that runs every online Duel and decides its result (section 19). |
 
 ## 2. Game overview
 
-Bastion Heroes is a single-player lane-defense game for iOS and Android: the player places cute, chunky heroes on a 5 × 9 grid to stop waves of shadow creatures, and collects new heroes of five rarities between levels.
+Bastion Heroes is a competitive online lane-strategy game for iOS and Android: two players fight a real-time 1v1 Duel on a shared 5 x 9 board, each defending an own bastion with stationary heroes and attacking the other with raiders, using a deck of 8 collectible cards. A single-player campaign teaches the cards and works offline.
 
 ### 2.1 Pitch
 
-The peaceful village of Brightvale is attacked by the Gloom, a horde of shadow creatures that pour out of a rift. The player commands a team of heroes from five factions. Each level, the player picks 6 heroes, places them on the grid, manages Essence, and holds the line until the final wave is defeated.
+The Gloom, a horde of shadow creatures, has broken into the world, and the bastions of Brightvale have learned to bind it. In the Duel arenas two commanders face each other: each places heroes from five factions on the own half of the field to hold the lanes, and sends bound Gloom raiders down the lanes to break the other gate. Three minutes, eight cards, one gate each. In the campaign the same heroes defend the village against the wild Gloom.
 
 ### 2.2 Design pillars (every feature must support at least one)
 
-1. **Think before you place.** Every level should have a clear best answer that the player has to work out: which loadout, which tile, which moment.
-2. **Readable at a glance.** On a 6-inch phone the player must understand what is happening within one second. Friend and enemy, health, danger.
-3. **Collect characters you love.** Every hero has a unique look, personality and mechanic. Rarity means a more unusual mechanic, not just bigger numbers.
-4. **Fair, not pay-to-win.** Every campaign level can be won with only Common and Rare heroes at the recommended card level.
+1. **Outplay, not outpay.** A Duel is decided by deck building, lane reading and timing. Card levels never give an advantage against another player (20.4).
+2. **Hold or push.** Every point of Essence is a choice between defending a lane and attacking one. There is always a counter, and it always costs something.
+3. **Readable at a glance.** On a 6-inch phone a player must understand within one second which units are theirs, which lane is in danger and how much health each gate has.
+4. **Collect characters you love.** Every hero and raider has a unique look, personality and mechanic. Rarity means a more unusual mechanic, not just bigger numbers.
 5. **Juicy feedback.** Every action has a bounce, a sound and a particle effect.
+6. **Short and fair sessions.** A match lasts about three minutes, starts within seconds and never ends because of a paywall or an energy timer.
 
 ### 2.3 Key facts
 
 | Item | Value |
 | --- | --- |
 | Platforms | iOS 16+ and Android 10+ (phones first, tablets supported) |
-| Art style | 2.5D HD-2D: low-poly 3D terrain, base and portal plus pixel-art sprite billboards for units and props; bloom and tilt-shift post-processing |
+| Art style | 2.5D: low-poly 3D terrain, bastions and portal plus smooth high-resolution sprite billboards for units and props; bloom and tilt-shift post-processing |
 | Orientation | Portrait only (Hochformat, 19.5:9) |
 | Target frame rate | 60 fps on an iPhone 12 / Pixel 6; never below 30 fps on an iPhone XR |
-| Level length | 3 to 5 minutes |
-| Session length | 10 to 15 minutes (3 levels + meta screens) |
-| Mode | Single player, offline-capable; online only for shop, chests and cloud save |
+| Match length | 3:00, plus up to 1:00 sudden death |
+| Session length | 10 to 15 minutes (3 to 4 Duels + meta screens) |
+| Modes | Ranked Duel and casual Duel (online, 1v1, real time), Training against a bot (offline), Campaign (offline) |
+| Network | Online play needs a connection; a match tolerates a 20 s disconnect (19.6) |
 | Age rating target | PEGI 7 / ESRB Everyone 10+ (cartoon violence, no blood) |
-| Business model | Free to play: battle pass, cosmetic skins, chests with published odds, optional rewarded ads |
+| Business model | Free to play: battle pass, cosmetic skins and emotes, chests with published odds, optional rewarded ads. Nothing sold changes card strength in a Duel. |
 | Working title | Bastion Heroes (final name: open decision, see section 17) |
 
-### 2.4 What makes it different from Plants vs. Zombies
+### 2.4 What makes it different
 
-- **Collection with rarities.** Heroes are unlocked from chests and leveled up with duplicates.
-- **Merge on the field.** Placing the same hero on a tile that already holds that hero upgrades it to ★2 and ★3.
-- **Elemental combos.** Some effects combine (ice + fire = steam burst). Placement next to each other matters.
-- **Damage and armor types.** Each enemy has an armor type; each hero has a damage type. Matching them is the core strategy.
-- **Scouting.** Before each level the player sees which enemy types will appear and picks a loadout to counter them.
-- **HD-2D look.** Saturated pixel-art sprites on a soft low-poly 3D world, glowing VFX, chunky arcade UI.
+- **Defense and attack with one deck.** Stationary defenders in the tradition of lane-defense games, and walking raiders in the tradition of real-time card battlers, paid from the same Essence.
+- **Last Stand Traps.** Every lane forgives exactly one breakthrough. Reading which lanes are still protected is half the game.
+- **Economy on the board.** A producer card raises the Essence income but must be protected.
+- **Merge on the field.** Playing the same defender onto itself upgrades it to 2 and 3 stars.
+- **Elemental combos and damage types.** Ice + fire = steam burst; Pierce, Blast and Arcane beat different armor types. Placement next to each other matters.
+- **Duel Standard.** Every card plays at the same level for both players.
+- **Original world.** All characters, names, art and UI are our own. Never copy characters, logos, card designs or UI of other games.
 
 ## 3. Core gameplay rules
+
+Sections 3 to 7 describe the **Campaign** (single player against waves). The Duel reuses the grid, time, merge, blocking and combat rules below and changes the rest in section 18.
 
 A level is won when every enemy of every wave is dead, and lost when an enemy crosses the base line in a lane whose Last Stand Trap is already used. Every number below is a default stored in `src/data/rules.ts`.
 
@@ -490,7 +505,7 @@ Each world has 10 levels; level 10 is always a boss level. Worlds 2 to 5 bosses 
 
 ## 8. Meta game: collection, rarity, chests, upgrades
 
-Outside levels the player collects defenders from chests, upgrades them with duplicate shards plus gold, and builds loadouts. Chests open instantly (no timers), drop odds are always shown, and a pity counter guarantees a Legendary.
+Outside matches the player collects cards (defenders and raiders) from chests and arenas, upgrades them with duplicate shards plus gold, and builds decks. Chests open instantly (no timers), drop odds are always shown, and a pity counter guarantees a Legendary. Card levels count in the campaign only: every Duel uses the Duel Standard (20.4). Trophies, arenas, seasons and Duel rewards are in section 20.
 
 ### 8.1 Currencies
 
@@ -556,6 +571,8 @@ How to open a chest (the server does this from M5 on; before M5 the client does 
 
 Every day at 00:00 local time, 3 quests are drawn from this pool. Each gives 50 gold + 10 gems. Completing all 3 gives a Wooden chest.
 
+The Duel quest pool of 20.5 replaces this pool from milestone D4 on; the campaign pool below stays for offline play before that.
+
 - Win 3 levels
 - Trigger 5 combos
 - Merge a defender to ★3
@@ -591,6 +608,7 @@ type SaveData = {
 
 - Write the save after every level end, chest opening, upgrade and settings change.
 - When `version` changes, write a migration function in `src/meta/save/migrations.ts`. Never delete player progress.
+- Raider cards are stored in `cards` like defenders (key = card id). Trophies, decks and match history live on the server (19.8), not in `SaveData`.
 
 ### 8.8 Battle pass and shop (built in M5)
 
@@ -601,7 +619,7 @@ type SaveData = {
 
 ## 9. Art direction
 
-The look is **2.5D HD-2D**: hand-crafted, saturated pixel-art sprites on a soft low-poly 3D world, seen through a fixed, slightly tilted portrait camera. Units, enemies and small props are flat pixel billboards; the terrain, the base gate and the enemy portal are stylized 3D meshes. Bloom, tilt-shift and a warm colour grade make the scene feel like a modern arcade game. Readability on a 6-inch phone beats detail every time. Inspired by mobile hits like Clash Royale and HD-2D role-playing games, but never copy their characters, logos or UI assets.
+The look is **2.5D**: smooth, saturated high-resolution sprites on a soft low-poly 3D world, seen through a fixed, slightly tilted portrait camera. Units and small props are flat sprite billboards; the terrain, the bastions and the portal are stylized 3D meshes. Bloom, tilt-shift and a warm colour grade make the scene feel like a modern arcade game. Readability on a 6-inch phone beats detail every time. The quality bar is the top tier of mobile strategy games, but never copy their characters, logos or UI assets. (Owner decision 2026-11-13, issue #117: the earlier pixel-art look is replaced by smooth sprites; the pipeline stays.)
 
 ### 9.1 Camera and world mapping
 
@@ -619,7 +637,7 @@ The look is **2.5D HD-2D**: hand-crafted, saturated pixel-art sprites on a soft 
 - One directional light from the upper left front: color #FFF2D9, intensity 2.2.
 - One hemisphere light: sky #BFE3FF, ground #6B8F4E, intensity 0.9.
 - 3D terrain, base and portal use `MeshToonMaterial` with a 3-step gradient map (shadow 0.55, mid 0.8, light 1.0 brightness).
-- Sprite billboards are unlit pixel art: shading and a 1 px #1B1B2F outline are baked into the atlas by the sprite pipeline (12.12). Every sheet uses **nearest-neighbour** filtering, no mipmaps and sRGB colours, so the pixels stay crisp. Every unit and tree gets a soft dark ground shadow ellipse (no real-time shadow maps).
+- Sprite billboards are unlit: soft shading, a rim light from the upper left and a 3 px #1B1B2F outline (at 256 px frame height) are baked into the atlas by the sprite pipeline (12.12). Every sheet uses **linear** filtering with mipmaps, premultiplied alpha, anti-aliased edges and sRGB colours. Every unit and tree gets a soft dark ground shadow ellipse (no real-time shadow maps). In a Duel every unit also gets its side's ground ring (18.1).
 - Post-processing in one `EffectComposer` chain (`src/render/postprocessing.ts`):
   - `UnrealBloomPass`, threshold 1.0 (only emissive VFX, hit flashes and portal glow bloom), strength 0.8, radius 0.45 at half resolution.
   - a custom tilt-shift pass with a sharp focus band over the board (screen centre y 0.46, half height 0.30) that blurs up to 1.6 px towards the top and bottom screen edges.
@@ -634,9 +652,9 @@ The look is **2.5D HD-2D**: hand-crafted, saturated pixel-art sprites on a soft 
 
 | Asset | Budget |
 | --- | --- |
-| Unit sprite frame | 64-128 px per axis, 1-12 frames per clip, sheet columns 1-8 |
-| Unit sprite atlas | at most 512 x 512 px and about 120 KB PNG per character |
-| Prop sprite frame | 36-104 px, single frame, at most 512 px atlas width |
+| Unit sprite frame | 192-384 px per axis, 1-12 frames per clip, sheet columns 1-8 |
+| Unit sprite atlas | at most 2048 x 2048 px and about 1.2 MB PNG per character |
+| Prop sprite frame | 128-512 px, single frame, at most 1024 px atlas width |
 | Palette texture | one shared 256 x 256 palette PNG (9.4) |
 | Level environment (3D part) | at most 30,000 triangles total for ground, base, portal and backdrop |
 | Draw calls | below 150 per frame (one material per sprite sheet, shared) |
@@ -644,7 +662,7 @@ The look is **2.5D HD-2D**: hand-crafted, saturated pixel-art sprites on a soft 
 | Post-processing | bloom at half resolution; whole chain under 2 ms on a mid-range phone |
 
 - A sprite frame's world height is recorded in the manifest (`worldHeight`) and multiplied by 1.5 at runtime for phone readability; the drawn unit still fits its tile footprint.
-- Pixel art is authored on an integer pixel grid: render at 4x, nearest-downsample to the target frame size, palette-quantise to the 9.4 swatches with the 9.2 toon bands, add the 1 px #1B1B2F outline, then pack the frames row-major into the atlas.
+- Sprites are rendered at 2x the target frame size and downsampled with a Lanczos filter; colours are not quantised. The 9.4 palette stays the source of the model colours.
 
 ### 9.4 Color palette
 
@@ -668,7 +686,7 @@ Defenders use warm, saturated colors. Enemies use dark purples with glowing eyes
 
 - Producers: round and soft. Shooters: a clear weapon pointing right. Walls: square and wide. Control and magic: flowing lines and floating parts. Legendary and Mythic: tall, asymmetric, unique silhouette.
 - Enemies: spiky, horned, jagged edges, always slightly hunched.
-- **Pixel-art rules:** chunky 1-3 px clusters, no anti-aliasing, a 1 px #1B1B2F outline around the whole silhouette, light from the upper left, readable at 48 px. Sprites are rendered from the fixed game camera direction so their shading matches the 3D world.
+- **Sprite rules:** clean shapes, soft two-tone shading with a rim light, a 3 px #1B1B2F outline around the whole silhouette, light from the upper left, readable at 64 px. Sprites are rendered from the fixed game camera direction so their shading matches the 3D world.
 - **Silhouette test:** render every character as a solid black sprite at 50 px tall. A tester must be able to name it and its role. Do this for every new character and attach the image to its pull request.
 
 ### 9.6 Animations
@@ -745,8 +763,9 @@ In-level HUD (portrait):
 | Wave banner | Centre | full width, 120 px | "A huge wave is coming!" / "FINAL WAVE", slides in and out |
 | Boss bar | Below the status bar, centred | 60 % width | Boss name, health, phase markers |
 
-- Screens: **Title/Home** (logo lockup, tagline, pixel-art hero key art in the 3D scene, PLAY CTA, secondary round icon buttons, world info pill), **Level Select** (World 1 map with 10 level medallions, stars, back button), **Scouting** -> **Loadout**, **Level** (HUD), **Pause** overlay (Resume/Restart/Quit), **Result** overlay (Victory/Defeat, 0-3 stars with a pop animation, Retry and Levels).
-- Card visual: pixel-art portrait from the sprite pipeline on a gradient in the rarity color, rarity frame, cost badge with the Essence icon in the bottom left, star pips at ★2/★3.
+- The Duel HUD is specified in 18.9 and the Duel screens in 20.6. The table above is the campaign HUD.
+- Screens: **Title/Home** (logo lockup, tagline, sprite hero key art in the 3D scene, PLAY CTA, secondary round icon buttons, world info pill), **Level Select** (World 1 map with 10 level medallions, stars, back button), **Scouting** -> **Loadout**, **Level** (HUD), **Pause** overlay (Resume/Restart/Quit), **Result** overlay (Victory/Defeat, 0-3 stars with a pop animation, Retry and Levels).
+- Card visual: sprite portrait from the sprite pipeline on a gradient in the rarity color, rarity frame, cost badge with the Essence icon in the bottom left, star pips at ★2/★3, and in the Duel a kind icon (shield = defender, claw = raider).
 - Icons: hand-written SVG files in `public/icons/`, 3 px #141326 outline, gradient fills with a top-left highlight and a soft drop shadow; icons must stay crisp at 32 px.
 - The app icon and splash screen are rendered from the same crest as the title lockup.
 
@@ -787,6 +806,7 @@ Use exactly these tools. Do not add a dependency that is not in this table witho
 | Mobile shell | `@capacitor/core`, `@capacitor/cli`, `@capacitor/ios`, `@capacitor/android` | Wrap the web build as native apps | M6 |
 | Native plugins | `@capacitor/haptics`, `@capacitor/preferences`, `@capacitor/app`, `@capacitor/screen-orientation`, `@capacitor/splash-screen`, `@capacitor/status-bar` | Device features | Only imported inside `src/platform/`. |
 | Backend | `@supabase/supabase-js` | Auth (anonymous + Apple/Google link), cloud save, chest opening | M5. Only inside `src/platform/backend.ts`. |
+| Match server | `ws` + `@types/ws` | WebSocket server for online Duels (section 19) | D3. Only imported inside `server/`. The client uses the browser `WebSocket`. |
 | Purchases | `@revenuecat/purchases-capacitor` | In-app purchases | M5. Only inside `src/platform/iap.ts`. |
 | Ads | `@capacitor-community/admob` | Optional rewarded ads only (never forced) | M5. Only inside `src/platform/ads.ts`. |
 | Analytics | `posthog-js` | Events and funnels | M5. Only inside `src/platform/analytics.ts`. |
@@ -825,8 +845,10 @@ These script names are fixed. Every agent prompt refers to them.
 | `assets` | `tsx tools/build-assets/run.ts` | Run Blender scripts and optimize all models (section 12) |
 | `validate-data` | `tsx tools/validate-data.ts` | Parse every data file with its Zod schema |
 | `check` | `npm run typecheck && npm run lint && npm test && npm run validate-data` | Everything a pull request must pass |
-| `sprites` | `python3 tools/sprites/build_sprites.py` | Render the 2.5D pixel-art sprite atlases and prop sheets (12.12) |
+| `sprites` | `python3 tools/sprites/build_sprites.py` | Render the smooth sprite atlases, prop sheets and portraits (12.12) |
 | `audio` | `tsx tools/audio/generate.ts` | Synthesize music and SFX (12.13) |
+| `server` | `tsx server/index.ts` | Start the match server at ws://localhost:8787 (section 19) |
+| `duel-balance` | `tsx tools/duel-balance/run.ts` | Run the Duel balance bot (16.7) |
 | `cap:sync` | `npm run build && npx cap sync` | Copy the web build into the native projects |
 
 ### 10.4 Import boundaries (enforced by ESLint)
@@ -839,6 +861,8 @@ Use the `no-restricted-imports` rule so these boundaries fail the lint:
 - `src/ui/` may import from `src/meta/`, `src/data/`, `src/platform/`, `preact`, `gsap`. It never imports `three`.
 - `src/meta/` may import from `src/data/` and `src/platform/` (save and backend wrappers only).
 - `src/platform/` is the only folder that imports Capacitor, Supabase, RevenueCat, AdMob, PostHog or Howler.
+- `src/net/` may import from `src/sim/` (types), `src/data/` and `zod`. It uses the browser `WebSocket` and is the only client folder besides `src/platform/` that opens a network connection.
+- `server/` may import from `src/sim/`, `src/data/`, `src/net/protocol.ts`, `ws`, `zod` and `@supabase/supabase-js`. Nothing in `src/` imports from `server/`.
 
 ## 11. Architecture
 
@@ -853,11 +877,11 @@ Meta (src/meta) <--uses-- UI (src/ui) --uses--> Platform (src/platform)
        +------------- save data, cloud calls ---------+
 ```
 
-The simulation is the only place game rules live. It never imports the renderer, the UI or any platform code, so it runs headless in tests and in the balancing bot. The renderer and the UI only read its state and its events; the UI changes the game only by sending commands. Data files are imported by every module.
+The simulation is the only place game rules live. It never imports the renderer, the UI or any platform code, so it runs headless in tests, in the balancing bots and on the match server. The renderer and the UI only read its state and its events; the UI changes the game only by sending commands. Data files are imported by every module. In an online Duel the commands go to the match server first and come back confirmed (section 19); the server runs the very same simulation code.
 
 ### 11.2 Folder structure
 
-Create exactly this structure in M0. Do not invent other top-level folders.
+Create exactly this structure in M0. Do not invent other top-level folders. The Duel adds the folders listed in 19.10 (`server/`, `src/net/`, `src/sim/duel/`, `src/sim/duelBot/`, `tests/server/`).
 
 ```
 bastion-heroes/
@@ -903,10 +927,10 @@ bastion-heroes/
       cameraFit.ts                # portrait level camera fit (9.1)
       outline.ts  toonMaterial.ts  blobShadow.ts
       units.ts                    # GLB unit fallback layer (M3)
-      sprites/                    # 2.5D pixel-art billboard unit layer (9.2, 11.7)
-      propSprites.ts              # pixel-art tree/bush/rock/flower props
+      sprites/                    # 2.5D sprite billboard unit layer (9.2, 11.7)
+      propSprites.ts              # sprite tree/bush/rock/flower props
       backdrop.ts                 # painted portrait far background
-      titleScene.ts  titleHeroes.ts # home-screen diorama + pixel-art key art
+      titleScene.ts  titleHeroes.ts # home-screen diorama + sprite key art
       animations.ts               # plays clips from events
       vfx/<vfxId>.ts
       environment/<worldId>.ts
@@ -1066,7 +1090,7 @@ export const EnemyDef = z.object({
 ### 11.7 Rendering rules
 
 - The renderer keeps a `Map<simId, Object3D>`. It creates objects on spawn events and removes them on removal events after the death animation (spec 11.7).
-- Units are animated pixel-art billboards (`src/render/sprites/`): one quad per unit, one material per sheet, frame UVs from the manifest, bottom-centre anchor, camera-facing quaternion, nearest-neighbour textures. Until the atlases load (or when they are missing) the GLB unit layer of M3 stays visible as a fallback; the sprite layer then takes over and the 3D layer is disposed.
+- Units are animated sprite billboards (`src/render/sprites/`): one quad per unit, one material per sheet, frame UVs from the manifest, bottom-centre anchor, camera-facing quaternion, linear-filtered textures with mipmaps. Until the atlases load (or when they are missing) the GLB unit layer of M3 stays visible as a fallback; the sprite layer then takes over and the 3D layer is disposed.
 - Trees, bushes, rocks, flowers and mushrooms are sprite billboards too (`src/render/propSprites.ts`); the 3D props mesh of the environment model is hidden.
 - 3D level structures still load once with `GLTFLoader` and keep the palette/toon materials.
 - Cap the device pixel ratio at 2.
@@ -1089,6 +1113,8 @@ The UI is a simple state machine in `src/ui/app.tsx`. Only one screen is mounted
 | Collection, Shop, Chest (M4/M5) | Back to the previous screen |
 
 The playable shell (`mountShell` in `src/ui/index.ts`) owns Title -> Level Select -> Scouting -> Loadout; `src/main.ts` owns the level run, the pause actions and the result overlay (`mountResult`). The 3D title scene stays mounted under the title screen.
+
+From milestone D4 the Home screen and the Duel screens of 20.6 wrap this flow: the campaign's Level Select is reached from Home.
 
 ### 11.9 Save data
 
@@ -1228,11 +1254,11 @@ If the human decides that scripted models are not good enough for Epic and highe
 
 ### 12.12 Sprite atlas pipeline (2.5D units and props)
 
-`npm run sprites` renders the pixel-art atlases from the existing rigged GLB models; no model has to be re-authored for the 2.5D look.
+`npm run sprites` renders the smooth sprite atlases from the rigged GLB models; the same models and clips serve the campaign and the Duel.
 
-1. `tools/sprites/render_sprites.py` runs headless Blender, imports every `public/models/<id>.glb`, plays each clip and renders the sampled frames at 4x the target resolution with an orthographic camera on the 9.1 game direction (elevation 45°, azimuth 0, key light from the upper left front), transparent background.
-2. `tools/sprites/make_atlases.py` (Python 3, Pillow/numpy) samples each 4x block (nearest, no anti-aliasing), alpha-thresholds, quantises to the 9.4 palette with the 9.2 toon bands, adds the 1 px #1B1B2F outline and packs the frames row-major into `public/sprites/<id>.png` plus `public/sprites/manifest.json`.
-3. Props (`prop_round_tree.png`, `prop_pine_tree.png`, `prop_bush.png`, `prop_rock.png`, `prop_mushroom.png`, `prop_flower_cluster.png`) and pixel card portraits (`public/sprites/portraits/<id>.png`, 128 x 128) come from the same pipeline.
+1. `tools/sprites/render_sprites.py` runs headless Blender, imports every `public/models/<id>.glb`, plays each clip and renders the sampled frames at 2x the target resolution with an orthographic camera on the 9.1 game direction (elevation 45°, azimuth 0, key light from the upper left front, soft fill and a rim light), transparent background, anti-aliased.
+2. `tools/sprites/make_atlases.py` (Python 3, Pillow/numpy) downsamples each frame with a Lanczos filter, keeps the smooth alpha edge, adds the 3 px #1B1B2F outline (scaled to the frame height), premultiplies alpha and packs the frames row-major into `public/sprites/<id>.png` plus `public/sprites/manifest.json`.
+3. Props (`prop_round_tree.png`, `prop_pine_tree.png`, `prop_bush.png`, `prop_rock.png`, `prop_mushroom.png`, `prop_flower_cluster.png`) and card portraits (`public/sprites/portraits/<id>.png`, 256 x 256) come from the same pipeline.
 4. `manifest.json` is the contract for the render layer (no other file describes the atlas):
 
 ```json
@@ -1251,7 +1277,7 @@ If the human decides that scripted models are not good enough for Epic and highe
 }
 ```
 
-- The build is deterministic and rerunnable; the raw 4x renders are a cache and are never committed, only the atlases and the manifest.
+- The build is deterministic and rerunnable; the raw 2x renders are a cache and are never committed, only the atlases and the manifest.
 - The silhouette test (9.5) is part of the generated contact sheet `docs/screenshots/m3b-sprites-contact-sheet.png`.
 
 ### 12.13 Audio generation pipeline
@@ -1520,87 +1546,151 @@ Exit criteria:
 - [ ] Playwright screenshots at 390 x 844 and 834 x 1194 of every screen are attached to the last PR and viewed.
 - [ ] `npm run check` and `npm run e2e` pass; draw calls and triangles stay inside 11.7.
 
-### M4 — Meta game
+### Milestone re-plan (owner decision, 2026-11-13)
 
-Goal: the full single-player loop: play, earn, open chests, upgrade, progress.
+M0 to M3b are done or in review and stay as written. The former milestones M4 (meta game), M5 (backend and monetization), M6 (mobile builds) and M7 (content, polish, soft launch) are **replaced** by D1 to D7 below; their still-valid tasks are listed inside the new milestones. Do not start an old M4 to M7 issue.
 
-| # | Issue | Area | Depends on |
-| --- | --- | --- | --- |
-| 4.1 | Save system with schema, migrations and corruption fallback (11.9) | meta | M0 |
-| 4.2 | Currencies, level rewards, star records | meta | 4.1 |
-| 4.3 | Card levels and upgrades with the cost tables (section 8) | meta | 4.2 |
-| 4.4 | Chests: local opening algorithm, odds and pity (section 8); chest opening screen with per-rarity card flip | meta, ui | 4.2 |
-| 4.5 | Main menu, world map, result screen with rewards | ui | 4.2 |
-| 4.6 | Collection screen (owned, locked, card detail, upgrade button) | ui | 4.3 |
-| 4.7 | Daily quests | meta, ui | 4.2 |
-| 4.8 | Settings screen (music, SFX, auto-collect, haptics, language) | ui | 4.1 |
-| 4.9 | First-time tutorial for W1-L01 to W1-L03: hand pointer, blocked inputs, short text bubbles | ui | 4.5 |
+Where an older section still names a replaced milestone, read it as: M4 = D4, M5 = D4 for accounts and server-side economy and D5 for purchases, ads and analytics, M6 = D6, M7 = D7.
 
-Exit criteria:
+### D1 — Duel core (offline)
 
-- [ ] A new player can go from first launch through W1-L10 with rewards, chests and upgrades, and the save survives a page reload.
-- [ ] Unit tests for every cost table, chest odds (100,000 simulated openings within ±0.5% of the published odds) and pity.
-- [ ] Migration test from a hand-written version 1 save.
-
-### M5 — Backend and monetization
-
-Goal: server-authoritative economy, purchases, ads and analytics.
+Goal: a complete Duel against a bot runs locally with simple HUD art, and feels like the game.
 
 | # | Issue | Area | Depends on |
 | --- | --- | --- | --- |
-| 5.1 | Supabase project, anonymous auth, link to Apple and Google accounts | backend | M4 |
-| 5.2 | Cloud save table with row-level security; merge rule: higher progress wins, ask the player on conflict | backend | 5.1 |
-| 5.3 | Edge function `open-chest`: server rolls the chest with pity, writes the result, client only displays it | backend | 5.1 |
-| 5.4 | RevenueCat products (gem packs, battle pass) and edge function `verify-purchase` | backend, platform | 5.1 |
-| 5.5 | Shop screen and battle pass screen (section 8) | ui | 5.4 |
-| 5.6 | Optional rewarded ads (double level gold, one free chest speed-up per day) | platform | M4 |
-| 5.7 | PostHog events: `level_start`, `level_end` (result, stars, duration), `chest_open`, `upgrade`, `purchase`, `tutorial_step` | platform | M4 |
-| 5.8 | Account deletion in settings, privacy policy and terms links | backend, ui | 5.1 |
+| D1.1 | `src/data/duelRules.ts` and the `duel` block in every card file (18.8), schemas and `validate-data` | data | M3b |
+| D1.2 | Move shared combat, status, combo and projectile code to side-aware functions; the campaign sim and its golden replays must stay bit-identical | sim | D1.1 |
+| D1.3 | `createDuelSim`: sides, zones, phases, Essence income, `playDefender`, merge, rejected commands (18.1-18.5, 19.11) | sim | D1.2 |
+| D1.4 | Raiders: summon, movement, blocking, raider vs raider fights, special behaviors (18.6) | sim | D1.3 |
+| D1.5 | Gates, Last Stand Traps, end conditions, sudden death (18.2, 18.7) | sim | D1.4 |
+| D1.6 | Hand cycle and deck validation outside the sim (18.4), local match host for Training | meta | D1.3 |
+| D1.7 | Duel bots `easy`, `normal`, `hard` (18.10) | sim | D1.5 |
+| D1.8 | Duel replay format, `hashState` for the Duel, determinism tests (11.6) | sim | D1.5 |
+| D1.9 | Renderer: second bastion, mirrored north view, side rings, raider units of both sides, gate hit and trap VFX | render | D1.4 |
+| D1.10 | Duel HUD of 18.9 and the Training entry on the Home screen | ui | D1.6 |
 
 Exit criteria:
 
-- [ ] Changing gems in local storage has no effect on the server balance (test it).
-- [ ] Chest results come only from the server.
+- [ ] A Training match against each bot level can be played from Home to the result screen at 390 x 844.
+- [ ] One test per rule sentence of section 18; campaign golden replays unchanged.
+- [ ] `hard` beats `easy` in at least 90 % of 200 headless matches.
+- [ ] The human plays 10 Training matches and reports feel issues (`needs:device-test`).
+
+### D2 — Sprite quality and Duel presentation
+
+Goal: the Duel looks like a finished game in a still screenshot and in motion.
+
+| # | Issue | Area | Depends on |
+| --- | --- | --- | --- |
+| D2.1 | Smooth sprite pipeline of 12.12 and 9.2/9.3 (2x render, Lanczos, outline, premultiplied alpha, linear filtering); regenerate all atlases and portraits | assets, render | M3b |
+| D2.2 | Model quality pass, one issue per card: silhouette, face, detail and animation timing against the 5.3 and 6.4 briefs; the human approves every sprite sheet | assets | D2.1 |
+| D2.3 | Bastion gate model for both sides and the Arena 1 Duel environment | assets | D1.9 |
+| D2.4 | Game feel: card play anticipation, summon and landing, hit stop on heavy hits, projectile trails, gate damage shake, overdrive and sudden-death presentation (9.6, 9.7) | render | D1.9 |
+| D2.5 | Duel audio: match music with an overdrive layer, card, summon, gate and result sounds (9.9, 12.13) | assets | D1.10 |
+| D2.6 | Home, Matchmaking, Result and Decks screens in the final style (20.6) | ui | D1.10 |
+
+Exit criteria:
+
+- [ ] The human approves the look on a real phone.
+- [ ] Draw calls below 150 and triangles below 300,000 in a full Duel (12 raiders per side, 12 defenders per side).
+
+### D3 — Match server and netcode
+
+Goal: two devices play a Duel against each other over the internet.
+
+| # | Issue | Area | Depends on |
+| --- | --- | --- | --- |
+| D3.1 | `src/net/protocol.ts` with all message schemas of 19.5 and tests | net | D1.8 |
+| D3.2 | `server/`: WebSocket server, `hello` with a fake token in tests, routing, rate limits | server | D3.1 |
+| D3.3 | `server/match.ts`: tick loop, command validation and scheduling, hands, `ticks` broadcast, result (19.3, 19.4) | server | D3.2 |
+| D3.4 | `src/net/client.ts`: connection, tick buffer, catch-up, hash reports, snapshot resync | net | D3.3 |
+| D3.5 | Disconnect, resume and forfeit (19.6) | server, net | D3.4 |
+| D3.6 | Server test harness: two fake clients play a full match headless; packet delay, loss and reorder simulation | server | D3.3 |
+| D3.7 | Deploy the development server on the owner's VPS behind the reverse proxy (the human approves every change to shared services) | server | D3.5 |
+
+Exit criteria:
+
+- [ ] A match between two browsers stays in sync for 200 automated matches with 150 ms simulated latency and 2 % packet delay spikes (zero desyncs).
+- [ ] Killing one client's connection for 10 s and resuming continues the match.
+- [ ] The human plays 5 matches between two real phones on mobile data.
+
+### D4 — Accounts, matchmaking and meta
+
+Goal: the full online loop: sign in, build a deck, queue, play, earn, progress.
+
+| # | Issue | Area | Depends on |
+| --- | --- | --- | --- |
+| D4.1 | Supabase project, anonymous auth, link to Apple and Google accounts; server token verification (19.2) | backend | D3.2 |
+| D4.2 | Tables and row-level security of 19.8; migrations | backend | D4.1 |
+| D4.3 | Matchmaking queue, trophy windows, bot fallback, first-three-matches rule (19.7) | server | D3.3 |
+| D4.4 | Trophies, arenas, arena unlocks and rewards (20.1, 20.2, 20.5) | server, meta | D4.2 |
+| D4.5 | Collection with defender and raider cards, card detail, deck builder with 3 slots | meta, ui | D4.2 |
+| D4.6 | Server-side chest opening with odds and pity (8.4), chest screen | backend, ui | D4.2 |
+| D4.7 | Daily quests of 20.5, save system and migrations (8.7, 11.9) | meta | D4.2 |
+| D4.8 | Guided first Training match and the campaign entry on Home | ui | D1.10 |
+| D4.9 | Settings: music, SFX, haptics, language, mute emotes, account deletion, privacy policy and terms links | ui, backend | D4.1 |
+
+Exit criteria:
+
+- [ ] A new install can reach Arena 2 only by winning matches; changing local storage changes nothing on the server (test it).
+- [ ] 100,000 simulated chest openings are within ±0.5 % of the published odds; pity test.
+- [ ] Two accounts with 1000 trophies difference are not matched while a closer opponent waits.
+
+### D5 — Balance, seasons and monetization
+
+Goal: a fair, varied metagame and a working shop.
+
+| # | Issue | Area | Depends on |
+| --- | --- | --- | --- |
+| D5.1 | Duel balance bot and report (16.7) | tools | D1.7 |
+| D5.2 | Balance pass on the 18.8 numbers until the 16.7 targets hold | balance | D5.1 |
+| D5.3 | Seasons, season reset and season rewards (20.3) | server | D4.4 |
+| D5.4 | RevenueCat products (gem packs, battle pass) and edge function `verify-purchase` | backend, platform | D4.1 |
+| D5.5 | Shop and battle pass screens (8.8, 20.3); cosmetics: skins and emotes | ui | D5.4 |
+| D5.6 | Optional rewarded ads (double Duel gold once per day, one extra Wooden chest per day) | platform | D4.4 |
+| D5.7 | PostHog events: `match_start`, `match_end` (result, reason, duration, trophies), `queue_time`, `desync`, `chest_open`, `purchase`, `tutorial_step` | platform | D4.3 |
+
+Exit criteria:
+
+- [ ] All 16.7 targets hold in the report.
 - [ ] Sandbox purchases tested by the human on one iOS and one Android device (`needs:device-test`).
 
-### M6 — Mobile builds
+### D6 — Mobile builds
 
 Goal: installable, smooth builds on real phones.
 
 | # | Issue | Area | Depends on |
 | --- | --- | --- | --- |
-| 6.1 | Add Capacitor iOS and Android projects, portrait lock, safe areas, status bar hidden | platform | M5 |
-| 6.2 | App icon and splash screen from a 1024 × 1024 source (human approves the icon) | assets | 6.1 |
-| 6.3 | Haptics, background pause, audio unlock on first touch | platform | 6.1 |
-| 6.4 | Performance pass on the lowest target device: texture sizes, pixel ratio, particle caps | render | 6.1 |
-| 6.5 | CI jobs that build the Android debug APK and the iOS simulator build | ci | 6.1 |
-| 6.6 | TestFlight and Google Play internal testing upload (human runs the upload with their accounts) | platform | 6.5 |
+| D6.1 | Add Capacitor iOS and Android projects, portrait lock, safe areas, status bar hidden | platform | D4 |
+| D6.2 | App icon and splash screen from a 1024 × 1024 source (human approves the icon) | assets | D6.1 |
+| D6.3 | Haptics, audio unlock on first touch; going to the background during a Duel counts as a disconnect (19.6) | platform | D6.1 |
+| D6.4 | Performance pass on the lowest target device: texture sizes, pixel ratio, particle caps | render | D6.1 |
+| D6.5 | CI jobs that build the Android debug APK and the iOS simulator build | ci | D6.1 |
+| D6.6 | TestFlight and Google Play internal testing upload (human runs the upload with their accounts) | platform | D6.5 |
 
 Exit criteria:
 
-- [ ] 60 fps in W1-L10's final wave on an iPhone 12 and a mid-range Android phone (measured by the human).
-- [ ] Cold start to main menu under 5 seconds on those devices.
-- [ ] Install size under 150 MB.
+- [ ] 60 fps in a full Duel on an iPhone 12 and a mid-range Android phone (measured by the human).
+- [ ] Cold start to Home under 5 seconds on those devices; install size under 150 MB.
 
-### M7 — Content, polish, soft launch
+### D7 — Content, polish, soft launch
 
 Goal: a complete game ready for a soft launch.
 
 | # | Issue | Area | Depends on |
 | --- | --- | --- | --- |
-| 7.1 | The 7 M7 defenders (one issue each: data, behavior, model) | data, sim, assets | M3 |
-| 7.2 | The M7 enemies (burrower, shadow\_hound) | data, sim, assets | M3 |
-| 7.3 | One boss per world, starting with Morvak (section 6) | sim, assets | M3 |
-| 7.4 | Worlds 2 to 5: environment, 10 levels each, balance pass with the bot (one issue per world) | data, assets, balance | 7.1–7.3 |
-| 7.5 | Final music and SFX (if the human approves a source, section 17) | assets | M3 |
-| 7.6 | Localization: all UI strings in `src/ui/i18n/en.json`; second language decided by the human | ui | M4 |
-| 7.7 | Store listing: 6 screenshots per platform from Playwright plus device captures, short and long description | docs | M6 |
-| 7.8 | Soft launch in 1–2 test countries chosen by the human; dashboard for retention and level funnel | platform | all |
+| D7.1 | The remaining cards not yet built (one issue each: data, behavior, model, Duel numbers): `snaptrap_bertie`, `venom_sprout`, `battle_drummer`, `tesla_gnome`, `king_borrowbones`, `aurora_dragon`, `burrower`, `shadow_hound` | data, sim, assets | D2.1 |
+| D7.2 | Arena environments 2 to 5 | assets | D2.3 |
+| D7.3 | Production hosting of the match server (open decision 17.3), monitoring, crash and desync dashboards | server | D3.7 |
+| D7.4 | Localization: all UI strings in `src/ui/i18n/en.json`; second language decided by the human | ui | D4 |
+| D7.5 | Store listing: 6 screenshots per platform, short and long description | docs | D6 |
+| D7.6 | Soft launch in 1-2 test countries chosen by the human; dashboard for retention, queue time and match funnel | platform | all |
+| D7.7 | Campaign Worlds 2 to 5 and bosses (7.4, 6.3) only if the human asks for them after the soft launch | data, assets | — |
 
 Exit criteria:
 
-- [ ] All 50 campaign levels are winnable with Common and Rare cards according to the bot.
-- [ ] Crash-free sessions above 99.5% during the soft launch.
+- [ ] Median queue time under 15 s in the soft-launch countries, bots included.
+- [ ] Crash-free sessions above 99.5 %; desync rate below 0.1 % of matches.
 - [ ] The human signs off on the launch.
 
 ## 15. Agent prompts
@@ -1610,29 +1700,36 @@ Copy these prompts as they are. Replace only the parts in angle brackets. Always
 ### 15.1 Game design context (paste before any other prompt)
 
 ```text
-You are working on "Bastion Heroes", a single-player mobile lane-defense game
-in the style of Plants vs. Zombies, with collectible hero cards and a rarity
-system, and a colorful 2.5D HD-2D look: pixel-art sprite billboards for units and
+You are working on "Bastion Heroes", a competitive online lane-strategy game
+for mobile with collectible cards: real-time 1v1 Duels on a shared 5-lane x
+9-column board, plus a single-player campaign as tutorial and offline mode. The
+look is colorful 2.5D: smooth high-resolution sprite billboards for units and
 props on a soft low-poly 3D world, viewed through a fixed portrait camera.
 
-Core loop: the player defends a 5-lane x 9-column lawn-like grid against waves
-of shadow creatures ("the Gloom") walking from right to left. Before each level
-the player scouts the enemies and picks 6 defender cards. During the level they
-spend Essence (collected from orbs) to place defenders on tiles. Placing the
-same defender on the same tile merges it to 2 or 3 stars. Damage types (Pierce,
-Blast, Arcane) beat different armor types (Light, Armored, Spectral), and status
-effects combine into combos (Steam, Shatter, Toxic, Chain). The strategy is in
-choosing the right cards for each level and placing them in the right lanes.
+Duel loop: each player brings a deck of 8 cards and holds 4 in hand. Essence
+regenerates over time. Defender cards are placed on the own half and do not
+move; raider cards send Gloom creatures down a lane towards the enemy bastion.
+Each lane has one Last Stand Trap that stops the first breakthrough; after that
+raiders damage the gate. A gate at 0 loses; after 3 minutes the healthier gate
+wins. Placing the same defender on itself merges it to 2 or 3 stars. Damage
+types (Pierce, Blast, Arcane) beat different armor types (Light, Armored,
+Spectral), and status effects combine into combos (Steam, Shatter, Toxic,
+Chain). All cards play at the same level in a Duel.
 
-Meta: cards have 5 rarities (Common, Rare, Epic, Legendary, Mythic) and levels
-1-10, upgraded with shards and gold from chests. Every campaign level must be
-winnable with Common and Rare cards only.
+Campaign loop: the player defends the grid against waves of the Gloom with 6
+defender cards and Essence collected from orbs (sections 3 to 7).
+
+Meta: trophies, arenas and 4-week seasons; cards have 5 rarities and come from
+arenas and chests with published odds; card levels 1-10 count in the campaign
+only.
 
 Tech: TypeScript, Vite, three.js, Preact, Capacitor. A deterministic 30 Hz
-simulation in src/sim is separate from rendering. All game numbers live in
-src/data. 3D models are built by Python scripts run in headless Blender; the
-pixel-art sprite atlases and the soundtrack are generated by the same kind of
-scripted pipeline (sections 12.12 and 12.13). The game is portrait-only.
+simulation in src/sim is separate from rendering and also runs on the Node.js
+match server (server/), which is the authority for every online match. All
+game numbers live in src/data. 3D models are built by Python scripts run in
+headless Blender; the sprite atlases and the soundtrack are generated by the
+same kind of scripted pipeline (sections 12.12 and 12.13). The game is
+portrait-only.
 
 The full spec is in docs/spec.md. It is the source of truth. Never guess: if
 the spec does not answer a question, open a GitHub issue labeled
@@ -1863,20 +1960,49 @@ Debug-only previews used by the tests and the PR screenshots: `?level=<id>&seed=
 - A Playwright test runs W1-L10 with `autoplay` at 1× speed and records the average and 1% low fps. CI only reports the numbers (CI machines vary); the human checks them on devices at the end of M3 and M6.
 - JavaScript bundle (gzip) under 1.5 MB, excluding models and audio. CI fails if it grows by more than 10% in one PR.
 
+### 16.7 Duel tests and balance
+
+| Layer | Tool | Location | What it covers | Runs |
+| --- | --- | --- | --- | --- |
+| Duel rules | Vitest | `tests/sim/duel/` | Every rule sentence of section 18 | Every PR |
+| Duel determinism | Vitest | `tests/sim/duel/replays/` | Golden Duel replays give the same state hash; two sims fed the same confirmed commands never differ | Every PR |
+| Protocol and server | Vitest | `tests/server/` | Message schemas, matchmaking windows, a full match between two fake clients, disconnect and resume, rate limits | Every PR |
+| Network soak | `npm run server` + script | `tools/duel-balance/soak.ts` | 200 matches with simulated latency and delay spikes, zero desyncs | Nightly and on `area:server` PRs |
+| Duel E2E | Playwright | `tests/e2e/duel*.spec.ts` | Training match from Home to Result; two browser contexts play one online match against a local server | Every PR |
+
+`npm run duel-balance -- [--runs 500]` plays headless Duels between bots with fixed decks and writes `balance-report/duel.md` and `.json`. It uses the `hard` bot on both sides and these deck sets: every single card's "showcase" deck (the card plus the 7 Arena 1 starter cards it does not replace), and 12 hand-written archetype decks in `tools/duel-balance/decks.ts` (for example heavy defense, raider swarm, producer economy, control, anti-air).
+
+| Metric | Target |
+| --- | --- |
+| Side balance | South wins 48-52 % of mirror matches (same deck on both sides) |
+| Card win rate | Every card's showcase deck wins 45-55 % against the starter deck |
+| Archetype spread | No archetype deck wins more than 60 % against the field; none below 40 % |
+| Match length | Median 2:15 to 3:00; at most 15 % of matches reach sudden death; at most 3 % draws |
+| Decided by gate | At least 35 % of matches end before 3:00 by a broken gate |
+| Passive play | A deck that never plays a raider wins less than 35 % |
+| Pure rush | A deck that never plays a defender wins less than 35 % |
+| Essence waste | The `hard` bot wastes less than 10 % of its income at the 10 Essence cap |
+| Trap use | On average 2 to 4 of a player's 5 traps are used per match |
+
+Rows that miss a target are marked with ❌. Paste the markdown table into every Duel balance PR. A balance PR changes only data files.
+
+
 ## 17. Out of scope and open decisions
 
 ### 17.1 Out of scope for version 1
 
 Do not build any of these, even partly. If a task seems to need one, open a `needs:decision` issue.
 
-- PvP, multiplayer, leaderboards, guilds, chat or friends.
+- Any online mode other than the 1v1 Duel of section 18: no 2v2, tournaments, spectating, clans or guilds, free-text chat, friends lists, friendly battles or global leaderboards.
+- Automatic bans. Suspicious matches are only logged (19.9).
 - Landscape orientation.
 - Endless mode, level editor, user-generated content.
 - Energy or stamina systems that block playing.
 - Loot boxes bought directly with real money (chests are bought with gems; gems are bought with money; odds are always shown).
 - Any form of tracking beyond the PostHog events in M5. No ad personalization without consent.
 - Web release as a public product (the browser build is for development and testing).
-- Replacing the pixel-art sprite pipeline with hand-painted sprite assets (the scripted Blender render pipeline of 12.12 is the source of truth until the human decides otherwise).
+- Hand-painted or externally produced sprite assets (the scripted Blender render pipeline of 12.12 is the source of truth until the human decides otherwise).
+- Campaign Worlds 2 to 5 before the soft launch (D7.7).
 
 ### 17.2 Things only the human can do
 
@@ -1885,6 +2011,8 @@ Do not build any of these, even partly. If a task seems to need one, open a `nee
 | Apple Developer Program account | Before M6 | About $99 per year |
 | Google Play Console account | Before M6 | One-time fee of about $25 |
 | Supabase, RevenueCat, PostHog and AdMob accounts; put keys in `.env.local` | Before M5 | Agents never see live keys in chat |
+| Approve changes on the VPS that hosts the development match server | D3 onwards | Agents ask before touching shared services |
+| Play Duels on two real phones over mobile data | End of D1, D3, D6 | Report feel, lag and desync issues as issues |
 | Approve the art style pilot and every model | M3 onwards | In the PR, with written feedback |
 | Play every milestone build on real devices | End of M3, M5, M6, M7 | Report feel issues as issues |
 | Set real-money prices per product | M5 | In App Store Connect and Google Play Console |
@@ -1903,6 +2031,385 @@ Each of these becomes a `needs:decision` issue when its milestone starts. The de
 | Music and SFX source | Procedurally generated in-repo (`tools/audio`), a paid asset store pack, or a commissioned composer | Procedurally generated in-repo (12.13) | M7 |
 | Rewarded ads | On (5.6) or off entirely | On, never forced | M5 |
 | Battle pass | Free + premium track, or no battle pass in version 1 | Free + premium | M5 |
+| Production hosting of the match server | The owner's VPS, a managed container host, or a game-server host with regions | The owner's VPS (one region) | D7 |
+| Duel Standard level | All cards at level 6 for both players, or card levels count up to a cap | All cards at level 6 (20.4) | D4 |
+| Bot matches in ranked | Fill the queue with tagged bots after 12 s, or wait for humans only | Tagged bots (19.7) | D4 |
+| Model source for better characters | Scripted Blender only, AI image-to-3D with cleanup (12.10), or a commissioned artist | Scripted Blender only | D2 |
 | Second language | German, Spanish, French or none | None until decided | M7 |
 | Soft launch countries | For example Philippines, Canada, Nordic countries | Not set | M7 |
 | Minimum devices | iPhone 12 / Android 10 (section 2), or lower | As in section 2 | M6 |
+
+## 18. Duel mode (online 1v1)
+
+The Duel is the main mode of the game: two players fight in real time on one shared board. Each player defends an own bastion with stationary defenders and attacks the other bastion with raiders. Every number below is a default stored in `src/data/duelRules.ts`; card numbers live in the `duel` block of each card file. Sections 3 and 4 still apply to the Duel unless this section says otherwise.
+
+### 18.1 Board, sides and views
+
+- The Duel uses the 5 × 9 grid and the coordinates of 3.1. There is no terrain: every tile is `normal`.
+- Two sides: **south** (bastion at x = 0) and **north** (bastion at x = 9). South owns columns 0-3, north owns columns 5-8. Column 4 is the **midline**: nobody can place a defender there.
+- **Base lines:** south x = 0.0, north x = 9.0. **Raider spawn points:** south raiders spawn at x = 0.4, north raiders at x = 8.6, in the lane the player chose.
+- "Forward" for a unit means towards the enemy bastion: +x for south units, -x for north units. Every rule in section 4 that says "to the right" or "smallest x" means "forward" and "closest to the own bastion" in the Duel.
+- The simulation always uses these absolute coordinates. Each client draws its own side at the bottom of the screen: the north player's view is mirrored (x becomes 9 - x, lane becomes 4 - lane) in the renderer and in pointer mapping only, never in the sim.
+- Own units get a teal ground ring (#3BF0C8), enemy units a red ground ring (#FF4D4D). This replaces the "warm defenders, purple enemies" readability rule of 9.4 in the Duel, because both players use both kinds of units.
+
+### 18.2 Match flow
+
+| Phase | Time | Rules |
+| --- | --- | --- |
+| Countdown | 3 s | Both players see the board and their first hand. No commands are accepted. |
+| Regular time | 0:00 to 2:00 | Normal Essence income (18.3). |
+| Overdrive | 2:00 to 3:00 | Essence income is doubled. A banner "OVERDRIVE" slides in with the horn sound. |
+| Sudden death | up to 1:00 more | Only if both gates have equal health at 3:00. Income stays doubled. The first gate damage ends the match. |
+
+- A match ends immediately when a gate reaches 0 health: the other player wins.
+- At 3:00 the player whose gate has more health wins. If the health is equal, sudden death starts. If no gate takes damage in sudden death, the match is a **draw**.
+- A player who surrenders or stays disconnected for longer than the reconnect window (19.6) loses.
+- There is no pause and no speed button in the Duel.
+
+### 18.3 Essence in the Duel
+
+| Rule | Value |
+| --- | --- |
+| Starting Essence | 5 |
+| Maximum Essence | 10 |
+| Income, regular time | 1 Essence every 2.4 s |
+| Income, overdrive and sudden death | 1 Essence every 1.2 s |
+| Producer income | Added directly to the counter (no orbs to tap). A producer shows a "+1" popup. |
+
+- There are no sky drops and no orbs in the Duel. Essence is a whole number; the HUD shows the progress to the next point as a filling bar.
+- Essence above the maximum is lost.
+
+### 18.4 Deck, hand and card cycle
+
+- A deck has exactly **8 different cards**. It must contain at least 2 defenders and at least 2 raiders. `harbor_turtle` and `morvak` are not Duel cards.
+- At match start the deck is shuffled with the player's private seed. The first 4 cards are the **hand**; the 5th is shown as **next**.
+- Playing a card moves it to the back of the deck order, and the "next" card enters the hand. So a played card returns after 4 other cards were played.
+- A card needs its Duel cost in Essence. The cooldowns of 3.5 do not exist in the Duel; the hand cycle replaces them.
+- The opponent's hand and deck order are never sent to the other client (19.3).
+
+### 18.5 Playing cards
+
+**Defenders**
+
+1. The player drags a defender card onto a tile, or taps the card and then the tile.
+2. Placement is allowed only if ALL are true: the player has the Essence; the tile is in the player's own columns; the tile is empty or holds the player's **same defender** at ★1 or ★2 (merge, 3.6, including the full heal).
+3. The defender becomes active after 0.5 s (3.4). Enemy raiders standing on the tile do not block placement.
+4. There is no shovel in the Duel.
+
+**Raiders**
+
+1. The player drags a raider card onto any lane, or taps the card and then a lane. All five lanes are always allowed.
+2. The raider appears at the player's spawn point of that lane and becomes active after 1.0 s (it cannot move, attack or be targeted during the summon).
+3. Raiders cannot be merged.
+
+A rejected command changes nothing and shows the reason as in 3.4 ("Not enough Essence", "Not your side", "Tile occupied").
+
+### 18.6 Units in the Duel
+
+- **Defenders** behave as in sections 4 and 5, but they only target, hit and are blocked by **enemy** units. Auras and revives only affect own defenders.
+- **Raiders** are the Gloom creatures of section 6, bound by the player who played the card. They walk forward at `speed × 1.5` and use their section 6 behavior against the opponent:
+  - A raider is blocked by an enemy ground defender as in 3.8 and attacks it (4.7).
+  - Two enemy ground raiders that come within 0.55 units of each other in a lane block each other and fight with their attack damage and interval until one dies.
+  - Flying raiders (`bat_swarm`) are never blocked and never fight.
+  - `burrower` surfaces when it is 3.0 tiles away from the enemy base line.
+  - `gloom_priest` heals only own raiders. The `gloom_ogre` throws its Gloomling 3 tiles forward.
+- Raiders have armor types and defenders have damage types as in 4.1. Raider attacks against defenders and against other raiders ignore the 4.1 table (multiplier 1.0).
+- All cards play at **card level 6** in ranked and casual Duels, whatever the player's own card level is ("Duel Standard", 20.4). So L = 1.40 in the 4.2 formula for both players.
+- Unit caps per player: at most 12 living raiders. A raider card played at the cap is rejected ("Too many raiders").
+
+### 18.7 Gates and Last Stand Traps
+
+- Each bastion has one **gate** with **8 health**.
+- Each player has one Last Stand Trap per lane (3.9). When an enemy raider reaches the base line in a lane whose trap is unused, the trap fires: it rolls forward from the base line across the whole lane at 8 tiles per second and kills every enemy raider it touches. It does not touch own units or enemy defenders. The trap is then used for the rest of the match.
+- When an enemy raider reaches the base line in a lane whose trap is used, the raider is removed and the gate loses the raider's `gateDamage`.
+- A used trap is shown as a broken roller, so both players can read which lanes are open.
+
+### 18.8 Duel card numbers
+
+All values are for the Duel only. Health, damage, intervals, ranges and special rules come from sections 5 and 6 unless a row changes them.
+
+| Card id | Kind | Duel cost | Duel changes |
+| --- | --- | --- | --- |
+| `glowshroom_monk` | defender | 3 | Produces +1 Essence every 10 s; first after 5 s. ★2: every 7 s. ★3: every 5 s. |
+| `sparkbolt_gremlin` | defender | 2 | — |
+| `iron_granny` | defender | 3 | Health 2400 |
+| `boomcap_brewer` | defender | 4 | — |
+| `snowpup_yeti` | defender | 3 | — |
+| `rune_archer` | defender | 3 | — |
+| `pyro_fox` | defender | 4 | — |
+| `frost_witch` | defender | 5 | — |
+| `snaptrap_bertie` | defender | 2 | Arms 6 s after placement. Damage 900. |
+| `venom_sprout` | defender | 4 | — |
+| `battle_drummer` | defender | 3 | — |
+| `tesla_gnome` | defender | 4 | — |
+| `king_borrowbones` | defender | 6 | Max 1 per player |
+| `aurora_dragon` | defender | 8 | Max 1 per player |
+| `gloomling` | raider | 2 | The card summons **2** Gloomlings, 0.6 s apart. Gate damage 1 each. |
+| `pothead` | raider | 2 | Gate damage 1 |
+| `shieldbearer` | raider | 3 | Gate damage 1 |
+| `shade_wisp` | raider | 2 | Gate damage 1 |
+| `bat_swarm` | raider | 2 | Gate damage 1 |
+| `gloom_priest` | raider | 3 | Gate damage 1 |
+| `gloom_ogre` | raider | 6 | Gate damage 3 |
+| `burrower` | raider | 3 | Gate damage 1 |
+| `shadow_hound` | raider | 2 | Gate damage 1 |
+
+These numbers are the starting point. The Duel balance pass (milestone D5) may change them, but only through the data files and with a balance report (16.7).
+
+### 18.9 Duel HUD (portrait)
+
+| Element | Position | Content |
+| --- | --- | --- |
+| Opponent bar | Top | Opponent name, trophies, gate health (8 pips) |
+| Match timer | Top centre | Remaining time; gold and pulsing in overdrive |
+| Own gate health | Above the hand, left | 8 pips |
+| Essence bar | Above the hand, full width | 10 segments, the current segment fills smoothly; the number in the Essence orb |
+| Hand | Bottom | 4 cards about 76 x 100 px at 390 px width, cost badge, kind icon (shield = defender, claw = raider); unaffordable cards are dimmed |
+| Next card | Left of the hand | Small card, 60 % size |
+| Emotes | Right edge | 4 preset emotes, can be muted by the other player |
+| Surrender | Pause-style menu, top right | Asks for confirmation |
+
+- While a defender card is held, the own columns glow teal and the other tiles are dimmed. While a raider card is held, the five lanes show arrows towards the enemy gate.
+- The placement preview appears immediately on the client; the unit itself appears when the server confirms the command (19.4).
+- Result screen: Victory, Defeat or Draw, trophy change, rewards, "Play again" and "Home".
+
+### 18.10 Bots and practice
+
+- A **bot** is a player driven by code in `src/sim/duelBot/` that only uses the public state of its side and sends the same commands as a human. Bots run on the server in online matches and locally in practice.
+- Practice mode ("Training") runs the whole Duel locally against a bot, without the server. It gives no trophies and no rewards.
+- Three bot levels: `easy` (decides every 3.0 s, random legal card), `normal` (every 1.5 s, counters the lane with the most enemy health), `hard` (every 0.75 s, also saves Essence for counters and pushes lanes with a used trap).
+- A bot opponent in online play is always shown with an "AI" tag next to its name. Never present a bot as a human.
+
+## 19. Online architecture
+
+The match server is the authority for every online Duel. It runs the same simulation code as the client, so there is exactly one implementation of the rules.
+
+### 19.1 Overview
+
+```
+Client A ──commands──▶              ◀──commands── Client B
+          ◀─ticks────  Match server  ────ticks─▶
+                        │  runs src/sim (Duel)
+                        ▼
+                    Supabase (accounts, decks, trophies, match results)
+```
+
+- `server/` is a Node.js program (same Node version as the client tooling) that imports `src/sim/` and `src/data/` directly. It never imports `src/render/`, `src/ui/` or `three`.
+- Transport: WebSocket over TLS (`wss`). Messages are JSON, validated with Zod schemas in `src/net/protocol.ts`, which the client and the server both import.
+- One server process handles matchmaking and matches for version 1. Do not add Redis, queues or a second service without a `needs:decision` issue.
+- In development the server runs at `ws://localhost:8787`. The hosted development server runs on the owner's VPS behind the existing reverse proxy; its URL comes from `VITE_MATCH_SERVER_URL`.
+
+### 19.2 Accounts and authentication
+
+- Every player has a Supabase account. A new install signs in anonymously; the account can be linked to Apple or Google later so progress survives a new phone.
+- The client sends its Supabase access token in the first WebSocket message. The server verifies the token signature and rejects the connection if it is invalid or expired.
+- A player has a display name (3-16 characters, letters, digits, spaces; checked against a block list on the server). Default: "Hero" plus 4 digits.
+- Only the server writes trophies, match results and rewards, using the Supabase service key. The service key exists only on the server, never in the client or the repository.
+
+### 19.3 What the shared simulation contains
+
+- The Duel sim state contains only **public** information: units, gates, traps, timers and both players' Essence.
+- Hands, deck order and the private shuffle seeds are **not** part of the sim. The server keeps them per player in the match object and sends each player only their own hand.
+- A `play` command names the card; the server checks that the card is in that player's hand before it accepts the command.
+
+### 19.4 Tick protocol (server-confirmed lockstep)
+
+1. The server runs the sim at 30 ticks per second (3.2).
+2. A client sends `play` commands as soon as the player acts. The server validates each command and schedules it for the tick `serverTick + 3` (100 ms input delay). Invalid commands are answered with `rejected` and a reason.
+3. Every 3 ticks the server sends one `ticks` message to both clients with the confirmed commands of those 3 ticks (usually empty) and the tick number.
+4. A client only steps its local sim up to the last tick the server confirmed, applying the confirmed commands at their tick. Both clients and the server therefore compute identical states.
+5. The client renders about 100 ms behind the newest confirmed tick and interpolates (11.4), so short network jitter is invisible. If more than 6 confirmed ticks are waiting, the client steps up to 3 ticks per frame until it has caught up.
+6. Every 30 ticks the client sends `hashState` (11.6) for that tick. If it differs from the server's hash, the server sends a full `snapshot` and the client replaces its state. Desyncs are logged with the match id.
+7. The local placement preview (18.9) is the only client-side prediction. The client never applies an unconfirmed command to its sim.
+
+### 19.5 Messages
+
+Client to server:
+
+| Message | Fields | Meaning |
+| --- | --- | --- |
+| `hello` | `token`, `protocolVersion`, `dataVersion` | Authenticate. A version mismatch is answered with `updateRequired`. |
+| `queue` | `mode` (`ranked` or `casual`), `deckId` | Enter matchmaking |
+| `cancelQueue` | — | Leave matchmaking |
+| `play` | `cardId`, `lane`, `col` (defenders only), `seq` | Play a card from the hand |
+| `emote` | `emoteId` | Show an emote |
+| `surrender` | — | Give up |
+| `hash` | `tick`, `hash` | State hash for desync detection |
+| `resume` | `matchId` | Rejoin a running match after a reconnect |
+
+Server to client:
+
+| Message | Fields | Meaning |
+| --- | --- | --- |
+| `welcome` | `playerId`, `serverTime` | Authenticated |
+| `matchFound` | `matchId`, `side`, `opponent` (name, trophies, `isBot`), `seed`, `deck`, `hand`, `next`, `startsAt` | A match begins after the countdown |
+| `ticks` | `fromTick`, `commands` | Confirmed commands for 3 ticks |
+| `hand` | `hand`, `next` | The player's hand after a confirmed play |
+| `rejected` | `seq`, `reason` | A `play` was refused |
+| `snapshot` | `tick`, `state` | Full sim state for resync or resume |
+| `emote` | `side`, `emoteId` | The other player's emote |
+| `matchEnded` | `result`, `reason`, `trophyChange`, `rewards` | Final result from the server |
+| `updateRequired` | — | The client is too old |
+
+Rules:
+
+- The server accepts at most 10 `play` messages per second and at most 1 `emote` per second from one client; more are dropped.
+- Every message with an unknown type or a failed schema check is dropped and counted; 20 bad messages close the connection.
+- `protocolVersion` changes when a message changes. `dataVersion` is a hash of `src/data/`; a client with different data cannot play online, because the sims would not match.
+
+### 19.6 Disconnects
+
+- If a client disconnects during a match, the match continues. The player's units keep acting; no cards are played for that side.
+- The player can `resume` within **20 seconds**. The server sends a `snapshot` and the current hand, then normal `ticks`.
+- After 20 seconds without a resume the player loses by forfeit. A forfeit counts as a normal loss for trophies.
+- If both players are disconnected for 20 seconds, the match is a draw.
+- If the server process stops during a match, the match is void: no trophy change for either player.
+
+### 19.7 Matchmaking
+
+- A player in the queue is matched with the waiting player of the same mode whose trophies are closest, inside a window of ±100 trophies. The window grows by 50 trophies every 3 seconds.
+- After **12 seconds** without an opponent the player gets a bot match. Below 300 trophies the bot is `easy`, from 300 to 899 `normal`, from 900 `hard`.
+- The first 3 ranked matches of a new account are always bot matches (`easy`), so nobody starts with a loss to a veteran.
+- Two players never meet twice in a row if another opponent is available.
+- Sides are assigned at random (seeded by the match id).
+
+### 19.8 Server data (Supabase)
+
+| Table | Columns | Written by |
+| --- | --- | --- |
+| `profiles` | `id`, `name`, `trophies`, `best_trophies`, `season_id`, `created_at` | Server (name: player through an edge function with validation) |
+| `decks` | `id`, `player_id`, `slot` (1-3), `cards` (8 card ids) | Player, checked by a database constraint and by the server at queue time |
+| `matches` | `id`, `mode`, `south_id`, `north_id`, `winner`, `reason`, `duration_ticks`, `seed`, `data_version`, `created_at` | Server |
+| `match_replays` | `match_id`, `commands` (confirmed command log) | Server; kept 14 days |
+| `collection`, `wallet`, `quests`, `chests` | As in section 8 | Server (edge functions) |
+
+Row-level security: a player can read the own rows and the public columns of other profiles (name, trophies). Nobody can write `trophies`, `matches` or `wallet` from a client.
+
+### 19.9 Anti-cheat and fair play
+
+- The server owns the simulation, the Essence and the hands, so a modified client cannot play cards it does not have or cannot afford.
+- Hidden information is never sent to the other client (19.3).
+- The stored replay (seed, decks, confirmed commands) can be re-run headless to reproduce any match for bug reports and cheating reports.
+- Rate limits of 19.5 apply. Accounts are not banned automatically in version 1; suspicious matches are only logged.
+
+### 19.10 Folder additions
+
+```
+server/
+  index.ts            # WebSocket server, auth, routing
+  matchmaking.ts      # queue and bot fallback (19.7)
+  match.ts            # one running match: sim, hands, tick loop (19.4)
+  results.ts          # trophies, rewards, Supabase writes
+src/net/
+  protocol.ts         # Zod message schemas, shared with the server
+  client.ts           # WebSocket client, reconnect, tick buffer
+src/sim/duel/
+  createDuelSim.ts    # entry point of the Duel sim
+  sides.ts  essence.ts  cards.ts  raiders.ts  gates.ts
+src/sim/duelBot/      # easy, normal, hard (18.10)
+src/data/duelRules.ts # every number of section 18
+tests/server/         # vitest: protocol, matchmaking, match loop with two fake clients
+```
+
+- `src/net/` may import from `src/sim/` (types), `src/data/` and `zod`. Only `src/platform/` and `src/net/` open network connections.
+- `server/` may import from `src/sim/`, `src/data/`, `src/net/protocol.ts`, `ws`, `zod` and `@supabase/supabase-js`.
+
+### 19.11 Duel simulation contract
+
+These types live in `src/sim/duel/types.ts`. The campaign contract of 11.3 stays unchanged.
+
+```ts
+export type Side = 'south' | 'north';
+
+export type DuelCommand =
+  | { type: 'playDefender'; side: Side; cardId: string; lane: number; col: number }
+  | { type: 'playRaider'; side: Side; cardId: string; lane: number }
+  | { type: 'surrender'; side: Side };
+
+export type DuelEvent =
+  | SimEvent // unit events of 11.3; every unit event also carries `side`
+  | { type: 'essenceChanged'; side: Side; essence: number }
+  | { type: 'gateDamaged'; side: Side; amount: number; health: number }
+  | { type: 'phaseChanged'; phase: 'countdown' | 'regular' | 'overdrive' | 'suddenDeath' }
+  | { type: 'duelEnded'; winner: Side | 'draw'; reason: 'gate' | 'time' | 'surrender' | 'forfeit' };
+
+export interface DuelSim {
+  readonly state: Readonly<DuelState>;
+  enqueue(cmd: DuelCommand, tick: number): void; // applied at the start of that tick
+  step(): DuelEvent[];
+}
+
+export function createDuelSim(seed: number): DuelSim;
+```
+
+- The Duel sim reuses the combat, status, combo and projectile code of the campaign sim. Shared code moves to `src/sim/combat/` and takes the unit's side as a parameter; do not copy it.
+- Tick order: 1) apply the commands scheduled for this tick, sorted by side (south first) and arrival order, 2) Essence income, 3) defenders act (sorted by id), 4) projectiles, 5) status effects, 6) raiders move, block and fight (sorted by id), 7) remove dead units, 8) traps and gate damage, 9) phase changes and end check.
+- The hand cycle is not part of the sim (19.3): `createDuelSim` does not know the decks. The caller (server, or the local practice match) checks hands and passes only legal card plays.
+
+## 20. Ranked play and progression
+
+### 20.1 Trophies
+
+| Result | Trophies |
+| --- | --- |
+| Ranked win | +30 |
+| Ranked loss | -20 (never below 0, and never below the floor of the current arena) |
+| Draw | 0 |
+| Casual or practice match | 0 |
+
+- Bot matches in ranked count like any other match.
+- `best_trophies` records the highest value ever reached.
+
+### 20.2 Arenas
+
+Reaching an arena for the first time unlocks its cards (added to the collection at level 1) and gives the listed chest. An arena, once reached, is never lost: its trophy floor is the lowest value the player can fall to.
+
+| Arena | Name | Trophy floor | Unlocks | First-time reward |
+| --- | --- | --- | --- | --- |
+| 1 | Brightvale Green | 0 | `sparkbolt_gremlin`, `glowshroom_monk`, `iron_granny`, `boomcap_brewer`, `gloomling`, `pothead`, `shade_wisp`, `bat_swarm` | — |
+| 2 | Glowshroom Forest | 300 | `snowpup_yeti`, `rune_archer`, `shieldbearer`, `shadow_hound` | Silver chest |
+| 3 | Frozen Harbor | 600 | `snaptrap_bertie`, `venom_sprout`, `gloom_priest`, `burrower` | Silver chest |
+| 4 | Forge Mountain | 1000 | `battle_drummer`, `tesla_gnome`, `gloom_ogre` | Gold chest |
+| 5 | Gloom Citadel | 1500 | — (all cards obtainable from chests) | Gold chest |
+
+- `pyro_fox`, `frost_witch`, `king_borrowbones` and `aurora_dragon` come only from chests (8.4), from Arena 2 on.
+- The 8 Arena 1 cards are exactly one legal starter deck, so every new player can queue immediately.
+- The arena only changes the level environment and the card pool. Arena 1 uses the World 1 environment.
+
+### 20.3 Seasons
+
+- A season lasts 4 weeks and starts on a Monday at 00:00 UTC.
+- At the season end every player above 1500 trophies is reset to `1500 + (trophies - 1500) / 2`, rounded down. Players at or below 1500 keep their trophies.
+- Season rewards by best arena reached in the season: Arena 2 = Silver chest, Arena 3 = Silver chest + 100 gems, Arena 4 = Gold chest + 200 gems, Arena 5 = Gold chest + 400 gems.
+- The battle pass of 8.8 runs on the same 4-week season. Season XP: 20 per Duel win, 8 per Duel loss or draw, 20 per daily quest, 10 per campaign level won.
+
+### 20.4 Card levels and fairness
+
+- **Duel Standard:** in every ranked and casual Duel all cards of both players play at card level 6 (18.6). Card levels from 8.3 never give an advantage against another player.
+- Card levels still matter in the campaign (sections 3 to 7) and are shown on the card.
+- What players earn for competitive play is the card pool (arenas, chests), trophies, season rewards and cosmetics. Nothing that can be bought changes the strength of a card in a Duel.
+
+### 20.5 Rewards per Duel
+
+| Event | Reward |
+| --- | --- |
+| Ranked or casual win | 40 gold |
+| Ranked or casual loss or draw | 10 gold |
+| First 3 wins of the day | One Wooden chest each |
+| Practice match | Nothing |
+
+Daily quest pool for the Duel (replaces the 8.5 pool; each still gives 50 gold + 10 gems, all 3 give a Wooden chest): win 2 Duels; play 20 raider cards; merge a defender to ★3 in a Duel; trigger 5 combos; win a Duel without losing gate health; win a Duel with a deck that has at least 5 Common cards.
+
+### 20.6 Screens
+
+| Screen | Goes to |
+| --- | --- |
+| Home (arena art, trophies, BATTLE button, deck preview) | Matchmaking, Decks, Collection, Shop, Campaign, Training, Settings |
+| Matchmaking ("Searching for an opponent", cancel) | Duel, Home |
+| Duel (18.9) | Result |
+| Result (Victory/Defeat/Draw, trophies, rewards) | Matchmaking ("Play again"), Home |
+| Decks (3 deck slots, 8 cards each, average cost, validity check of 18.4) | Home |
+| Campaign | The Level Select flow of 11.8 |
+| Training | Duel against a bot (18.10) |
+
+The first launch plays a guided Training match (hand pointer, short text bubbles) before the Home screen appears.
