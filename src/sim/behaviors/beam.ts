@@ -4,19 +4,27 @@ import { applyArmorMultiplier, calculatePreArmorDamage } from '../combat/damage'
 import { applyAfterHitCombos, applyShatter } from '../combat/combos';
 import { applyAttackStatus, beginDefenderAttack } from '../combat/status';
 import { enemyArmor } from '../enemies/armor';
-import { ENEMY_SPAWN_X } from '../grid';
-import { tileCenterX } from '../grid';
-import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
+import {
+  advanceX,
+  defenderSide,
+  enemySide,
+  forwardOf,
+  isAheadOf,
+  type ForwardDirection,
+} from '../combat/side';
+import { isCloserTarget } from '../combat/targeting';
+import { ENEMY_SPAWN_X, tileCenterX } from '../grid';
+import type { CombatState, DefenderState, EnemyState, SimEvent } from '../types';
 import { collectAuraDamageBuffs } from './aura';
 import { star3RangeTiles } from './star3';
 
 /**
- * One `beam` attack (spec 4.3): instantly hits every enemy in its lane within
- * `range` tiles. Beams hit the body of a Shieldbearer directly (spec 6.2) and hit
+ * One `beam` attack (spec 4.3): instantly hits every unit of the other side in
+ * its lane within `range` tiles ahead (spec 18.1). Beams hit the body of a Shieldbearer directly (spec 6.2) and hit
  * flying enemies (spec 4.4 rule 4). A ★3 `range_up` bonus replaces the range (spec 5.2).
  */
 export function attackWithBeam(
-  state: SimState,
+  state: CombatState,
   defender: DefenderState,
   defenderDef: DefenderDef,
   events: SimEvent[],
@@ -25,16 +33,7 @@ export function attackWithBeam(
   if (damageType === undefined) {
     return false;
   }
-  const fromX = tileCenterX(defender.col);
-  const maximumX = fromX + (star3RangeTiles(defender, defenderDef) ?? ENEMY_SPAWN_X);
-  const targets = state.enemies
-    .filter(
-      (enemy) =>
-        enemy.lane === defender.lane &&
-        enemy.x > fromX - rules.combat.targetingBehindOffsetTiles &&
-        enemy.x <= maximumX,
-    )
-    .sort((first, second) => first.id - second.id);
+  const targets = beamTargets(state, defender, defenderDef);
   if (targets.length === 0) {
     return false;
   }
@@ -46,7 +45,7 @@ export function attackWithBeam(
     defender.stars,
     buffs,
   );
-  const primary = nearestTarget(targets);
+  const primary = nearestTarget(targets, forwardOf(defenderSide(defender)));
   const attackStatus = beginDefenderAttack(defender, defenderDef);
   events.push({ type: 'attack', sourceId: defender.id, targetId: primary?.id ?? null });
   for (const enemy of targets) {
@@ -60,15 +59,37 @@ export function attackWithBeam(
   return true;
 }
 
-/** The enemy closest to the base (smallest x, then smallest id), for the attack event. */
-function nearestTarget(targets: readonly EnemyState[]): EnemyState | undefined {
+/** The units of the other side the beam reaches, in id order (spec 4.3, 4.4 rule 1, 18.1). */
+function beamTargets(
+  state: CombatState,
+  defender: DefenderState,
+  defenderDef: DefenderDef,
+): EnemyState[] {
+  const side = defenderSide(defender);
+  const forward = forwardOf(side);
+  const fromX = tileCenterX(defender.col);
+  const rangeTiles = star3RangeTiles(defender, defenderDef) ?? ENEMY_SPAWN_X;
+  const rangeLimitX = advanceX(fromX, rangeTiles, forward);
+  const behindLimitX = advanceX(fromX, -rules.combat.targetingBehindOffsetTiles, forward);
+  return state.enemies
+    .filter(
+      (enemy) =>
+        enemy.lane === defender.lane &&
+        enemySide(enemy) !== side &&
+        isAheadOf(enemy.x, behindLimitX, forward) &&
+        !isAheadOf(enemy.x, rangeLimitX, forward),
+    )
+    .sort((first, second) => first.id - second.id);
+}
+
+/** The target closest to the defender's own bastion (then smallest id), for the attack event. */
+function nearestTarget(
+  targets: readonly EnemyState[],
+  forward: ForwardDirection,
+): EnemyState | undefined {
   let nearest: EnemyState | undefined;
   for (const enemy of targets) {
-    if (
-      nearest === undefined ||
-      enemy.x < nearest.x ||
-      (enemy.x === nearest.x && enemy.id < nearest.id)
-    ) {
+    if (nearest === undefined || isCloserTarget(enemy, nearest, forward)) {
       nearest = enemy;
     }
   }

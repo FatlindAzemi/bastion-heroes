@@ -1,14 +1,14 @@
 import { enemyById, rules } from '../../data';
-import type { DefenderDef, LevelDef } from '../../data';
+import type { DefenderDef } from '../../data';
 import { star3StatusDurationS } from '../behaviors/star3';
-import { isActiveLane, isInBounds, terrainAt } from '../grid';
+import { isActiveLane, isInBounds, terrainAt, type TerrainLayout } from '../grid';
 import { ticksFromSeconds } from '../placement';
 import type {
+  CombatState,
   DefenderState,
   EnemyState,
   EnemyStatusState,
   SimEvent,
-  SimState,
   StatusKind,
 } from '../types';
 
@@ -19,7 +19,7 @@ export interface StatusApplication {
   durationS?: number;
   /** Poison only: stacks added by this application (default 1). */
   stacks?: number;
-  /** Knockback only: tiles the enemy is pushed to the right. */
+  /** Knockback only: tiles the unit is pushed back, against its own forward direction. */
   distanceTiles?: number;
 }
 
@@ -234,7 +234,11 @@ function applyPoison(tick: number, enemy: EnemyState, application: StatusApplica
   }
 }
 
-/** Knockback: pushed right by the given tiles over the 4.5 duration (bosses are immune). */
+/**
+ * Knockback: pushed back by the given tiles over the 4.5 duration (bosses are
+ * immune). "Back" is against the unit's own forward direction, so to the right
+ * for a campaign enemy; the movement is applied in the walking phase.
+ */
 function applyKnockback(tick: number, enemy: EnemyState, application: StatusApplication): void {
   const durationTicks = durationTicksOf('knockback', application.durationS);
   const distanceTiles = application.distanceTiles;
@@ -311,7 +315,11 @@ export function applyAttackStatus(
 }
 
 /** Phase 6 (spec 11.3): ticks the periodic status damage and expires statuses (spec 4.5). */
-export function updateStatusEffects(state: SimState, level: LevelDef, events: SimEvent[]): void {
+export function updateStatusEffects(
+  state: CombatState,
+  level: TerrainLayout,
+  events: SimEvent[],
+): void {
   const enemies = [...state.enemies].sort((first, second) => first.id - second.id);
   for (const enemy of enemies) {
     updateWetStatus(state.tick, level, enemy, events);
@@ -325,7 +333,7 @@ export function updateStatusEffects(state: SimState, level: LevelDef, events: Si
 /** Sets/clears the terrain-driven Wet status (spec 4.5): while the enemy stands on water. */
 function updateWetStatus(
   tick: number,
-  level: LevelDef,
+  level: TerrainLayout,
   enemy: EnemyState,
   events: SimEvent[],
 ): void {

@@ -24,6 +24,13 @@ export const BASE_LINE_X = rules.grid.baseLineX;
 /** Enemies spawn at this world x, just right of the grid (spec 3.1). */
 export const ENEMY_SPAWN_X = rules.grid.enemySpawnX;
 
+/**
+ * The lanes and terrain overrides of a board: the part of a level the shared
+ * combat code reads (spec 3.1). The Duel board has all lanes active and no
+ * terrain (spec 18.1).
+ */
+export type TerrainLayout = Pick<LevelDef, 'activeLanes' | 'terrain'>;
+
 /** Terrain of a tile that the level does not override (spec 3.1). */
 const DEFAULT_TERRAIN: TerrainType = 'normal';
 
@@ -61,12 +68,16 @@ export function tileCenter(lane: number, col: number): WorldPosition {
 }
 
 /** True when the lane is active in this level; the other lanes are rocks and unused (spec 3.1, 7.1). */
-export function isActiveLane(level: LevelDef, lane: number): boolean {
+export function isActiveLane(level: Pick<LevelDef, 'activeLanes'>, lane: number): boolean {
   return level.activeLanes.includes(lane);
 }
 
 /** Terrain of a tile: the level's override or normal when there is none (spec 3.1, 7.1). */
-export function terrainAt(level: LevelDef, lane: number, col: number): TerrainType {
+export function terrainAt(
+  level: Pick<LevelDef, 'terrain'>,
+  lane: number,
+  col: number,
+): TerrainType {
   const tile = level.terrain.find(
     (terrainTile) => terrainTile.lane === lane && terrainTile.col === col,
   );

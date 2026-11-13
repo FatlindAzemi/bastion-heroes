@@ -1,8 +1,9 @@
 import { enemyById, rules } from '../../data';
 import { enemyArmor } from '../enemies/armor';
 import { ticksFromSeconds } from '../placement';
-import type { ComboId, ElementKind, EnemyState, SimEvent, SimState } from '../types';
+import type { CombatState, ComboId, ElementKind, EnemyState, SimEvent } from '../types';
 import { applyArmorMultiplier, type DamageType } from './damage';
+import { enemySide } from './side';
 import { applyStatus, hasStatus, removeStatus } from './status';
 
 /** Distance between two enemies in tile units (x along the lane, lane across; spec 3.1). */
@@ -10,10 +11,17 @@ function distanceBetween(first: EnemyState, second: EnemyState): number {
   return Math.hypot(first.x - second.x, first.lane - second.lane);
 }
 
-/** The enemies within `radiusTiles` of the target, in id order (spec 4.6). */
-function enemiesWithin(state: SimState, target: EnemyState, radiusTiles: number): EnemyState[] {
+/**
+ * The units of the target's own side within `radiusTiles` of it, in id order
+ * (spec 4.6, 18.6): a combo spreads among the units the attacker fights, never
+ * to the attacker's own units.
+ */
+function enemiesWithin(state: CombatState, target: EnemyState, radiusTiles: number): EnemyState[] {
   return state.enemies
-    .filter((enemy) => distanceBetween(enemy, target) <= radiusTiles)
+    .filter(
+      (enemy) =>
+        enemySide(enemy) === enemySide(target) && distanceBetween(enemy, target) <= radiusTiles,
+    )
     .sort((first, second) => first.id - second.id);
 }
 
@@ -72,7 +80,7 @@ export function applyShatter(
  * deals its Blast burst to every enemy within the radius and stuns them.
  */
 function applySteam(
-  state: SimState,
+  state: CombatState,
   tick: number,
   element: ElementKind,
   target: EnemyState,
@@ -97,7 +105,7 @@ function applySteam(
 
 /** Toxic Spread (spec 4.6): Blast damage on a Poisoned enemy gives all enemies in the radius a stack. */
 function applyToxic(
-  state: SimState,
+  state: CombatState,
   tick: number,
   damageType: DamageType,
   target: EnemyState,
@@ -119,7 +127,7 @@ function applyToxic(
 
 /** Chain Shock (spec 4.6): a storm attack on a Wet enemy jumps damage to the other Wet enemies. */
 function applyChain(
-  state: SimState,
+  state: CombatState,
   tick: number,
   element: ElementKind,
   target: EnemyState,
@@ -146,7 +154,7 @@ function applyChain(
  * either, so there is no recursion.
  */
 export function applyAfterHitCombos(
-  state: SimState,
+  state: CombatState,
   tick: number,
   element: ElementKind,
   damageType: DamageType,

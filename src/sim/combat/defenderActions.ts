@@ -8,11 +8,11 @@ import { attackWithStraight } from '../behaviors/straight';
 import { star3BoltBurst } from '../behaviors/star3';
 import { updateTrapDefender } from '../behaviors/trap';
 import { isDefenderActive, ticksFromSeconds } from '../placement';
-import type { DefenderState, SimEvent, SimState } from '../types';
+import type { CombatState, DefenderState, SimEvent } from '../types';
 
 /** Runs the attack behaviour of one pattern; returns true when the defender fired (spec 4.3). */
 function attackWithPattern(
-  state: SimState,
+  state: CombatState,
   defender: DefenderState,
   defenderDef: DefenderDef,
   events: SimEvent[],
@@ -39,7 +39,7 @@ function attackWithPattern(
  * the full attack interval (spec 5.2).
  */
 function scheduleNextAttack(
-  state: SimState,
+  state: CombatState,
   defender: DefenderState,
   defenderDef: DefenderDef,
   attackIntervalTicks: number,
@@ -62,7 +62,7 @@ function scheduleNextAttack(
  * A burst that loses its target stops: the next attack starts a fresh burst as
  * soon as a target appears again (spec 5.2).
  */
-function cancelBurstWithoutTarget(state: SimState, defender: DefenderState): void {
+function cancelBurstWithoutTarget(state: CombatState, defender: DefenderState): void {
   if (defender.burstShotsRemaining === 0) {
     return;
   }
@@ -78,7 +78,7 @@ function cancelBurstWithoutTarget(state: SimState, defender: DefenderState): voi
  * `melee` is not in any roster defender (5.2); enemy bites are spec 4.7.
  * A defender cannot act during its 0.5 s drop (spec 3.4).
  */
-export function updateDefenders(state: SimState, events: SimEvent[]): void {
+export function updateDefenders(state: CombatState, events: SimEvent[]): void {
   const defenders = [...state.defenders].sort((first, second) => first.id - second.id);
   for (const defender of defenders) {
     if (!isDefenderActive(defender, state.tick)) {

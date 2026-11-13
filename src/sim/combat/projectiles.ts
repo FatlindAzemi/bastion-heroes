@@ -1,20 +1,21 @@
 import { enemyById, rules } from '../../data';
 import { enemyArmor } from '../enemies/armor';
 import { absorbShieldHit, hasShield, shieldBlocksProjectile } from '../enemies/shieldbearer';
-import { ENEMY_SPAWN_X } from '../grid';
 import type {
+  CombatState,
   DefenderState,
   ElementKind,
   EnemyState,
   FirePatchSpec,
   ProjectileState,
   SimEvent,
-  SimState,
 } from '../types';
 import { applyAfterHitCombos, applyShatter } from './combos';
 import { applyArmorMultiplier, scaleDamage, type DamageType } from './damage';
 import { spawnFirePatch } from './firePatches';
+import { advanceX, attackSide, enemySide, forwardOf, isAheadOf, laneEndX } from './side';
 import { applyStatus, type AttackStatus } from './status';
+import { isCloserTarget } from './targeting';
 
 /** Tiles a moving projectile covers per tick (spec 4.3: 6 tiles/s at 30 ticks/s). */
 const PROJECTILE_TILES_PER_TICK =
@@ -46,15 +47,20 @@ export interface ProjectileOptions {
   firePatch?: FirePatchSpec | null;
 }
 
-/** Adds a projectile to the state, allocates its id and emits `projectileSpawned` (spec 11.3). */
+/**
+ * Adds a projectile to the state, allocates its id and emits `projectileSpawned`
+ * (spec 11.3). The projectile belongs to the side of the defender that fired it
+ * and flies in that side's forward direction (spec 18.1).
+ */
 export function spawnProjectile(
-  state: SimState,
+  state: CombatState,
   defender: DefenderState,
   options: ProjectileOptions,
   events: SimEvent[],
 ): ProjectileState {
   const projectile: ProjectileState = {
     id: state.nextId,
+    ...(defender.side === undefined ? {} : { side: defender.side }),
     kind: options.kind,
     lane: options.lane,
     x: options.x,
@@ -88,26 +94,32 @@ export function spawnProjectile(
 }
 
 /**
- * Finds the first enemy a moving projectile reaches this tick (spec 4.3). Only
- * enemies the projectile passes this tick (previousX < x <= x) count, so it never
- * hits an enemy behind the defender that fired it. Flying enemies only count when
- * the projectile has `hitsFlying` (spec 4.4 rule 4).
+ * Finds the first unit of the other side a moving projectile reaches this tick
+ * (spec 4.3, 18.1). Only units the projectile passes this tick count (in the
+ * campaign: previousX < x <= projectile.x), so it never hits a unit behind the
+ * defender that fired it. Flying units only count when the projectile has
+ * `hitsFlying` (spec 4.4 rule 4).
  */
 function findHitEnemy(
   enemies: readonly EnemyState[],
   projectile: ProjectileState,
   previousX: number,
 ): EnemyState | undefined {
+  const side = attackSide(projectile);
+  const forward = forwardOf(side);
   let hit: EnemyState | undefined;
   for (const enemy of enemies) {
-    if (enemy.lane !== projectile.lane || enemy.x > projectile.x || enemy.x <= previousX) {
+    if (enemy.lane !== projectile.lane || enemySide(enemy) === side) {
+      continue;
+    }
+    if (isAheadOf(enemy.x, projectile.x, forward) || !isAheadOf(enemy.x, previousX, forward)) {
       continue;
     }
     const enemyDef = enemyById[enemy.enemyId];
     if (enemyDef?.isFlying === true && !projectile.hitsFlying) {
       continue;
     }
-    if (hit === undefined || enemy.x < hit.x || (enemy.x === hit.x && enemy.id < hit.id)) {
+    if (hit === undefined || isCloserTarget(enemy, hit, forward)) {
       hit = enemy;
     }
   }
@@ -117,11 +129,11 @@ function findHitEnemy(
 /**
  * Applies one rounded hit to an enemy, its status and the 11.3 hit event
  * (spec 4.2, 4.5, 6.2). Returns true when the hit was absorbed by a shield:
- * a `straight`/`diagonal` projectile hits the right-facing shield first, so the
+ * a `straight`/`diagonal` projectile hits the forward-facing shield first, so the
  * body, its statuses and the combos are untouched.
  */
 function applyHit(
-  state: SimState,
+  state: CombatState,
   enemy: EnemyState,
   projectile: ProjectileState,
   events: SimEvent[],
@@ -167,11 +179,16 @@ function applyHit(
 
 /**
  * Lands a lob/splash arc (spec 4.3): full damage to the target and the 50 %
- * splash ratio from the rules to every other enemy inside the splash radius.
+ * splash ratio from the rules to every other unit of the target's side inside
+ * the splash radius.
  * If the target died during the flight the arc lands without effect. A ★3 Pyro
  * Fox fire patch is dropped at the impact point (spec 5.2).
  */
-function resolveArcImpact(state: SimState, projectile: ProjectileState, events: SimEvent[]): void {
+function resolveArcImpact(
+  state: CombatState,
+  projectile: ProjectileState,
+  events: SimEvent[],
+): void {
   if (projectile.targetId === null) {
     return;
   }
@@ -182,7 +199,7 @@ function resolveArcImpact(state: SimState, projectile: ProjectileState, events: 
   const impactX = target.x;
   applyHit(state, target, projectile, events);
   if (projectile.firePatch !== null) {
-    spawnFirePatch(state, target.lane, impactX, projectile.firePatch);
+    spawnFirePatch(state, target.lane, impactX, projectile.firePatch, projectile.side);
   }
   const splashRadius = projectile.splashRadius;
   if (splashRadius === null) {
@@ -192,6 +209,7 @@ function resolveArcImpact(state: SimState, projectile: ProjectileState, events: 
     .filter(
       (enemy) =>
         enemy.id !== target.id &&
+        enemySide(enemy) === enemySide(target) &&
         enemy.lane === projectile.lane &&
         Math.abs(enemy.x - impactX) <= splashRadius,
     )
@@ -202,7 +220,7 @@ function resolveArcImpact(state: SimState, projectile: ProjectileState, events: 
 }
 
 /** Keeps the arc's x on its target while it flies, for the renderer (spec 4.3). */
-function followArcTarget(state: SimState, projectile: ProjectileState): void {
+function followArcTarget(state: CombatState, projectile: ProjectileState): void {
   if (projectile.targetId === null) {
     return;
   }
@@ -214,16 +232,17 @@ function followArcTarget(state: SimState, projectile: ProjectileState): void {
 
 /** Moves one straight/diagonal projectile and resolves the lane switch and the hit (spec 4.3). */
 function updateMovingProjectile(
-  state: SimState,
+  state: CombatState,
   projectile: ProjectileState,
   events: SimEvent[],
 ): boolean {
+  const forward = forwardOf(attackSide(projectile));
   const previousX = projectile.x;
-  projectile.x += PROJECTILE_TILES_PER_TICK;
+  projectile.x = advanceX(projectile.x, PROJECTILE_TILES_PER_TICK, forward);
   if (
     projectile.targetLane !== null &&
     projectile.switchAtX !== null &&
-    projectile.x >= projectile.switchAtX
+    !isAheadOf(projectile.switchAtX, projectile.x, forward)
   ) {
     projectile.lane = projectile.targetLane;
     projectile.targetLane = null;
@@ -233,21 +252,21 @@ function updateMovingProjectile(
   if (hitEnemy !== undefined) {
     const hitShield = applyHit(state, hitEnemy, projectile, events);
     if (hitShield) {
-      // Straight/diagonal projectiles stop on the right-facing shield (spec 6.2).
+      // Straight/diagonal projectiles stop on the forward-facing shield (spec 6.2).
       return true;
     }
     if (projectile.piercesRemaining > 0) {
       // ★3 piercing_arrow: the projectile passes through and keeps flying (spec 5.2).
       projectile.piercesRemaining -= 1;
-      return projectile.x > ENEMY_SPAWN_X;
+      return isAheadOf(projectile.x, laneEndX(forward), forward);
     }
     return true;
   }
-  return projectile.x > ENEMY_SPAWN_X;
+  return isAheadOf(projectile.x, laneEndX(forward), forward);
 }
 
 /** Phase 5 (spec 11.3): moves the projectiles and resolves their hits and landings (spec 4.3). */
-export function updateProjectiles(state: SimState, events: SimEvent[]): void {
+export function updateProjectiles(state: CombatState, events: SimEvent[]): void {
   let index = 0;
   while (index < state.projectiles.length) {
     const projectile = state.projectiles[index];
@@ -277,7 +296,7 @@ export function updateProjectiles(state: SimState, events: SimEvent[]): void {
 
 /** Removes one projectile and emits `projectileEnded` (spec 11.3). */
 function removeProjectile(
-  state: SimState,
+  state: CombatState,
   index: number,
   projectile: ProjectileState,
   events: SimEvent[],

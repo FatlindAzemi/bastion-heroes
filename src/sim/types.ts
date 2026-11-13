@@ -90,9 +90,18 @@ export interface Rng {
   next(): number;
 }
 
+/**
+ * The two sides of a fight (spec 18.1, 19.11): south has its bastion at x = 0 and
+ * moves forward towards +x, north has its bastion at x = 9 and moves towards -x.
+ * The Duel contract of 19.11 re-exports this type from `src/sim/duel/types.ts`.
+ */
+export type Side = 'south' | 'north';
+
 /** A defender standing on the grid (spec 11.3, 3.4, 5.2). */
 export interface DefenderState {
   id: number;
+  /** Owning side; absent in the campaign, where every defender is south (spec 18.1). */
+  side?: Side;
   defenderId: string;
   lane: number;
   col: number;
@@ -149,6 +158,8 @@ export interface EnemyStatusState {
 /** An enemy walking along a lane (spec 3.8, 11.3). */
 export interface EnemyState {
   id: number;
+  /** Owning side; absent in the campaign, where every enemy is north (spec 18.1). */
+  side?: Side;
   enemyId: string;
   lane: number;
   x: number;
@@ -182,6 +193,8 @@ export interface EnemyState {
  */
 export interface ProjectileState {
   id: number;
+  /** Side of the defender that fired it; absent in the campaign (south, spec 18.1). */
+  side?: Side;
   kind: string;
   lane: number;
   x: number;
@@ -235,6 +248,8 @@ export interface FirePatchSpec {
  */
 export interface FirePatchState {
   id: number;
+  /** Side of the defender that left it; absent in the campaign (south, spec 18.1). */
+  side?: Side;
   lane: number;
   /** World x of the impact point. */
   x: number;
@@ -300,6 +315,27 @@ export interface TrapState {
   used: boolean;
   /** World x of the roller while it rolls from trapStartX to trapEndX; null when it is not rolling. */
   rollerX: number | null;
+}
+
+/**
+ * The part of a simulation state the shared combat code works on (spec 19.11):
+ * the clock, the id counter and the unit lists. `SimState` satisfies it, and so
+ * must the Duel state, so both sims run the same combat, status, combo and
+ * projectile code.
+ */
+export interface CombatState {
+  /** Ticks elapsed; 1 tick = 1/30 s (spec 3.2). */
+  tick: number;
+  /** Next entity id of the one shared counter (spec 11.3). */
+  nextId: number;
+  /** Defenders of every side on the grid. */
+  readonly defenders: DefenderState[];
+  /** Walking units of every side: campaign enemies, Duel raiders. */
+  readonly enemies: EnemyState[];
+  /** Projectiles in flight. */
+  readonly projectiles: ProjectileState[];
+  /** ★3 Pyro Fox fire patches on the field (spec 5.2). */
+  readonly firePatches: FirePatchState[];
 }
 
 /** Status of the level run (spec 3.9, 3.10). */

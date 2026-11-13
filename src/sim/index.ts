@@ -31,6 +31,7 @@ export {
 export { createRng } from './rng';
 export { MAX_STARS, starModelScale } from './stars';
 export type {
+  CombatState,
   ComboCooldownState,
   ComboId,
   Command,
@@ -49,6 +50,7 @@ export type {
   Replay,
   ReplayCommand,
   Rng,
+  Side,
   Sim,
   SimEvent,
   SimState,
