@@ -19,5 +19,7 @@ export const shieldbearer: EnemyDef = {
   shieldHp: 1200,
   shieldArmor: 'armored',
   isBoss: false,
+  // 18.8: Duel cost and gate damage.
+  duel: { kind: 'raider', cost: 3, gateDamage: 1 },
   milestone: 'M2',
 };

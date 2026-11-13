@@ -23,5 +23,7 @@ export const snowpupYeti: DefenderDef = {
   statusOnHit: { status: 'slow', durationS: 3, value: 0.5 },
   star3Bonus: 'slow_duration_up',
   star3Params: { slowDurationS: 5 },
+  // 18.8: Duel cost and Duel-only changes.
+  duel: { kind: 'defender', cost: 3 },
   milestone: 'M2',
 };

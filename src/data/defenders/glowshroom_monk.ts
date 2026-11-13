@@ -23,5 +23,11 @@ export const glowshroomMonk: DefenderDef = {
   orbEssence: 70,
   star3Bonus: 'producer_orb_value_up',
   star3Params: { orbEssence: 90 },
+  // 18.8: Duel cost and Duel-only changes.
+  duel: {
+    kind: 'defender',
+    cost: 3,
+    producer: { essence: 1, firstDelayS: 5, intervalSByStar: [10, 7, 5] },
+  },
   milestone: 'M2',
 };

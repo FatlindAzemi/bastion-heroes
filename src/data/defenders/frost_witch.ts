@@ -26,5 +26,7 @@ export const frostWitch: DefenderDef = {
   freezeEveryNthAttack: 4,
   star3Bonus: 'range_up',
   star3Params: { range: 6 },
+  // 18.8: Duel cost and Duel-only changes.
+  duel: { kind: 'defender', cost: 5 },
   milestone: 'M2',
 };

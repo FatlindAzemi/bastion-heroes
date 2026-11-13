@@ -19,5 +19,7 @@ export const gloomOgre: EnemyDef = {
   throwEnemyId: 'gloomling',
   throwDistanceTiles: 3,
   isBoss: false,
+  // 18.8: Duel cost and gate damage.
+  duel: { kind: 'raider', cost: 6, gateDamage: 3 },
   milestone: 'M2',
 };

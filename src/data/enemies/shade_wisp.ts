@@ -14,5 +14,7 @@ export const shadeWisp: EnemyDef = {
   biteIntervalS: 0.5,
   isFlying: false,
   isBoss: false,
+  // 18.8: Duel cost and gate damage.
+  duel: { kind: 'raider', cost: 2, gateDamage: 1 },
   milestone: 'M2',
 };

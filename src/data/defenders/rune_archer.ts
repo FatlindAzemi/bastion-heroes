@@ -24,5 +24,7 @@ export const runeArcher: DefenderDef = {
   element: 'none',
   star3Bonus: 'piercing_arrow',
   star3Params: { extraHits: 1 },
+  // 18.8: Duel cost and Duel-only changes.
+  duel: { kind: 'defender', cost: 3 },
   milestone: 'M2',
 };

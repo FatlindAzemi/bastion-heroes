@@ -24,5 +24,7 @@ export const boomcapBrewer: DefenderDef = {
   element: 'none',
   star3Bonus: 'splash_radius_up',
   star3Params: { splashRadius: 1.2 },
+  // 18.8: Duel cost and Duel-only changes.
+  duel: { kind: 'defender', cost: 4 },
   milestone: 'M2',
 };
