@@ -2,15 +2,17 @@ import { enemyById, rules } from '../../data';
 import type { DefenderDef } from '../../data';
 import { applyAfterHitCombos, applyShatter } from '../combat/combos';
 import { applyArmorMultiplier, calculatePreArmorDamage } from '../combat/damage';
+import { defenderSide, enemySide } from '../combat/side';
 import { enemyArmor } from '../enemies/armor';
 import { ticksFromSeconds } from '../placement';
-import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
+import type { CombatState, DefenderState, EnemyState, SimEvent } from '../types';
 import { collectAuraDamageBuffs } from './aura';
 
-/** True when the enemy stands on the trap defender's tile (spec 4.3 trap). */
+/** True when a unit of the other side stands on the trap defender's tile (spec 4.3 trap, 18.6). */
 function isOnTile(defender: DefenderState, enemy: EnemyState): boolean {
   const tileLeftX = defender.col * rules.grid.tileSize;
   return (
+    enemySide(enemy) !== defenderSide(defender) &&
     enemy.lane === defender.lane &&
     enemy.x >= tileLeftX &&
     enemy.x < tileLeftX + rules.grid.tileSize
@@ -24,7 +26,7 @@ function isOnTile(defender: DefenderState, enemy: EnemyState): boolean {
  * never trigger it when they arrive with #47 (no burrowed state exists yet).
  */
 export function updateTrapDefender(
-  state: SimState,
+  state: CombatState,
   defender: DefenderState,
   defenderDef: DefenderDef,
   events: SimEvent[],

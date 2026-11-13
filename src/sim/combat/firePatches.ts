@@ -1,6 +1,7 @@
 import { rules } from '../../data';
 import { ticksFromSeconds } from '../time';
-import type { FirePatchSpec, FirePatchState, SimEvent, SimState } from '../types';
+import type { CombatState, FirePatchSpec, FirePatchState, Side, SimEvent } from '../types';
+import { attackSide, enemySide } from './side';
 import { applyStatus } from './status';
 
 /** True when the enemy stands inside the patch (2D plane; one lane is 1 tile apart, spec 3.1). */
@@ -11,15 +12,19 @@ function isInsidePatch(patch: FirePatchState, enemy: { lane: number; x: number }
 /**
  * Spawns a ★3 Pyro Fox fire patch at a lob impact point (spec 5.2). Ids come from
  * the shared entity counter (spec 11.3); the first Burn application is due now.
+ * The patch belongs to `side`, the side of the defender whose lob left it; omitted
+ * means the campaign's defenders (spec 18.1).
  */
 export function spawnFirePatch(
-  state: SimState,
+  state: CombatState,
   lane: number,
   x: number,
   spec: FirePatchSpec,
+  side?: Side,
 ): FirePatchState {
   const patch: FirePatchState = {
     id: state.nextId,
+    ...(side === undefined ? {} : { side }),
     lane,
     x,
     radiusTiles: spec.radiusTiles,
@@ -31,11 +36,11 @@ export function spawnFirePatch(
   return patch;
 }
 
-/** Applies one Burn stack to every enemy inside a patch (spec 4.5, 5.2). */
-function burnEnemiesInside(state: SimState, patch: FirePatchState, events: SimEvent[]): void {
+/** Applies one Burn stack to every unit of the other side inside a patch (spec 4.5, 5.2, 18.6). */
+function burnEnemiesInside(state: CombatState, patch: FirePatchState, events: SimEvent[]): void {
   const enemies = [...state.enemies].sort((first, second) => first.id - second.id);
   for (const enemy of enemies) {
-    if (isInsidePatch(patch, enemy)) {
+    if (enemySide(enemy) !== attackSide(patch) && isInsidePatch(patch, enemy)) {
       applyStatus(state.tick, enemy, { kind: 'burn' }, events);
     }
   }
@@ -46,7 +51,7 @@ function burnEnemiesInside(state: SimState, patch: FirePatchState, events: SimEv
  * patch applies Burn to the enemies inside every burn interval and disappears
  * when its duration is over.
  */
-export function updateFirePatches(state: SimState, events: SimEvent[]): void {
+export function updateFirePatches(state: CombatState, events: SimEvent[]): void {
   const burnIntervalTicks = ticksFromSeconds(rules.status.burn.intervalS);
   for (let index = state.firePatches.length - 1; index >= 0; index -= 1) {
     const patch = state.firePatches[index];

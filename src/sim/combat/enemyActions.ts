@@ -3,7 +3,8 @@ import { star3MeleeReflectRatio } from '../behaviors/star3';
 import { updateEnemySpecial } from '../enemies/dispatch';
 import { tileCenterX } from '../grid';
 import { isDefenderActive, ticksFromSeconds } from '../placement';
-import type { DefenderState, EnemyState, SimEvent, SimState } from '../types';
+import type { CombatState, DefenderState, EnemyState, SimEvent } from '../types';
+import { advanceX, defenderSide, distanceAhead, enemySide, forwardOf, isAheadOf } from './side';
 import {
   enemyAttackSpeedMultiplier,
   enemyMoveSpeedMultiplier,
@@ -11,25 +12,42 @@ import {
   isEnemyIncapacitated,
 } from './status';
 
+/** True when this defender can block the walking unit at all (spec 3.8, 4.3, 18.6). */
+function canBlock(state: CombatState, defender: DefenderState, enemy: EnemyState): boolean {
+  if (defenderById[defender.defenderId]?.pattern === 'trap') {
+    return false;
+  }
+  return (
+    defender.lane === enemy.lane &&
+    defenderSide(defender) !== enemySide(enemy) &&
+    isDefenderActive(defender, state.tick)
+  );
+}
+
 /**
- * Finds the active ground defender that blocks this enemy (spec 3.8): same lane,
- * tile centre at most 0.55 units to the left of the enemy. Traps are invisible to
- * enemies (spec 4.3) and flying enemies are never blocked by ground defenders.
+ * Finds the active ground defender of the other side that blocks this walking
+ * unit (spec 3.8, 18.6): same lane, tile centre at most 0.55 units ahead of the
+ * unit (to its left in the campaign). Traps are invisible to enemies (spec 4.3)
+ * and flying enemies are never blocked by ground defenders.
  */
-function findBlockingDefender(state: SimState, enemy: EnemyState): DefenderState | undefined {
+export function findBlockingDefender(
+  state: CombatState,
+  enemy: EnemyState,
+): DefenderState | undefined {
+  const forward = forwardOf(enemySide(enemy));
   let blocker: DefenderState | undefined;
   for (const defender of state.defenders) {
-    if (defenderById[defender.defenderId]?.pattern === 'trap') {
+    if (!canBlock(state, defender, enemy)) {
       continue;
     }
-    if (defender.lane !== enemy.lane || !isDefenderActive(defender, state.tick)) {
+    const distance = distanceAhead(enemy.x, tileCenterX(defender.col), forward);
+    if (distance < 0 || distance > rules.blocking.blockDistance) {
       continue;
     }
-    const distanceToTheLeft = enemy.x - tileCenterX(defender.col);
-    if (distanceToTheLeft < 0 || distanceToTheLeft > rules.blocking.blockDistance) {
-      continue;
-    }
-    if (blocker === undefined || tileCenterX(defender.col) > tileCenterX(blocker.col)) {
+    if (
+      blocker === undefined ||
+      isAheadOf(tileCenterX(blocker.col), tileCenterX(defender.col), forward)
+    ) {
       blocker = defender;
     }
   }
@@ -45,7 +63,7 @@ function findBlockingDefender(state: SimState, enemy: EnemyState): DefenderState
  * reflection is an untyped hit too and reuses the same `attack` event, from the
  * defender to the enemy.
  */
-function biteDefender(enemy: EnemyState, defender: DefenderState, events: SimEvent[]): void {
+export function biteDefender(enemy: EnemyState, defender: DefenderState, events: SimEvent[]): void {
   const enemyDef = enemyById[enemy.enemyId];
   if (enemyDef === undefined || enemyDef.biteDamage <= 0 || enemyDef.biteIntervalS === undefined) {
     // Enemies without an attack (Bat Swarm's "—", spec 6.1) never damage a defender.
@@ -67,25 +85,33 @@ function biteDefender(enemy: EnemyState, defender: DefenderState, events: SimEve
   events.push({ type: 'attack', sourceId: defender.id, targetId: enemy.id });
 }
 
-/** Applies one tick of active knockback movement; returns true when it moved (spec 4.5). */
-function updateKnockback(enemy: EnemyState): boolean {
+/**
+ * Applies one tick of active knockback movement; returns true when it moved
+ * (spec 4.5). The unit is pushed back against its own forward direction: to the
+ * right for a campaign enemy.
+ */
+export function updateKnockback(enemy: EnemyState): boolean {
   const knockback = findStatus(enemy, 'knockback');
   if (knockback === undefined) {
     return false;
   }
-  enemy.x += knockback.knockbackTilesPerTick;
+  enemy.x = advanceX(enemy.x, -knockback.knockbackTilesPerTick, forwardOf(enemySide(enemy)));
   return true;
 }
 
-/** Walks the enemy left with its status-aware speed (spec 3.8, 4.5). */
-function walkLeft(enemy: EnemyState, speedTilesPerSecond: number): void {
+/**
+ * Walks the unit forward with its status-aware speed (spec 3.8, 4.5, 18.1):
+ * towards -x for a campaign enemy and a north raider, towards +x for a south raider.
+ */
+export function walkForward(enemy: EnemyState, speedTilesPerSecond: number): void {
   enemy.blockedByDefenderId = null;
   enemy.nextBiteTick = null;
-  enemy.x -= (speedTilesPerSecond / rules.tick.tickRate) * enemyMoveSpeedMultiplier(enemy);
+  const stepTiles = (speedTilesPerSecond / rules.tick.tickRate) * enemyMoveSpeedMultiplier(enemy);
+  enemy.x = advanceX(enemy.x, stepTiles, forwardOf(enemySide(enemy)));
 }
 
 /** Phase 7 (spec 11.3): enemies move, block and eat, sorted by id (spec 3.8, 4.5, 4.7). */
-export function updateEnemies(state: SimState, events: SimEvent[]): void {
+export function updateEnemies(state: CombatState, events: SimEvent[]): void {
   const enemies = [...state.enemies].sort((first, second) => first.id - second.id);
   for (const enemy of enemies) {
     const enemyDef = enemyById[enemy.enemyId];
@@ -107,7 +133,7 @@ export function updateEnemies(state: SimState, events: SimEvent[]): void {
     }
     const blocker = enemyDef.isFlying ? undefined : findBlockingDefender(state, enemy);
     if (blocker === undefined) {
-      walkLeft(enemy, enemyDef.speed);
+      walkForward(enemy, enemyDef.speed);
       continue;
     }
 

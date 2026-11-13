@@ -1,6 +1,6 @@
 import { enemyById } from '../../data';
 import { ticksFromSeconds } from '../placement';
-import type { EnemyState, SimEvent, SimState } from '../types';
+import type { CombatState, EnemyState, Side, SimEvent } from '../types';
 
 /** Tick of the first heal pulse of a healer, or null when the data has no heal interval (spec 6.2). */
 function initialHealTick(enemyDef: { healIntervalS?: number }, spawnTick: number): number | null {
@@ -14,15 +14,17 @@ function initialHealTick(enemyDef: { healIntervalS?: number }, spawnTick: number
  * Creates one enemy of `enemyId` at `x` in `lane` (spec 6.1, 11.3): allocates its
  * id from the shared counter, initialises the special state from its data and
  * emits `enemySpawned`. Used by the wave runner and by enemies that spawn others
- * (Gloom Ogre throw, spec 6.2). Returns undefined for an unknown enemy id.
+ * (Gloom Ogre throw, spec 6.2). `side` is the owning side; omitted means a
+ * campaign enemy (north, spec 18.1). Returns undefined for an unknown enemy id.
  */
 export function spawnEnemy(
-  state: SimState,
+  state: CombatState,
   enemyId: string,
   lane: number,
   x: number,
   waveIndex: number,
   events: SimEvent[],
+  side?: Side,
 ): EnemyState | undefined {
   const enemyDef = enemyById[enemyId];
   if (enemyDef === undefined) {
@@ -30,6 +32,7 @@ export function spawnEnemy(
   }
   const enemy: EnemyState = {
     id: state.nextId,
+    ...(side === undefined ? {} : { side }),
     enemyId,
     lane,
     x,

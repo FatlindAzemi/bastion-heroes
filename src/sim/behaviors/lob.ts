@@ -2,10 +2,11 @@ import type { DefenderDef } from '../../data';
 import { rules } from '../../data';
 import { calculatePreArmorDamage } from '../combat/damage';
 import { spawnProjectile } from '../combat/projectiles';
+import { defenderSide } from '../combat/side';
 import { findTarget } from '../combat/targeting';
 import { tileCenterX } from '../grid';
 import { ticksFromSeconds } from '../placement';
-import type { DefenderState, SimEvent, SimState } from '../types';
+import type { CombatState, DefenderState, SimEvent } from '../types';
 import { beginDefenderAttack } from '../combat/status';
 import { collectAuraDamageBuffs } from './aura';
 import { star3FirePatch, star3RangeTiles } from './star3';
@@ -17,7 +18,7 @@ import { star3FirePatch, star3RangeTiles } from './star3';
  * leaves a Burn patch at the impact (spec 5.2).
  */
 export function attackWithLob(
-  state: SimState,
+  state: CombatState,
   defender: DefenderState,
   defenderDef: DefenderDef,
   events: SimEvent[],
@@ -30,6 +31,7 @@ export function attackWithLob(
   const target = findTarget(state.enemies, {
     lane: defender.lane,
     fromX,
+    side: defenderSide(defender),
     rangeTiles: star3RangeTiles(defender, defenderDef),
     canHitFlying: false,
   });

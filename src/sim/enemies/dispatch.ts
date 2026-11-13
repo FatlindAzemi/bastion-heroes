@@ -1,5 +1,5 @@
 import type { EnemyDef } from '../../data';
-import type { EnemyState, SimEvent, SimState } from '../types';
+import type { CombatState, EnemyState, SimEvent } from '../types';
 import { updateGloomOgre } from './gloomOgre';
 import { updateGloomPriest } from './gloomPriest';
 import { updatePothead } from './pothead';
@@ -11,7 +11,7 @@ import { updatePothead } from './pothead';
  * shield is read by `absorbShieldHit`.
  */
 export function updateEnemySpecial(
-  state: SimState,
+  state: CombatState,
   enemy: EnemyState,
   enemyDef: EnemyDef,
   events: SimEvent[],

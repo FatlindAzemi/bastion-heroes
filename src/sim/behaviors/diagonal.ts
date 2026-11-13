@@ -2,11 +2,12 @@ import type { DefenderDef } from '../../data';
 import { rules } from '../../data';
 import { calculatePreArmorDamage } from '../combat/damage';
 import { spawnProjectile } from '../combat/projectiles';
+import { advanceX, defenderSide, forwardOf } from '../combat/side';
 import { findTarget } from '../combat/targeting';
 import { tileCenterX } from '../grid';
 import type { AttackStatus } from '../combat/status';
 import type { ElementKind } from '../types';
-import type { DefenderState, SimEvent, SimState } from '../types';
+import type { CombatState, DefenderState, SimEvent } from '../types';
 import { beginDefenderAttack } from '../combat/status';
 import { collectAuraDamageBuffs } from './aura';
 import { star3RangeTiles } from './star3';
@@ -18,7 +19,7 @@ import { star3RangeTiles } from './star3';
  * their target lane once, `rules.combat.diagonalLaneSwitchTiles` after spawning.
  */
 export function attackWithDiagonal(
-  state: SimState,
+  state: CombatState,
   defender: DefenderState,
   defenderDef: DefenderDef,
   events: SimEvent[],
@@ -31,6 +32,7 @@ export function attackWithDiagonal(
   const target = findTarget(state.enemies, {
     lane: defender.lane,
     fromX,
+    side: defenderSide(defender),
     rangeTiles: star3RangeTiles(defender, defenderDef),
     canHitFlying: defenderDef.hitsFlying === true,
   });
@@ -47,7 +49,8 @@ export function attackWithDiagonal(
   );
   const hitsFlying = defenderDef.hitsFlying === true;
   const attackStatus = beginDefenderAttack(defender, defenderDef);
-  const switchAtX = fromX + rules.combat.diagonalLaneSwitchTiles;
+  const forward = forwardOf(defenderSide(defender));
+  const switchAtX = advanceX(fromX, rules.combat.diagonalLaneSwitchTiles, forward);
   events.push({ type: 'attack', sourceId: defender.id, targetId: target.id });
   fireLane(
     state,
@@ -97,7 +100,7 @@ export function attackWithDiagonal(
 
 /** Spawns one diagonal projectile; a non-null target lane is reached at switchAtX (spec 4.3). */
 function fireLane(
-  state: SimState,
+  state: CombatState,
   defender: DefenderState,
   events: SimEvent[],
   damageType: 'pierce' | 'blast' | 'arcane',

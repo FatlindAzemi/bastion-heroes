@@ -1,21 +1,22 @@
 import type { DefenderDef } from '../../data';
 import { calculatePreArmorDamage } from '../combat/damage';
 import { spawnProjectile } from '../combat/projectiles';
+import { defenderSide } from '../combat/side';
 import { findTarget } from '../combat/targeting';
 import { tileCenterX } from '../grid';
-import type { DefenderState, SimEvent, SimState } from '../types';
+import type { CombatState, DefenderState, SimEvent } from '../types';
 import { beginDefenderAttack } from '../combat/status';
 import { collectAuraDamageBuffs } from './aura';
 import { star3ExtraHits, star3RangeTiles } from './star3';
 
 /**
- * One `straight` attack (spec 4.3): fires a projectile to the right at the first
- * enemy in the lane that the pattern can hit (non-flying unless `hitsFlying`).
+ * One `straight` attack (spec 4.3): fires a projectile forward (to the right in
+ * the campaign, spec 18.1) at the first enemy in the lane that the pattern can hit (non-flying unless `hitsFlying`).
  * A ★3 `piercing_arrow` projectile passes through its first targets (spec 5.2).
  * Returns true when the defender fired.
  */
 export function attackWithStraight(
-  state: SimState,
+  state: CombatState,
   defender: DefenderState,
   defenderDef: DefenderDef,
   events: SimEvent[],
@@ -29,6 +30,7 @@ export function attackWithStraight(
   const target = findTarget(state.enemies, {
     lane: defender.lane,
     fromX: fireFromX,
+    side: defenderSide(defender),
     rangeTiles: star3RangeTiles(defender, defenderDef),
     canHitFlying: hitsFlying,
   });

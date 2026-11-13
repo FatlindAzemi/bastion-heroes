@@ -1,21 +1,25 @@
 import type { EnemyDef } from '../../data';
+import { enemySide } from '../combat/side';
 import { ticksFromSeconds } from '../placement';
-import type { EnemyState, SimState } from '../types';
+import type { CombatState, EnemyState } from '../types';
 
 /** Distance in tiles on the 2D simulation plane (spec 3.1; combos of 4.6 use the same measure). */
 function distanceTiles(first: EnemyState, second: EnemyState): number {
   return Math.hypot(first.lane - second.lane, first.x - second.x);
 }
 
-/** Heals every living enemy in the radius except the priest itself, capped at maxHp (spec 6.2). */
+/**
+ * Heals every living unit of the priest's own side in the radius except the
+ * priest itself, capped at maxHp (spec 6.2, 18.6).
+ */
 function healEnemiesInRadius(
-  state: SimState,
+  state: CombatState,
   priest: EnemyState,
   amount: number,
   radiusTiles: number,
 ): void {
   for (const target of [...state.enemies].sort((first, second) => first.id - second.id)) {
-    if (target.id === priest.id || target.hp <= 0) {
+    if (target.id === priest.id || target.hp <= 0 || enemySide(target) !== enemySide(priest)) {
       continue;
     }
     if (distanceTiles(priest, target) > radiusTiles) {
@@ -30,7 +34,7 @@ function healEnemiesInRadius(
  * enemy within `healRadiusTiles` for `healAmount` health, never itself. The first
  * pulse comes one interval after spawn (set in spawn.ts).
  */
-export function updateGloomPriest(state: SimState, enemy: EnemyState, enemyDef: EnemyDef): void {
+export function updateGloomPriest(state: CombatState, enemy: EnemyState, enemyDef: EnemyDef): void {
   const intervalS = enemyDef.healIntervalS;
   const amount = enemyDef.healAmount;
   const radiusTiles = enemyDef.healRadiusTiles;

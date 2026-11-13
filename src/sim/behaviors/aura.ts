@@ -1,7 +1,8 @@
 import { defenderById } from '../../data';
 import type { DefenderDef } from '../../data';
+import { defenderSide } from '../combat/side';
 import { isDefenderActive } from '../placement';
-import type { DefenderState, SimState } from '../types';
+import type { CombatState, DefenderState } from '../types';
 
 /** One damage buff currently affecting a defender (spec 4.2, 5.2). */
 export interface ActiveDamageBuff {
@@ -25,18 +26,18 @@ function auraBuffOf(defender: DefenderState, defenderDef: DefenderDef): ActiveDa
 }
 
 /**
- * Collects the damage buffs a defender receives from `aura` defenders on the four
- * orthogonally adjacent tiles (spec 4.3, 5.2). Buffs with the same name do not
+ * Collects the damage buffs a defender receives from `aura` defenders of its own
+ * side on the four orthogonally adjacent tiles (spec 4.3, 5.2, 18.6). Buffs with the same name do not
  * stack: the highest value wins (spec 4.2). The returned ratios are summed into
  * the damage formula's `(1 + sum(buffs))`.
  */
-export function collectAuraDamageBuffs(state: SimState, target: DefenderState): number[] {
+export function collectAuraDamageBuffs(state: CombatState, target: DefenderState): number[] {
   const highestByName = new Map<string, number>();
   for (const source of state.defenders) {
     if (source.id === target.id || !isOrthogonallyAdjacent(source, target)) {
       continue;
     }
-    if (!isDefenderActive(source, state.tick)) {
+    if (defenderSide(source) !== defenderSide(target) || !isDefenderActive(source, state.tick)) {
       continue;
     }
     const sourceDef = defenderById[source.defenderId];
