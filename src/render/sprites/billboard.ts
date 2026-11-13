@@ -10,7 +10,7 @@
 import { PlaneGeometry, Quaternion, Vector3 } from 'three';
 
 /** Default readability scale of the manifest world heights on a portrait phone. */
-export const DEFAULT_WORLD_SCALE = 1.25;
+export const DEFAULT_WORLD_SCALE = 1.5;
 
 /** Lower bound of the world scale: shrinking below the manifest height hurts readability. */
 export const MIN_WORLD_SCALE = 1;
@@ -28,7 +28,7 @@ const ROLL_AXIS = new Vector3(0, 0, 1);
 const rollQuaternion = new Quaternion();
 
 /**
- * Resolves the optional `worldScale` layer option: defaults to 1.25 for phone
+ * Resolves the optional `worldScale` layer option: defaults to 1.5 for phone
  * readability and clamps into 1..3 (the Lead asked for a >= 1.0 floor).
  */
 export function resolveSpriteWorldScale(worldScale: number | undefined): number {
