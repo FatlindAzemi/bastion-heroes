@@ -3,6 +3,20 @@
  * this module; the simulation never imports the renderer, the UI or the platform.
  */
 export { createSim } from './createSim';
+export { createDuelSim } from './duel';
+export type {
+  DuelCommand,
+  DuelDefenderState,
+  DuelEvent,
+  DuelPhase,
+  DuelRaiderState,
+  DuelRejectReason,
+  DuelResult,
+  DuelSideState,
+  DuelSim,
+  DuelState,
+  DuelUnitEvent,
+} from './duel';
 export { hashState } from './hash';
 export {
   BASE_LINE_X,
