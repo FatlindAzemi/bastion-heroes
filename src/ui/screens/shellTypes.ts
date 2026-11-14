@@ -4,6 +4,7 @@
  * They stay free of simulation imports, like the existing screen types.
  */
 import type { LevelRewardSummary, SaveData } from '../../meta';
+import type { TrainingBotLevel } from '../duel/types';
 import type { LoadoutChoice } from './types';
 
 /** One level as the level select needs it; `index` is the 1-based level number. */
@@ -24,6 +25,8 @@ export interface ShellOptions {
   readonly save: SaveData;
   /** Called by "Fight!": starts the level with the chosen 6-card loadout. */
   readonly onFight: (levelId: string, loadout: readonly LoadoutChoice[]) => void;
+  /** Starts a Training Duel against a bot of this level (spec 18.10, 20.6). */
+  readonly onTraining?: (level: TrainingBotLevel) => void;
   /** Persists a changed save after an upgrade, chest opening or settings change. */
   readonly onSave: (save: SaveData) => void;
   /** Start screen of the shell; defaults to the title screen. */

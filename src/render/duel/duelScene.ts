@@ -25,6 +25,7 @@ import { createVfxLayer } from '../vfx/index';
 import { columnToWorldX, laneToWorldZ, simXToWorldX } from '../worldMapping';
 import { createDuelEffects } from './duelEffects';
 import { createDuelEnvironment } from './duelEnvironment';
+import { createPlacementHint, type PlacementHintKind } from './placementHint';
 import { duelViewEvents, duelViewState, simPointOfView, viewLane, viewX } from './duelView';
 import { createSideRings, type SideRingUnit } from './sideRings';
 import { createTrapRollers } from './trapRollers';
@@ -47,6 +48,8 @@ export interface DuelScene {
   draw(state: Readonly<DuelState>, alpha: number): void;
   /** Converts a ground point of the drawn board into sim coordinates (x, z = lane + 0.5). */
   viewToSim(worldX: number, worldZ: number): { readonly x: number; readonly z: number };
+  /** Shows the board highlight of a held defender or raider card, or hides it (spec 18.9). */
+  setPlacementHint(kind: PlacementHintKind): void;
   resize(aspect: number): void;
   dispose(): void;
 }
@@ -118,8 +121,16 @@ export function createDuelScene(options: DuelViewOptions): DuelScene {
   const unitStack = createUnitLayerStack(scene, camera, particles);
   const sideRings = createSideRings();
   const trapRollers = createTrapRollers();
+  const placementHint = createPlacementHint(viewSide);
   const projectileGroup = new Group();
-  scene.add(sideRings.mesh, trapRollers.mesh, projectileGroup, particles.object, vfx.object);
+  scene.add(
+    placementHint.mesh,
+    sideRings.mesh,
+    trapRollers.mesh,
+    projectileGroup,
+    particles.object,
+    vfx.object,
+  );
   const projectiles = createProjectileLayer(projectileGroup);
   const effects = createDuelEffects({
     viewSide,
@@ -156,6 +167,7 @@ export function createDuelScene(options: DuelViewOptions): DuelScene {
     const sceneSeconds = (now - clock.startMs) / 1000;
     propSprites.update(camera);
     setGroundSurfaceTime(sceneSeconds);
+    placementHint.update(sceneSeconds);
     ambientMotes.update(sceneSeconds);
     trapRollers.update(state, viewSide);
     effects.update(state, deltaSeconds);
@@ -196,6 +208,7 @@ export function createDuelScene(options: DuelViewOptions): DuelScene {
       animate(state, view);
     },
     viewToSim: (worldX, worldZ) => simPointOfView(worldX, worldZ, viewSide),
+    setPlacementHint: placementHint.set,
     resize: (aspect): void => {
       fitLevelCamera(camera, aspect);
       shake.refit();
@@ -206,6 +219,7 @@ export function createDuelScene(options: DuelViewOptions): DuelScene {
       unitStack.dispose();
       projectiles.dispose();
       sideRings.dispose();
+      placementHint.dispose();
       trapRollers.dispose();
       propSprites.dispose();
       ambientMotes.dispose();

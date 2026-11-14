@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="steel" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" />
+      <stop offset="0.45" stop-color="#C9D8E6" />
+      <stop offset="0.78" stop-color="#8296A8" />
+      <stop offset="1" stop-color="#4E5F70" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0.12" y1="0" x2="0.84" y2="1">
+      <stop offset="0" stop-color="#FFF6C4" />
+      <stop offset="0.5" stop-color="#FFC12E" />
+      <stop offset="1" stop-color="#B96800" />
+    </linearGradient>
+    <filter id="ds" x="-40%" y="-40%" width="180%" height="190%">
+      <feDropShadow dx="0" dy="1.4" stdDeviation="1.1" flood-color="#05030C" flood-opacity="0.42" />
+    </filter>
+  </defs>
+  <g filter="url(#ds)" stroke="#141326" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M 10 8 L 18 8 L 44 34 L 38 40 L 12 14 Z" fill="url(#steel)" />
+    <path d="M 54 8 L 46 8 L 20 34 L 26 40 L 52 14 Z" fill="url(#steel)" />
+    <path d="M 33 33 L 47 47" stroke-width="7" />
+    <path d="M 33 33 L 47 47" stroke="url(#gold)" stroke-width="3.5" />
+    <path d="M 31 33 L 17 47" stroke-width="7" />
+    <path d="M 31 33 L 17 47" stroke="url(#gold)" stroke-width="3.5" />
+    <circle cx="51" cy="51" r="5" fill="url(#gold)" />
+    <circle cx="13" cy="51" r="5" fill="url(#gold)" />
+  </g>
+</svg>

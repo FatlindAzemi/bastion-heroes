@@ -36,7 +36,9 @@ export type IconName =
   | 'vibrate'
   | 'plus'
   | 'minus'
-  | 'backArrow';
+  | 'backArrow'
+  | 'claw'
+  | 'swords';
 
 /** File name of each icon (the `essence-orb` file is the Essence currency icon). */
 const ICON_FILES: Readonly<Record<IconName, string>> = {
@@ -72,6 +74,8 @@ const ICON_FILES: Readonly<Record<IconName, string>> = {
   plus: 'plus',
   minus: 'minus',
   backArrow: 'back-arrow',
+  claw: 'claw',
+  swords: 'swords',
 };
 
 /** Props of one HUD/UI icon. */
