@@ -437,3 +437,19 @@ export const DuelRulesDef = z.object({
 
 /** A parsed Duel rules definition (spec 18, 20.2). */
 export type DuelRulesDef = z.infer<typeof DuelRulesDef>;
+
+/** Tuning of one Duel bot level (spec 18.10). */
+const duelBotLevel = z.object({
+  /** Seconds between two decisions of the bot; one decision plays at most one card. */
+  decisionIntervalS: z.number().positive(),
+});
+
+/** The three Duel bot levels (spec 18.10). */
+export const DuelBotsDef = z.object({
+  easy: duelBotLevel,
+  normal: duelBotLevel,
+  hard: duelBotLevel,
+});
+
+/** Parsed Duel bot tuning (spec 18.10). */
+export type DuelBotsDef = z.infer<typeof DuelBotsDef>;

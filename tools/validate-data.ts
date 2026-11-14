@@ -8,8 +8,15 @@
  * approved package list (spec 10.2), so an uncaught throw is what makes the
  * process exit non-zero. `console` comes from the DOM lib of tsconfig.
  */
-import { defenders, duelRules, enemies, levels, rules } from '../src/data';
-import { DefenderDef, DuelRulesDef, EnemyDef, LevelDef, RulesDef } from '../src/data/schemas';
+import { defenders, duelBots, duelRules, enemies, levels, rules } from '../src/data';
+import {
+  DefenderDef,
+  DuelBotsDef,
+  DuelRulesDef,
+  EnemyDef,
+  LevelDef,
+  RulesDef,
+} from '../src/data/schemas';
 
 /** Parses every definition of one kind; throws on the first duplicate id. */
 function parseAndCount<T extends { id: string }>(
@@ -38,10 +45,11 @@ const enemyCount = parseAndCount('enemy', enemies, (def) => EnemyDef.parse(def))
 const levelCount = parseAndCount('level', levels, (def) => LevelDef.parse(def));
 RulesDef.parse(rules);
 DuelRulesDef.parse(duelRules);
+DuelBotsDef.parse(duelBots);
 
 console.log(
   'validate-data: ok - ' +
     `${formatCount(defenderCount, 'defender', 'defenders')}, ` +
     `${formatCount(enemyCount, 'enemy', 'enemies')}, ` +
-    `${formatCount(levelCount, 'level', 'levels')}, rules and duel rules parsed`,
+    `${formatCount(levelCount, 'level', 'levels')}, rules, duel rules and duel bots parsed`,
 );
