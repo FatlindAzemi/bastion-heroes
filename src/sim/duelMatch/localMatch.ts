@@ -58,10 +58,11 @@ export interface LocalDuelMatch {
   step(): DuelEvent[];
 }
 
-type PlayCommand = Exclude<DuelCommand, { type: 'surrender' }>;
+/** The sim command of a card play: every Duel command except a surrender. */
+export type DuelPlayCommand = Exclude<DuelCommand, { type: 'surrender' }>;
 
 /** Builds the sim command of a play, or the reason why the play names no legal command. */
-function commandOf(side: Side, play: DuelCardPlay): PlayCommand | DuelRejectReason {
+export function duelCommandOf(side: Side, play: DuelCardPlay): DuelPlayCommand | DuelRejectReason {
   const kind = duelCardKind(play.cardId);
   if (kind === undefined) {
     return 'invalidCard';
@@ -103,7 +104,7 @@ export function createLocalDuelMatch(options: LocalDuelMatchOptions): LocalDuelM
   const sim = createDuelSim(options.seed);
   const hands = createHands(options.players);
   /** Plays passed to the sim that the next `step()` decides. */
-  const pending: PlayCommand[] = [];
+  const pending: DuelPlayCommand[] = [];
 
   /** True in regular time, overdrive and sudden death: not in the countdown, not after the end. */
   function isRunning(): boolean {
@@ -120,7 +121,7 @@ export function createLocalDuelMatch(options: LocalDuelMatchOptions): LocalDuelM
     if (!isInHand(hands[side], cardPlay.cardId) || isPending) {
       return 'cardNotInHand';
     }
-    const command = commandOf(side, cardPlay);
+    const command = duelCommandOf(side, cardPlay);
     if (typeof command === 'string') {
       return command;
     }

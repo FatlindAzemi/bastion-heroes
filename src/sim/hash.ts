@@ -1,4 +1,4 @@
-import type { SimState } from './types';
+import type { DefenderState, EnemyState, FirePatchState, ProjectileState, SimState } from './types';
 
 /**
  * The stable state hash used by the replay tests (spec 11.6).
@@ -27,72 +27,9 @@ export function hashState(state: Readonly<SimState>): string {
     nextId: state.nextId,
     essence: state.essence,
     autoCollect: state.autoCollect,
-    defenders: state.defenders.map((defender) => [
-      defender.id,
-      defender.defenderId,
-      defender.lane,
-      defender.col,
-      defender.stars,
-      defender.hp,
-      defender.maxHp,
-      defender.cardLevel,
-      defender.activeAtTick,
-      defender.nextOrbTick,
-      defender.nextAttackTick,
-      defender.trapReadyAtTick,
-      defender.trapRearmed,
-      defender.attackCount,
-      defender.burstShotsRemaining,
-    ]),
-    enemies: state.enemies.map((enemy) => [
-      enemy.id,
-      enemy.enemyId,
-      enemy.lane,
-      enemy.x,
-      enemy.hp,
-      enemy.maxHp,
-      enemy.waveIndex,
-      enemy.blockedByDefenderId,
-      enemy.nextBiteTick,
-      enemy.statuses.map((status) => [
-        status.kind,
-        status.expiresAtTick,
-        status.nextTickAt,
-        status.knockbackTilesPerTick,
-      ]),
-      enemy.comboCooldowns.steam,
-      enemy.comboCooldowns.shatter,
-      enemy.comboCooldowns.toxic,
-      enemy.comboCooldowns.chain,
-      enemy.shieldHp,
-      enemy.armorBroken,
-      enemy.nextHealTick,
-      enemy.hasThrown,
-    ]),
-    projectiles: state.projectiles.map((projectile) => [
-      projectile.id,
-      projectile.kind,
-      projectile.lane,
-      projectile.x,
-      projectile.originX,
-      projectile.sourceId,
-      projectile.damage,
-      projectile.damageType,
-      projectile.hitsFlying,
-      projectile.targetId,
-      projectile.landTick,
-      projectile.splashRadius,
-      projectile.targetLane,
-      projectile.switchAtX,
-      projectile.statusKind,
-      projectile.statusDurationS,
-      projectile.statusStacks,
-      projectile.element,
-      projectile.piercesRemaining,
-      projectile.firePatch === null
-        ? null
-        : [projectile.firePatch.radiusTiles, projectile.firePatch.durationTicks],
-    ]),
+    defenders: state.defenders.map(defenderSnapshot),
+    enemies: state.enemies.map(enemySnapshot),
+    projectiles: state.projectiles.map(projectileSnapshot),
     orbs: state.orbs.map((orb) => [
       orb.id,
       orb.lane,
@@ -102,14 +39,7 @@ export function hashState(state: Readonly<SimState>): string {
       orb.landTick,
       orb.expiresAtTick,
     ]),
-    firePatches: state.firePatches.map((patch) => [
-      patch.id,
-      patch.lane,
-      patch.x,
-      patch.radiusTiles,
-      patch.expiresAtTick,
-      patch.nextBurnTick,
-    ]),
+    firePatches: state.firePatches.map(firePatchSnapshot),
     wave: {
       index: state.wave.index,
       nextWaveTick: state.wave.nextWaveTick,
@@ -129,11 +59,101 @@ export function hashState(state: Readonly<SimState>): string {
 }
 
 /** FNV-1a 32-bit hash of a string, formatted as 8 lowercase hex characters. */
-function fnv1a(value: string): string {
+export function fnv1a(value: string): string {
   let hash = 0x811c9dc5;
   for (let index = 0; index < value.length; index += 1) {
     hash ^= value.charCodeAt(index);
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
   return hash.toString(16).padStart(8, '0');
+}
+
+/** The hashed fields of a defender in a fixed order (spec 11.6); shared with the Duel hash. */
+export function defenderSnapshot(defender: Readonly<DefenderState>): unknown[] {
+  return [
+    defender.id,
+    defender.defenderId,
+    defender.lane,
+    defender.col,
+    defender.stars,
+    defender.hp,
+    defender.maxHp,
+    defender.cardLevel,
+    defender.activeAtTick,
+    defender.nextOrbTick,
+    defender.nextAttackTick,
+    defender.trapReadyAtTick,
+    defender.trapRearmed,
+    defender.attackCount,
+    defender.burstShotsRemaining,
+  ];
+}
+
+/** The hashed fields of an enemy (a raider in a Duel) in a fixed order (spec 11.6). */
+export function enemySnapshot(enemy: Readonly<EnemyState>): unknown[] {
+  return [
+    enemy.id,
+    enemy.enemyId,
+    enemy.lane,
+    enemy.x,
+    enemy.hp,
+    enemy.maxHp,
+    enemy.waveIndex,
+    enemy.blockedByDefenderId,
+    enemy.nextBiteTick,
+    enemy.statuses.map((status) => [
+      status.kind,
+      status.expiresAtTick,
+      status.nextTickAt,
+      status.knockbackTilesPerTick,
+    ]),
+    enemy.comboCooldowns.steam,
+    enemy.comboCooldowns.shatter,
+    enemy.comboCooldowns.toxic,
+    enemy.comboCooldowns.chain,
+    enemy.shieldHp,
+    enemy.armorBroken,
+    enemy.nextHealTick,
+    enemy.hasThrown,
+  ];
+}
+
+/** The hashed fields of a projectile in a fixed order (spec 11.6). */
+export function projectileSnapshot(projectile: Readonly<ProjectileState>): unknown[] {
+  return [
+    projectile.id,
+    projectile.kind,
+    projectile.lane,
+    projectile.x,
+    projectile.originX,
+    projectile.sourceId,
+    projectile.damage,
+    projectile.damageType,
+    projectile.hitsFlying,
+    projectile.targetId,
+    projectile.landTick,
+    projectile.splashRadius,
+    projectile.targetLane,
+    projectile.switchAtX,
+    projectile.statusKind,
+    projectile.statusDurationS,
+    projectile.statusStacks,
+    projectile.element,
+    projectile.piercesRemaining,
+    projectile.firePatch === null
+      ? null
+      : [projectile.firePatch.radiusTiles, projectile.firePatch.durationTicks],
+  ];
+}
+
+/** The hashed fields of a fire patch in a fixed order (spec 11.6). */
+export function firePatchSnapshot(patch: Readonly<FirePatchState>): unknown[] {
+  return [
+    patch.id,
+    patch.lane,
+    patch.x,
+    patch.radiusTiles,
+    patch.expiresAtTick,
+    patch.nextBurnTick,
+  ];
 }
