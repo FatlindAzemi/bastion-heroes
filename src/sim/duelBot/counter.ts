@@ -29,9 +29,18 @@ export function isCounterCard(cardId: string): boolean {
   return duelRaiderCard(cardId)?.def.isFlying === false;
 }
 
-/** The counter cards in hand, defenders before raiders, each group in hand order. */
-export function counterCardsOf(view: DuelBotView): string[] {
-  const cards = view.hand.hand.filter(isCounterCard);
+/** True when the card can hit flying raiders: a defender with `hitsFlying` (spec 4.4). */
+export function isAntiAirCard(cardId: string): boolean {
+  return duelDefenderCard(cardId)?.def.hitsFlying === true;
+}
+
+/**
+ * The counter cards in hand, defenders before raiders, each group in hand order.
+ * Against a lane of only flying raiders only anti-air defenders count.
+ */
+export function counterCardsOf(view: DuelBotView, lane?: LaneReading): string[] {
+  const fits = lane?.isAirOnly === true ? isAntiAirCard : isCounterCard;
+  const cards = view.hand.hand.filter(fits);
   const defenders = cards.filter((cardId) => duelDefenderCard(cardId) !== undefined);
   return [...defenders, ...cards.filter((cardId) => !defenders.includes(cardId))];
 }
@@ -90,7 +99,7 @@ function counterPlayOfCard(
  * bot can pay for wins; defenders go before raiders. Null when nothing fits now.
  */
 export function counterPlayOf(view: DuelBotView, lane: LaneReading): DuelCardPlay | null {
-  const plays = counterCardsOf(view).flatMap((cardId) => {
+  const plays = counterCardsOf(view, lane).flatMap((cardId) => {
     const play = counterPlayOfCard(view, cardId, lane);
     return play === undefined ? [] : [play];
   });

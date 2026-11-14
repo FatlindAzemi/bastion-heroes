@@ -1,4 +1,4 @@
-import { duelRules } from '../../data';
+import { duelRules, enemyById } from '../../data';
 import { LANE_COUNT, tileCenterX } from '../grid';
 import type { DuelRaiderState, Side } from '../duel';
 import type { DuelBotView } from './types';
@@ -29,6 +29,11 @@ export function distanceFromOwnBase(side: Side, x: number): number {
   return Math.abs(x - BASE_LINE_X[side]);
 }
 
+/** True when the raider flies over blockers (spec 18.6). */
+function isFlyingRaider(raider: DuelRaiderState): boolean {
+  return enemyById[raider.enemyId]?.isFlying === true;
+}
+
 /** Summed health of units. */
 function sumHealth(units: readonly { hp: number }[]): number {
   return units.reduce((sum, unit) => sum + unit.hp, 0);
@@ -47,6 +52,8 @@ export interface LaneReading {
   readonly ownBlockerHealth: number;
   /** Summed health of the opponent's defenders in the lane. */
   readonly enemyDefenderHealth: number;
+  /** True when the lane holds enemy raiders and all of them fly (spec 18.6). */
+  readonly isAirOnly: boolean;
   /** True when the opponent's Last Stand Trap of the lane is used (spec 18.7). */
   readonly isEnemyTrapUsed: boolean;
 }
@@ -74,6 +81,7 @@ function readLane(view: DuelBotView, lane: number, raiders: readonly DuelRaiderS
     closestRaiderDistance,
     ownBlockerHealth: sumHealth(ownAhead) + sumHealth(ownRaiders),
     enemyDefenderHealth: sumHealth(enemyDefenders),
+    isAirOnly: inLane.length > 0 && inLane.every((raider) => isFlyingRaider(raider)),
     isEnemyTrapUsed: view.state.sides[enemy].traps[lane]?.used === true,
   };
 }

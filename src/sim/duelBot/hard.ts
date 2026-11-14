@@ -61,10 +61,9 @@ function raiderPlayOf(
  * after it (spec 18.7).
  */
 function openerPlayOf(view: DuelBotView, lanes: readonly LaneReading[]): DuelCardPlay | undefined {
-  if (lanes.some((lane) => lane.isEnemyTrapUsed)) {
-    return undefined;
-  }
-  const untouched = lanes.filter((lane) => !hasOwnRaiderIn(view, lane.lane));
+  const untouched = lanes.filter(
+    (lane) => !lane.isEnemyTrapUsed && !hasOwnRaiderIn(view, lane.lane),
+  );
   return raiderPlayOf(view, untouched, (cost) => -cost);
 }
 
@@ -108,8 +107,9 @@ function producerPlayOf(view: DuelBotView, lanes: readonly LaneReading[]): DuelC
  */
 export const hardStrategy: DuelBotStrategy = (view) => {
   const lanes = readLanes(view);
-  const threat = threatLaneOf(lanes);
-  if (threat !== undefined && counterCardsOf(view).length > 0) {
+  // Spec 18.10: hard saves Essence only for lanes it holds a counter card for.
+  const threat = threatLaneOf(lanes.filter((lane) => counterCardsOf(view, lane).length > 0));
+  if (threat !== undefined) {
     const counter = counterPlayOf(view, threat);
     const isFull = view.state.sides[view.side].essence >= duelRules.essence.maxEssence;
     if (counter !== null || !isFull) {
@@ -118,8 +118,8 @@ export const hardStrategy: DuelBotStrategy = (view) => {
   }
   return (
     producerPlayOf(view, lanes) ??
-    openerPlayOf(view, lanes) ??
     pushPlayOf(view, lanes) ??
+    openerPlayOf(view, lanes) ??
     buildPlayOf(view, lanes) ??
     null
   );
