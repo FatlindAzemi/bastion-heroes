@@ -8,18 +8,20 @@ import { createRng } from '../rng';
 import { playDefender } from './cards';
 import { updateDuelEssence } from './essence';
 import { createEventLog, type DuelEventLog } from './events';
-import { surrender, updateTrapsAndGates } from './gates';
+import { initialDuelTraps, updateTrapsAndGates } from './gates';
+import { surrender, updateMatchEnd } from './matchEnd';
 import { acceptsCommands, initialPhaseState, updatePhase } from './phases';
 import { playRaider } from './raiderCards';
 import { updateRaiders } from './raiders';
 import { DUEL_BOARD, sideOrder } from './sides';
 import type { DuelCommand, DuelEvent, DuelSim, DuelSideState, DuelState } from './types';
 
-/** The numbers a player starts with (spec 18.3, 18.7). */
+/** What a player starts with: Essence, a full gate and five unused traps (spec 18.3, 18.7). */
 function initialSideState(): DuelSideState {
   return {
     essence: duelRules.essence.startingEssence,
     gateHealth: duelRules.gate.gateHealth,
+    traps: initialDuelTraps(),
   };
 }
 
@@ -107,6 +109,10 @@ export function createDuelSim(seed: number): DuelSim {
       (first, second) => sideOrder(first.side) - sideOrder(second.side),
     );
     for (const command of ordered) {
+      // A surrender ends the match; the commands after it change nothing (spec 18.2).
+      if (state.result !== null) {
+        return;
+      }
       applyCommand(state, command, events);
     }
   }
@@ -118,14 +124,22 @@ export function createDuelSim(seed: number): DuelSim {
     }
     const log = createEventLog(state);
     applyScheduledCommands(log.events); // 1) commands of this tick
+    if (state.result === null) {
+      runTick(log);
+    }
+    state.tick += 1;
+    return log.events;
+  }
+
+  /** Tick steps 2 to 9 (spec 19.11); skipped when a surrender ended the match in step 1. */
+  function runTick(log: DuelEventLog): void {
     updateDuelEssence(state, log.events); // 2) Essence income
     updateDefenderCombat(state, log); // 3) defenders, 4) projectiles, 5) status effects
     updateRaiders(state, log); // 6) raiders are summoned, move, block and fight
     removeDeadUnits(state, log); // 7) remove dead units
-    updateTrapsAndGates(state, log.events); // 8) traps and gate damage (#125)
-    updatePhase(state, log.events); // 9) phase changes and end check
-    state.tick += 1;
-    return log.events;
+    updateTrapsAndGates(state, log.events); // 8) traps and gate damage
+    updateMatchEnd(state, log.events); // 9) end check: broken gate, sudden death
+    updatePhase(state, log.events); // 9) phase changes and end by time
   }
 
   return {

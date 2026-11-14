@@ -12,6 +12,7 @@ import type {
   Rng,
   Side,
   SimEvent,
+  TrapState,
 } from '../types';
 
 export type { Side };
@@ -35,7 +36,6 @@ export type DuelCommand =
  * - `cardLimitReached`: the player already has the card's maximum number of copies (18.8).
  * - `tooManyRaiders`: "Too many raiders": the card's raiders do not fit under the raider cap (18.6).
  * - `matchNotRunning`: the countdown is still running; no commands are accepted (18.2).
- * - `notImplemented`: the command belongs to a later D1 issue (`surrender` #125).
  */
 export type DuelRejectReason =
   | 'notEnoughEssence'
@@ -45,8 +45,7 @@ export type DuelRejectReason =
   | 'invalidCard'
   | 'cardLimitReached'
   | 'tooManyRaiders'
-  | 'matchNotRunning'
-  | 'notImplemented';
+  | 'matchNotRunning';
 
 /** How a match ended (spec 18.2). */
 export interface DuelResult {
@@ -87,7 +86,9 @@ export type DuelEvent =
   // The "+1" popup of a producer (spec 18.3); emitted even when the point is lost at the cap.
   | { type: 'essenceProduced'; side: Side; sourceId: number; amount: number }
   | { type: 'gateDamaged'; side: Side; amount: number; health: number }
-  // A raider of `side` reached the enemy base line and left the lane (spec 18.7).
+  // The Last Stand Trap of `side` in `lane` fired and starts rolling (spec 18.7).
+  | { type: 'trapFired'; side: Side; lane: number }
+  // A raider of `side` got through a lane whose trap is used and hit the gate (spec 18.7).
   | { type: 'raiderReachedBase'; side: Side; id: number; enemyId: string; lane: number }
   | { type: 'phaseChanged'; phase: DuelPhase }
   | { type: 'duelEnded'; winner: Side | 'draw'; reason: DuelResult['reason'] };
@@ -122,6 +123,11 @@ export interface DuelSideState {
   essence: number;
   /** Health of the player's gate (spec 18.7). */
   gateHealth: number;
+  /**
+   * The player's Last Stand Traps, one per lane (spec 18.7). `used` shows the broken
+   * roller; `rollerX` is the roller's world x while it rolls, null otherwise.
+   */
+  readonly traps: TrapState[];
 }
 
 /**
