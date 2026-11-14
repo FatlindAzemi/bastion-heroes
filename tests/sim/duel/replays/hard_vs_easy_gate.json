@@ -1,0 +1,1530 @@
+{
+  "description": "Hard bot (south) against easy bot (north) with starter decks: defenders, raiders, traps, and the north gate breaks.",
+  "seed": 202,
+  "players": {
+    "south": {
+      "deck": [
+        "sparkbolt_gremlin",
+        "glowshroom_monk",
+        "iron_granny",
+        "boomcap_brewer",
+        "gloomling",
+        "pothead",
+        "shade_wisp",
+        "bat_swarm"
+      ],
+      "privateSeed": 6
+    },
+    "north": {
+      "deck": [
+        "sparkbolt_gremlin",
+        "glowshroom_monk",
+        "iron_granny",
+        "boomcap_brewer",
+        "gloomling",
+        "pothead",
+        "shade_wisp",
+        "bat_swarm"
+      ],
+      "privateSeed": 44
+    }
+  },
+  "commands": [
+    {
+      "tick": 90,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "glowshroom_monk",
+        "lane": 0,
+        "col": 0
+      }
+    },
+    {
+      "tick": 90,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "iron_granny",
+        "lane": 3,
+        "col": 6
+      }
+    },
+    {
+      "tick": 180,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "bat_swarm",
+        "lane": 3
+      }
+    },
+    {
+      "tick": 248,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "bat_swarm",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 270,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 7
+      }
+    },
+    {
+      "tick": 315,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "pothead",
+        "lane": 1
+      }
+    },
+    {
+      "tick": 450,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "gloomling",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 473,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "boomcap_brewer",
+        "lane": 0,
+        "col": 1
+      }
+    },
+    {
+      "tick": 540,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "pothead",
+        "lane": 2
+      }
+    },
+    {
+      "tick": 563,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 0
+      }
+    },
+    {
+      "tick": 720,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "shade_wisp",
+        "lane": 2
+      }
+    },
+    {
+      "tick": 743,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "iron_granny",
+        "lane": 2,
+        "col": 3
+      }
+    },
+    {
+      "tick": 900,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "glowshroom_monk",
+        "lane": 1,
+        "col": 0
+      }
+    },
+    {
+      "tick": 900,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "iron_granny",
+        "lane": 2,
+        "col": 5
+      }
+    },
+    {
+      "tick": 1080,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "bat_swarm",
+        "lane": 3
+      }
+    },
+    {
+      "tick": 1103,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "pothead",
+        "lane": 4
+      }
+    },
+    {
+      "tick": 1193,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "gloomling",
+        "lane": 3
+      }
+    },
+    {
+      "tick": 1260,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 1,
+        "col": 6
+      }
+    },
+    {
+      "tick": 1328,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "bat_swarm",
+        "lane": 2
+      }
+    },
+    {
+      "tick": 1350,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "pothead",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 1395,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 3,
+        "col": 0
+      }
+    },
+    {
+      "tick": 1463,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "glowshroom_monk",
+        "lane": 4,
+        "col": 0
+      }
+    },
+    {
+      "tick": 1530,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "shade_wisp",
+        "lane": 4
+      }
+    },
+    {
+      "tick": 1620,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "gloomling",
+        "lane": 1
+      }
+    },
+    {
+      "tick": 1643,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "boomcap_brewer",
+        "lane": 1,
+        "col": 1
+      }
+    },
+    {
+      "tick": 1800,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "bat_swarm",
+        "lane": 4
+      }
+    },
+    {
+      "tick": 1823,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "iron_granny",
+        "lane": 4,
+        "col": 3
+      }
+    },
+    {
+      "tick": 1980,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "iron_granny",
+        "lane": 1,
+        "col": 5
+      }
+    },
+    {
+      "tick": 2003,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "gloomling",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 2025,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "pothead",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 2048,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "glowshroom_monk",
+        "lane": 2,
+        "col": 1
+      }
+    },
+    {
+      "tick": 2160,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "pothead",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 2205,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "bat_swarm",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 2273,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "shade_wisp",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 2340,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "gloomling",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 2340,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "shade_wisp",
+        "lane": 2
+      }
+    },
+    {
+      "tick": 2408,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 0
+      }
+    },
+    {
+      "tick": 2430,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 0,
+        "col": 5
+      }
+    },
+    {
+      "tick": 2475,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "glowshroom_monk",
+        "lane": 2,
+        "col": 1
+      }
+    },
+    {
+      "tick": 2610,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "gloomling",
+        "lane": 3
+      }
+    },
+    {
+      "tick": 2633,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "iron_granny",
+        "lane": 3,
+        "col": 3
+      }
+    },
+    {
+      "tick": 2700,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "bat_swarm",
+        "lane": 1
+      }
+    },
+    {
+      "tick": 2723,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "bat_swarm",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 2858,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "boomcap_brewer",
+        "lane": 0,
+        "col": 1
+      }
+    },
+    {
+      "tick": 2880,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "pothead",
+        "lane": 3
+      }
+    },
+    {
+      "tick": 2948,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 0
+      }
+    },
+    {
+      "tick": 2993,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "glowshroom_monk",
+        "lane": 0,
+        "col": 0
+      }
+    },
+    {
+      "tick": 3060,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "shade_wisp",
+        "lane": 3
+      }
+    },
+    {
+      "tick": 3150,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 2,
+        "col": 8
+      }
+    },
+    {
+      "tick": 3173,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "gloomling",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 3263,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "iron_granny",
+        "lane": 2,
+        "col": 2
+      }
+    },
+    {
+      "tick": 3330,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "gloomling",
+        "lane": 2
+      }
+    },
+    {
+      "tick": 3398,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "bat_swarm",
+        "lane": 4
+      }
+    },
+    {
+      "tick": 3420,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "shade_wisp",
+        "lane": 4
+      }
+    },
+    {
+      "tick": 3420,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "bat_swarm",
+        "lane": 2
+      }
+    },
+    {
+      "tick": 3465,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "glowshroom_monk",
+        "lane": 0,
+        "col": 0
+      }
+    },
+    {
+      "tick": 3600,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "pothead",
+        "lane": 2
+      }
+    },
+    {
+      "tick": 3623,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 0,
+        "col": 2
+      }
+    },
+    {
+      "tick": 3713,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "pothead",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 3758,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "iron_granny",
+        "lane": 1,
+        "col": 2
+      }
+    },
+    {
+      "tick": 3780,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "glowshroom_monk",
+        "lane": 3,
+        "col": 5
+      }
+    },
+    {
+      "tick": 3870,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "boomcap_brewer",
+        "lane": 2,
+        "col": 1
+      }
+    },
+    {
+      "tick": 3870,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "iron_granny",
+        "lane": 0,
+        "col": 8
+      }
+    },
+    {
+      "tick": 3960,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "shade_wisp",
+        "lane": 4
+      }
+    },
+    {
+      "tick": 3960,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "gloomling",
+        "lane": 0
+      }
+    },
+    {
+      "tick": 3983,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 3,
+        "col": 0
+      }
+    },
+    {
+      "tick": 4028,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "glowshroom_monk",
+        "lane": 3,
+        "col": 1
+      }
+    },
+    {
+      "tick": 4050,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "bat_swarm",
+        "lane": 3
+      }
+    },
+    {
+      "tick": 4095,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "iron_granny",
+        "lane": 4,
+        "col": 3
+      }
+    },
+    {
+      "tick": 4140,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "pothead",
+        "lane": 1
+      }
+    },
+    {
+      "tick": 4163,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "pothead",
+        "lane": 1
+      }
+    },
+    {
+      "tick": 4230,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 0,
+        "col": 5
+      }
+    },
+    {
+      "tick": 4253,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "boomcap_brewer",
+        "lane": 4,
+        "col": 1
+      }
+    },
+    {
+      "tick": 4320,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 0,
+        "col": 2
+      }
+    },
+    {
+      "tick": 4320,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "shade_wisp",
+        "lane": 2
+      }
+    },
+    {
+      "tick": 4343,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "glowshroom_monk",
+        "lane": 0,
+        "col": 3
+      }
+    },
+    {
+      "tick": 4410,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "iron_granny",
+        "lane": 4,
+        "col": 6
+      }
+    },
+    {
+      "tick": 4433,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "iron_granny",
+        "lane": 2,
+        "col": 3
+      }
+    },
+    {
+      "tick": 4478,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "shade_wisp",
+        "lane": 4
+      }
+    },
+    {
+      "tick": 4500,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "boomcap_brewer",
+        "lane": 2,
+        "col": 6
+      }
+    },
+    {
+      "tick": 4523,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "boomcap_brewer",
+        "lane": 1,
+        "col": 1
+      }
+    },
+    {
+      "tick": 4590,
+      "cmd": {
+        "type": "playDefender",
+        "side": "north",
+        "cardId": "glowshroom_monk",
+        "lane": 4,
+        "col": 5
+      }
+    },
+    {
+      "tick": 4613,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "sparkbolt_gremlin",
+        "lane": 1,
+        "col": 3
+      }
+    },
+    {
+      "tick": 4635,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "glowshroom_monk",
+        "lane": 3,
+        "col": 1
+      }
+    },
+    {
+      "tick": 4680,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "bat_swarm",
+        "lane": 4
+      }
+    },
+    {
+      "tick": 4703,
+      "cmd": {
+        "type": "playDefender",
+        "side": "south",
+        "cardId": "iron_granny",
+        "lane": 3,
+        "col": 3
+      }
+    },
+    {
+      "tick": 4748,
+      "cmd": {
+        "type": "playRaider",
+        "side": "south",
+        "cardId": "shade_wisp",
+        "lane": 4
+      }
+    },
+    {
+      "tick": 4770,
+      "cmd": {
+        "type": "playRaider",
+        "side": "north",
+        "cardId": "shade_wisp",
+        "lane": 3
+      }
+    }
+  ],
+  "expected": {
+    "result": {
+      "winner": "south",
+      "reason": "gate"
+    },
+    "finalTick": 4774,
+    "hashes": [
+      {
+        "tick": 30,
+        "hash": "168be04a"
+      },
+      {
+        "tick": 60,
+        "hash": "99a72005"
+      },
+      {
+        "tick": 90,
+        "hash": "93787ba2"
+      },
+      {
+        "tick": 120,
+        "hash": "f417c0d6"
+      },
+      {
+        "tick": 150,
+        "hash": "5376b08d"
+      },
+      {
+        "tick": 180,
+        "hash": "cf4714b8"
+      },
+      {
+        "tick": 210,
+        "hash": "87f33f48"
+      },
+      {
+        "tick": 240,
+        "hash": "21d5d16b"
+      },
+      {
+        "tick": 270,
+        "hash": "5cc162ea"
+      },
+      {
+        "tick": 300,
+        "hash": "2163fa22"
+      },
+      {
+        "tick": 330,
+        "hash": "34317eea"
+      },
+      {
+        "tick": 360,
+        "hash": "6847e6a1"
+      },
+      {
+        "tick": 390,
+        "hash": "7f2c9334"
+      },
+      {
+        "tick": 420,
+        "hash": "888864e9"
+      },
+      {
+        "tick": 450,
+        "hash": "b59245af"
+      },
+      {
+        "tick": 480,
+        "hash": "116d10cb"
+      },
+      {
+        "tick": 510,
+        "hash": "4403e789"
+      },
+      {
+        "tick": 540,
+        "hash": "65a31b30"
+      },
+      {
+        "tick": 570,
+        "hash": "a81955a9"
+      },
+      {
+        "tick": 600,
+        "hash": "b1722316"
+      },
+      {
+        "tick": 630,
+        "hash": "e2b7d7b9"
+      },
+      {
+        "tick": 660,
+        "hash": "4027ebec"
+      },
+      {
+        "tick": 690,
+        "hash": "897b8bf9"
+      },
+      {
+        "tick": 720,
+        "hash": "9b17c338"
+      },
+      {
+        "tick": 750,
+        "hash": "a0900b14"
+      },
+      {
+        "tick": 780,
+        "hash": "663ff9db"
+      },
+      {
+        "tick": 810,
+        "hash": "74613e75"
+      },
+      {
+        "tick": 840,
+        "hash": "751126a9"
+      },
+      {
+        "tick": 870,
+        "hash": "611dfa76"
+      },
+      {
+        "tick": 900,
+        "hash": "f3f88fa2"
+      },
+      {
+        "tick": 930,
+        "hash": "8c268751"
+      },
+      {
+        "tick": 960,
+        "hash": "41394993"
+      },
+      {
+        "tick": 990,
+        "hash": "25103b1c"
+      },
+      {
+        "tick": 1020,
+        "hash": "bbce4120"
+      },
+      {
+        "tick": 1050,
+        "hash": "abf340fd"
+      },
+      {
+        "tick": 1080,
+        "hash": "98cef7e8"
+      },
+      {
+        "tick": 1110,
+        "hash": "ad526654"
+      },
+      {
+        "tick": 1140,
+        "hash": "6cb08921"
+      },
+      {
+        "tick": 1170,
+        "hash": "a3c8ed37"
+      },
+      {
+        "tick": 1200,
+        "hash": "8156ad97"
+      },
+      {
+        "tick": 1230,
+        "hash": "bf5fd470"
+      },
+      {
+        "tick": 1260,
+        "hash": "ac08d902"
+      },
+      {
+        "tick": 1290,
+        "hash": "cbad631e"
+      },
+      {
+        "tick": 1320,
+        "hash": "ab26b78f"
+      },
+      {
+        "tick": 1350,
+        "hash": "b1cdebf6"
+      },
+      {
+        "tick": 1380,
+        "hash": "0519bcad"
+      },
+      {
+        "tick": 1410,
+        "hash": "5b55e7f2"
+      },
+      {
+        "tick": 1440,
+        "hash": "a88a8234"
+      },
+      {
+        "tick": 1470,
+        "hash": "243f7259"
+      },
+      {
+        "tick": 1500,
+        "hash": "100b6ba2"
+      },
+      {
+        "tick": 1530,
+        "hash": "cbd11211"
+      },
+      {
+        "tick": 1560,
+        "hash": "60952d2a"
+      },
+      {
+        "tick": 1590,
+        "hash": "8f5c7226"
+      },
+      {
+        "tick": 1620,
+        "hash": "93fbfd05"
+      },
+      {
+        "tick": 1650,
+        "hash": "9688e3d1"
+      },
+      {
+        "tick": 1680,
+        "hash": "4ee637e6"
+      },
+      {
+        "tick": 1710,
+        "hash": "810b6bb9"
+      },
+      {
+        "tick": 1740,
+        "hash": "9c964f8f"
+      },
+      {
+        "tick": 1770,
+        "hash": "f7d81e85"
+      },
+      {
+        "tick": 1800,
+        "hash": "cf5a6d6c"
+      },
+      {
+        "tick": 1830,
+        "hash": "c8f6769c"
+      },
+      {
+        "tick": 1860,
+        "hash": "4a38c760"
+      },
+      {
+        "tick": 1890,
+        "hash": "923f5213"
+      },
+      {
+        "tick": 1920,
+        "hash": "0e54f108"
+      },
+      {
+        "tick": 1950,
+        "hash": "d97dc3c6"
+      },
+      {
+        "tick": 1980,
+        "hash": "1caa2c3a"
+      },
+      {
+        "tick": 2010,
+        "hash": "2295139e"
+      },
+      {
+        "tick": 2040,
+        "hash": "b84baaa6"
+      },
+      {
+        "tick": 2070,
+        "hash": "1eb47fa2"
+      },
+      {
+        "tick": 2100,
+        "hash": "43ed2dde"
+      },
+      {
+        "tick": 2130,
+        "hash": "6000883a"
+      },
+      {
+        "tick": 2160,
+        "hash": "8a207cba"
+      },
+      {
+        "tick": 2190,
+        "hash": "165660e7"
+      },
+      {
+        "tick": 2220,
+        "hash": "24e31732"
+      },
+      {
+        "tick": 2250,
+        "hash": "cf810583"
+      },
+      {
+        "tick": 2280,
+        "hash": "03a76452"
+      },
+      {
+        "tick": 2310,
+        "hash": "99fe8812"
+      },
+      {
+        "tick": 2340,
+        "hash": "14b9c4fe"
+      },
+      {
+        "tick": 2370,
+        "hash": "d5de2e66"
+      },
+      {
+        "tick": 2400,
+        "hash": "194675a3"
+      },
+      {
+        "tick": 2430,
+        "hash": "ba8e429e"
+      },
+      {
+        "tick": 2460,
+        "hash": "9f652b99"
+      },
+      {
+        "tick": 2490,
+        "hash": "aa89104a"
+      },
+      {
+        "tick": 2520,
+        "hash": "442e609b"
+      },
+      {
+        "tick": 2550,
+        "hash": "9274c637"
+      },
+      {
+        "tick": 2580,
+        "hash": "4527715a"
+      },
+      {
+        "tick": 2610,
+        "hash": "18a54f34"
+      },
+      {
+        "tick": 2640,
+        "hash": "ef6531aa"
+      },
+      {
+        "tick": 2670,
+        "hash": "0a559ebc"
+      },
+      {
+        "tick": 2700,
+        "hash": "f937b75a"
+      },
+      {
+        "tick": 2730,
+        "hash": "404ca3e9"
+      },
+      {
+        "tick": 2760,
+        "hash": "8756db95"
+      },
+      {
+        "tick": 2790,
+        "hash": "da3fd6af"
+      },
+      {
+        "tick": 2820,
+        "hash": "bf00705d"
+      },
+      {
+        "tick": 2850,
+        "hash": "62cd2479"
+      },
+      {
+        "tick": 2880,
+        "hash": "6fefd755"
+      },
+      {
+        "tick": 2910,
+        "hash": "548b5f83"
+      },
+      {
+        "tick": 2940,
+        "hash": "fbaab6d6"
+      },
+      {
+        "tick": 2970,
+        "hash": "b3427238"
+      },
+      {
+        "tick": 3000,
+        "hash": "8d0a1a70"
+      },
+      {
+        "tick": 3030,
+        "hash": "bc24f173"
+      },
+      {
+        "tick": 3060,
+        "hash": "3228934f"
+      },
+      {
+        "tick": 3090,
+        "hash": "dd69b111"
+      },
+      {
+        "tick": 3120,
+        "hash": "d7b500c9"
+      },
+      {
+        "tick": 3150,
+        "hash": "e7e924cc"
+      },
+      {
+        "tick": 3180,
+        "hash": "e6f729f2"
+      },
+      {
+        "tick": 3210,
+        "hash": "587be4ec"
+      },
+      {
+        "tick": 3240,
+        "hash": "273ee0a3"
+      },
+      {
+        "tick": 3270,
+        "hash": "55665281"
+      },
+      {
+        "tick": 3300,
+        "hash": "5e7722ae"
+      },
+      {
+        "tick": 3330,
+        "hash": "72590d52"
+      },
+      {
+        "tick": 3360,
+        "hash": "8ad6412d"
+      },
+      {
+        "tick": 3390,
+        "hash": "cdf3ec46"
+      },
+      {
+        "tick": 3420,
+        "hash": "8cd179b5"
+      },
+      {
+        "tick": 3450,
+        "hash": "d3438170"
+      },
+      {
+        "tick": 3480,
+        "hash": "4164e247"
+      },
+      {
+        "tick": 3510,
+        "hash": "8fcdbb54"
+      },
+      {
+        "tick": 3540,
+        "hash": "4eaf8b96"
+      },
+      {
+        "tick": 3570,
+        "hash": "f3200b0a"
+      },
+      {
+        "tick": 3600,
+        "hash": "f3d3e301"
+      },
+      {
+        "tick": 3630,
+        "hash": "a91781fc"
+      },
+      {
+        "tick": 3660,
+        "hash": "2ac9b963"
+      },
+      {
+        "tick": 3690,
+        "hash": "a5506124"
+      },
+      {
+        "tick": 3720,
+        "hash": "28ebab61"
+      },
+      {
+        "tick": 3750,
+        "hash": "b989c33e"
+      },
+      {
+        "tick": 3780,
+        "hash": "a0b424ef"
+      },
+      {
+        "tick": 3810,
+        "hash": "9a3a9f23"
+      },
+      {
+        "tick": 3840,
+        "hash": "699920a9"
+      },
+      {
+        "tick": 3870,
+        "hash": "e4a76e47"
+      },
+      {
+        "tick": 3900,
+        "hash": "282172a8"
+      },
+      {
+        "tick": 3930,
+        "hash": "dc7f942f"
+      },
+      {
+        "tick": 3960,
+        "hash": "1d84ff66"
+      },
+      {
+        "tick": 3990,
+        "hash": "43ebcf17"
+      },
+      {
+        "tick": 4020,
+        "hash": "8d149fac"
+      },
+      {
+        "tick": 4050,
+        "hash": "d6071f66"
+      },
+      {
+        "tick": 4080,
+        "hash": "8b8a75ce"
+      },
+      {
+        "tick": 4110,
+        "hash": "bd539bea"
+      },
+      {
+        "tick": 4140,
+        "hash": "aad462bc"
+      },
+      {
+        "tick": 4170,
+        "hash": "e3559c57"
+      },
+      {
+        "tick": 4200,
+        "hash": "6fbfe808"
+      },
+      {
+        "tick": 4230,
+        "hash": "3634b7ef"
+      },
+      {
+        "tick": 4260,
+        "hash": "f1db1d25"
+      },
+      {
+        "tick": 4290,
+        "hash": "3ac8a5b2"
+      },
+      {
+        "tick": 4320,
+        "hash": "7708ffed"
+      },
+      {
+        "tick": 4350,
+        "hash": "04f9b7fd"
+      },
+      {
+        "tick": 4380,
+        "hash": "35f3e028"
+      },
+      {
+        "tick": 4410,
+        "hash": "2ff240c5"
+      },
+      {
+        "tick": 4440,
+        "hash": "b59103bc"
+      },
+      {
+        "tick": 4470,
+        "hash": "00bcb484"
+      },
+      {
+        "tick": 4500,
+        "hash": "25af6f2d"
+      },
+      {
+        "tick": 4530,
+        "hash": "a0057050"
+      },
+      {
+        "tick": 4560,
+        "hash": "38b16279"
+      },
+      {
+        "tick": 4590,
+        "hash": "7834d697"
+      },
+      {
+        "tick": 4620,
+        "hash": "4e58b85c"
+      },
+      {
+        "tick": 4650,
+        "hash": "6e55b40f"
+      },
+      {
+        "tick": 4680,
+        "hash": "e9c46a38"
+      },
+      {
+        "tick": 4710,
+        "hash": "9d207af2"
+      },
+      {
+        "tick": 4740,
+        "hash": "530dc33e"
+      },
+      {
+        "tick": 4770,
+        "hash": "d1d66a8e"
+      },
+      {
+        "tick": 4774,
+        "hash": "6ca69224"
+      }
+    ],
+    "hands": {
+      "south": {
+        "hand": ["boomcap_brewer", "pothead", "gloomling", "bat_swarm"],
+        "next": "sparkbolt_gremlin"
+      },
+      "north": {
+        "hand": ["iron_granny", "sparkbolt_gremlin", "pothead", "gloomling"],
+        "next": "boomcap_brewer"
+      }
+    }
+  }
+}

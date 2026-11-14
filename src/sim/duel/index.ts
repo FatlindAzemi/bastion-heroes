@@ -12,6 +12,7 @@ export {
   type DuelDefenderCard,
 } from './cards';
 export { duelProducerIntervalTicks, incomeIntervalTicksOf } from './essence';
+export { hashDuelState } from './hash';
 export { initialDuelTraps, raidersReachingBaseLine } from './gates';
 export { acceptsCommands, phaseLengthTicks } from './phases';
 export { countRaiders, duelRaiderCard, type DuelRaiderCard } from './raiderCards';

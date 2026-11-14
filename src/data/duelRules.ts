@@ -46,6 +46,8 @@ export const duelRules: DuelRulesDef = {
   standard: { cardLevel: 6 },
   // 18.7: gate health 8, trap rolls at 8 tiles per second.
   gate: { gateHealth: 8, trapSpeedTilesPerS: 8 },
+  // 19.4: a state hash every 30 ticks for desync detection; replays record hashes at the same ticks.
+  sync: { hashIntervalTicks: 30 },
   // 20.2: arenas, trophy floors, unlocked cards and first-time chests.
   arenas: [
     {

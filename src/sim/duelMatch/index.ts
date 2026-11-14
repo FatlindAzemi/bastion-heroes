@@ -20,9 +20,20 @@ export {
 } from './hand';
 export {
   createLocalDuelMatch,
+  duelCommandOf,
   type DuelCardPlay,
+  type DuelPlayCommand,
   type DuelPlayerSetup,
   type DuelPlayRejectReason,
   type LocalDuelMatch,
   type LocalDuelMatchOptions,
 } from './localMatch';
+export {
+  createRecordedDuelMatch,
+  runDuelReplay,
+  type DuelRecordedHash,
+  type DuelReplay,
+  type DuelReplayCommand,
+  type DuelReplayResult,
+  type RecordedDuelMatch,
+} from './replay';

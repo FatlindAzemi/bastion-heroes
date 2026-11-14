@@ -422,6 +422,10 @@ export const DuelRulesDef = z.object({
     gateHealth: z.number().int().positive(),
     trapSpeedTilesPerS: z.number().positive(),
   }),
+  /** Lockstep sync (19.4): ticks between two state hashes. */
+  sync: z.object({
+    hashIntervalTicks: z.number().int().positive(),
+  }),
   arenas: z
     .array(
       z.object({
