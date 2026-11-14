@@ -1,3 +1,5 @@
+import { useState } from 'preact/hooks';
+
 import { CardPortrait } from '../components/CardPortrait';
 import { Icon } from '../components/Icon';
 import { useAnimationRedraw } from '../hud/useInteraction';
@@ -9,7 +11,7 @@ import { GatePips } from './GatePips';
 import { MatchTimer } from './MatchTimer';
 import { OpponentBar } from './OpponentBar';
 import { PhaseOverlay } from './PhaseOverlay';
-import { SurrenderMenu } from './SurrenderMenu';
+import { SurrenderButton, SurrenderDialog } from './SurrenderMenu';
 import type { DuelHudBus, DuelHudOptions } from './types';
 import { useDuelInteraction, type DuelInteraction } from './useDuelInteraction';
 
@@ -50,13 +52,14 @@ function DragGhostView({ interaction }: { readonly interaction: DuelInteraction 
 export function DuelHud(props: DuelHudProps) {
   useAnimationRedraw();
   const interaction = useDuelInteraction(props);
+  const [menuOpen, setMenuOpen] = useState(false);
   const view = props.readState();
   return (
     <div class={`hud duel-hud${interaction.heldSlot === null ? '' : ' duel-hud--holding'}`}>
       <div class="hud__tap-layer" data-testid="duel-board" onPointerUp={interaction.onBoardTap} />
       <div class="duel-top">
         <OpponentBar opponent={view.opponent} gate={view.opponentGate} maxGate={view.maxGate} />
-        <SurrenderMenu disabled={view.ended} onSurrender={props.actions.surrender} />
+        <SurrenderButton disabled={view.ended} onOpen={(): void => setMenuOpen(true)} />
       </div>
       <MatchTimer seconds={view.clockSeconds} phase={view.phase} />
       <PhaseOverlay
@@ -79,6 +82,12 @@ export function DuelHud(props: DuelHudProps) {
         />
       </div>
       <DragGhostView interaction={interaction} />
+      {menuOpen && !view.ended ? (
+        <SurrenderDialog
+          onKeepFighting={(): void => setMenuOpen(false)}
+          onSurrender={props.actions.surrender}
+        />
+      ) : null}
     </div>
   );
 }

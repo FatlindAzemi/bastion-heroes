@@ -10,7 +10,7 @@ function TrainingNote({ botLevel }: { readonly botLevel: DuelResultOptions['botL
   return (
     <div class="duel-result__note" data-testid="duel-result-note">
       <Icon name="swords" class="duel-result__note-icon" />
-      <span>Training{level} · no trophies or rewards</span>
+      <span>Training{level} · no trophies</span>
     </div>
   );
 }
