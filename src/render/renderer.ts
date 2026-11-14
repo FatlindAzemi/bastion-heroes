@@ -11,8 +11,10 @@ import {
   WebGLRenderer,
 } from 'three';
 
+import type { DuelEvent, DuelState } from '../sim/duel';
 import type { SimEvent, SimState } from '../sim/types';
 import { createDebugOverlay, type DebugSimInfo } from './debugOverlay';
+import { createDuelScene, type DuelScene, type DuelViewOptions } from './duel/duelScene';
 import type { LevelViewOptions } from './grid';
 import { createLevelScene, type LevelScene } from './levelScene';
 import { createPostProcessing, type PostProcessing } from './postprocessing';
@@ -40,8 +42,19 @@ export interface GameRenderer {
   /** Switches back from a level to the 3D title scene (shell navigation, spec 11.8). */
   showTitle(): void;
   /**
+   * Switches the canvas to the Duel renderer (spec 18.1, issue #129), drawn from the
+   * view of `options.viewSide`: the north view is mirrored, never the sim.
+   */
+  showDuel(options: DuelViewOptions): DuelScene;
+  /** Renders one Duel frame and lerps the units by alpha (0..1) between ticks (spec 11.4). */
+  drawDuel(state: Readonly<DuelState>, alpha: number): void;
+  /** Applies one Duel tick's events; a no-op unless a Duel is shown. */
+  handleDuelEvents(events: readonly DuelEvent[]): void;
+  /**
    * Converts a DOM pointer position into the world point where its ray hits the ground
-   * plane (spec 9.1). The HUD (#26) uses it to turn taps into tiles and orb picks.
+   * plane (spec 9.1). The HUD (#26) uses it to turn taps into tiles and orb picks. In a
+   * Duel the point is in sim coordinates (x, z = lane + 0.5): the north view's mirror is
+   * undone here, so the HUD never mirrors anything itself (spec 18.1).
    */
   pointerToWorld(
     clientX: number,
@@ -109,6 +122,7 @@ export function createRenderer(container: HTMLElement): GameRenderer {
   });
 
   let levelScene: LevelScene | null = null;
+  let duelScene: DuelScene | null = null;
 
   // Reused for HUD pointer picking: a ray from the level camera against the y = 0 plane.
   const pointer = new Vector2();
@@ -125,6 +139,7 @@ export function createRenderer(container: HTMLElement): GameRenderer {
     titleCamera.aspect = width / height;
     titleCamera.updateProjectionMatrix();
     levelScene?.resize(width / height);
+    duelScene?.resize(width / height);
     postProcessing.setSize(width, height);
   };
   resize();
@@ -152,6 +167,14 @@ export function createRenderer(container: HTMLElement): GameRenderer {
     orbs: state.orbs.length,
   });
 
+  /** Disposes the shown level or Duel; the title scene is the default view again. */
+  const disposeScenes = (): void => {
+    levelScene?.dispose();
+    levelScene = null;
+    duelScene?.dispose();
+    duelScene = null;
+  };
+
   /** Animates and renders the title scene with its gentle camera sway (spec 9.7). */
   const drawTitle = (): void => {
     const elapsedSeconds = (performance.now() - titleStartedAtMs) / 1000;
@@ -169,7 +192,10 @@ export function createRenderer(container: HTMLElement): GameRenderer {
     draw: (state?: Readonly<SimState>, alpha = 0): void => {
       renderer.info.reset();
       let simInfo: DebugSimInfo | undefined;
-      if (levelScene === null) {
+      if (duelScene !== null) {
+        postProcessing.setScene(duelScene.scene, duelScene.camera);
+        postProcessing.render();
+      } else if (levelScene === null) {
         drawTitle();
       } else {
         if (state !== undefined) {
@@ -184,13 +210,31 @@ export function createRenderer(container: HTMLElement): GameRenderer {
     handleEvents: (events): void => {
       levelScene?.handleEvents(events);
     },
+    drawDuel: (state, alpha): void => {
+      renderer.info.reset();
+      if (duelScene !== null) {
+        duelScene.draw(state, alpha);
+        postProcessing.setScene(duelScene.scene, duelScene.camera);
+        postProcessing.render();
+      }
+      // Draw calls, triangles and fps only; the level diagnostics have no Duel meaning.
+      recordDebugFrame();
+    },
+    handleDuelEvents: (events): void => {
+      duelScene?.handleEvents(events);
+    },
     showTitle: (): void => {
-      levelScene?.dispose();
-      levelScene = null;
+      disposeScenes();
       titleStartedAtMs = performance.now();
     },
+    showDuel: (options): DuelScene => {
+      disposeScenes();
+      duelScene = createDuelScene(options);
+      resize();
+      return duelScene;
+    },
     showLevel: (options): LevelScene => {
-      levelScene?.dispose();
+      disposeScenes();
       levelScene = createLevelScene(options);
       resize();
       console.log(
@@ -204,7 +248,8 @@ export function createRenderer(container: HTMLElement): GameRenderer {
       return levelScene;
     },
     pointerToWorld: (clientX, clientY) => {
-      if (levelScene === null) {
+      const camera = duelScene?.camera ?? levelScene?.camera;
+      if (camera === undefined) {
         return null;
       }
       const bounds = renderer.domElement.getBoundingClientRect();
@@ -215,16 +260,19 @@ export function createRenderer(container: HTMLElement): GameRenderer {
         ((clientX - bounds.left) / bounds.width) * 2 - 1,
         -(((clientY - bounds.top) / bounds.height) * 2 - 1),
       );
-      pointerRaycaster.setFromCamera(pointer, levelScene.camera);
+      pointerRaycaster.setFromCamera(pointer, camera);
       const hit = pointerRaycaster.ray.intersectPlane(groundPlane, groundHit);
-      return hit === null ? null : { x: hit.x, z: hit.z };
+      if (hit === null) {
+        return null;
+      }
+      return duelScene === null ? { x: hit.x, z: hit.z } : duelScene.viewToSim(hit.x, hit.z);
     },
     dispose: (): void => {
       window.removeEventListener('resize', resize);
       debugOverlay.dispose();
       postProcessing.dispose();
       titleHeroes.dispose();
-      levelScene?.dispose();
+      disposeScenes();
       renderer.dispose();
     },
   };

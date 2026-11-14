@@ -36,6 +36,8 @@ export const GROUND_SURFACE = {
 
 /** Shared clock of every patched ground material, in seconds. */
 const timeUniform = { value: 0 };
+/** Shared portal corruption strength: the campaign level paints it, the Duel has no portal. */
+const corruptionUniform: { value: number } = { value: GROUND_SURFACE.corruptionStrength };
 
 const VERTEX_DECLARATIONS = /* glsl */ `
 varying vec3 vGroundWorld;
@@ -51,6 +53,7 @@ const FRAGMENT_DECLARATIONS = /* glsl */ `
 varying vec3 vGroundWorld;
 varying float vGroundUp;
 uniform float uGroundTime;
+uniform float uGroundCorruption;
 
 float groundHash( vec2 p ) {
   p = fract( p * vec2( 0.1031, 0.1030 ) );
@@ -137,7 +140,7 @@ const FRAGMENT_BODY = /* glsl */ `
   float creep = smoothstep( 6.6, 9.4, p.x + veins * 1.4 ) * ( 1.0 - smoothstep( 0.0, 2.5, outside ) );
   float pulse = 0.85 + 0.15 * sin( uGroundTime * 1.7 + p.x * 2.0 );
   vec3 corrupted = painted * vec3( 0.55, 0.4, 0.86 ) + vec3( 0.07, 0.0, 0.16 ) * pulse;
-  painted = mix( painted, corrupted, creep * ${GROUND_SURFACE.corruptionStrength.toFixed(2)} );
+  painted = mix( painted, corrupted, creep * uGroundCorruption );
 
   // Focus falloff: the world cools and darkens away from the playfield.
   float distant = smoothstep( 1.2, 9.0, outside );
@@ -158,6 +161,7 @@ const FRAGMENT_BODY = /* glsl */ `
 export function applyGroundSurface(material: MeshToonMaterial): void {
   material.onBeforeCompile = (shader): void => {
     shader.uniforms['uGroundTime'] = timeUniform;
+    shader.uniforms['uGroundCorruption'] = corruptionUniform;
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>\n${VERTEX_DECLARATIONS}`)
       .replace('#include <project_vertex>', `#include <project_vertex>\n${VERTEX_BODY}`);
@@ -172,4 +176,13 @@ export function applyGroundSurface(material: MeshToonMaterial): void {
 /** Advances the shared ground clock (cloud shadows and corruption pulse). */
 export function setGroundSurfaceTime(seconds: number): void {
   timeUniform.value = seconds;
+}
+
+/**
+ * Sets the strength of the violet portal corruption on the far columns (0..1). The
+ * campaign level uses `GROUND_SURFACE.corruptionStrength`; the Duel board has a
+ * bastion on both ends and turns it off (spec 18.1).
+ */
+export function setGroundCorruption(strength: number): void {
+  corruptionUniform.value = Math.min(Math.max(strength, 0), 1);
 }

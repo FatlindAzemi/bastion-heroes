@@ -13,7 +13,8 @@ import { Group, type Camera } from 'three';
 
 import { enemyById, rules } from '../../data';
 import type { DamageType } from '../../sim/combat/damage';
-import type { SimEvent, SimState } from '../../sim/types';
+import type { SimEvent } from '../../sim/types';
+import type { RenderSimState } from '../renderState';
 import { laneToWorldZ, simXToWorldX } from '../worldMapping';
 import { createChainArcs, type ChainArcs } from './chainArcs';
 import { createDamageNumbers, type DamageNumbers } from './damageNumbers';
@@ -106,9 +107,14 @@ export interface VfxOptions {
 /** The VFX layer surface the level scene drives. */
 export interface VfxLayer {
   readonly object: Group;
+  /**
+   * The shared AOE ring and impact flash batches, so mode-specific effects (the Duel
+   * gate hit and trap fire, issue #129) reuse their draw calls instead of adding new ones.
+   */
+  readonly effects: { readonly aoeRings: AoeRings; readonly impactFlash: ImpactFlash };
   handleEvents(events: readonly SimEvent[]): void;
   /** Resolves queued events and advances every effect; called once per drawn frame. */
-  update(state: Readonly<SimState>, deltaSeconds: number, camera: Camera): void;
+  update(state: Readonly<RenderSimState>, deltaSeconds: number, camera: Camera): void;
   dispose(): void;
 }
 
@@ -175,7 +181,7 @@ export function createVfxLayer(options: VfxOptions): VfxLayer {
 
   /** Position of one unit (defender or enemy) and its head height. */
   function unitPosition(
-    state: Readonly<SimState>,
+    state: Readonly<RenderSimState>,
     id: number,
   ): { x: number; y: number; z: number } | null {
     const defender = state.defenders.find((unit) => unit.id === id);
@@ -199,7 +205,7 @@ export function createVfxLayer(options: VfxOptions): VfxLayer {
   }
 
   /** Spec 4.1 effectiveness multiplier of one hit (1 for defender targets). */
-  function hitMultiplier(state: Readonly<SimState>, request: HitRequest): number {
+  function hitMultiplier(state: Readonly<RenderSimState>, request: HitRequest): number {
     const enemy = state.enemies.find((unit) => unit.id === request.targetId);
     if (enemy === undefined) {
       return 1;
@@ -233,7 +239,7 @@ export function createVfxLayer(options: VfxOptions): VfxLayer {
   }
 
   /** Resolves one queued hit: number, flash, particles, blast AOE and shake. */
-  function spawnHit(state: Readonly<SimState>, request: HitRequest): void {
+  function spawnHit(state: Readonly<RenderSimState>, request: HitRequest): void {
     const position = unitPosition(state, request.targetId);
     if (position === null) {
       return;
@@ -272,7 +278,7 @@ export function createVfxLayer(options: VfxOptions): VfxLayer {
   }
 
   /** Spawns one combo's particles, popup and (for chain) lightning arcs. */
-  function spawnCombo(combo: ComboRequest, state: Readonly<SimState> | null): void {
+  function spawnCombo(combo: ComboRequest, state: Readonly<RenderSimState> | null): void {
     const x = simXToWorldX(combo.x);
     const z = laneToWorldZ(combo.lane);
     options.particles.burst(COMBO_IDS[combo.combo], x, 1.0, z);
@@ -427,7 +433,7 @@ export function createVfxLayer(options: VfxOptions): VfxLayer {
   }
 
   /** Emits the dust trail of every rolling trap log from the sim `rollerX` (3.9). */
-  function updateTrapDust(state: Readonly<SimState>): void {
+  function updateTrapDust(state: Readonly<RenderSimState>): void {
     for (let lane = 0; lane < state.traps.length; lane += 1) {
       const rollerX = state.traps[lane]?.rollerX;
       if (rollerX === null || rollerX === undefined) {
@@ -446,7 +452,7 @@ export function createVfxLayer(options: VfxOptions): VfxLayer {
   }
 
   /** Continuous status sparkles, flames and bubbles plus the Essence orb trail. */
-  function updateContinuousEffects(state: Readonly<SimState>): void {
+  function updateContinuousEffects(state: Readonly<RenderSimState>): void {
     for (const enemy of state.enemies) {
       const position = unitPosition(state, enemy.id);
       if (position === null) {
@@ -485,7 +491,7 @@ export function createVfxLayer(options: VfxOptions): VfxLayer {
   }
 
   /** Resolves the queued attack events: Ogre and boss smashes get their AOE rings. */
-  function updateAttacks(state: Readonly<SimState>): void {
+  function updateAttacks(state: Readonly<RenderSimState>): void {
     for (const sourceId of attackSources) {
       const enemy = state.enemies.find((unit) => unit.id === sourceId);
       if (enemy === undefined) {
@@ -505,6 +511,7 @@ export function createVfxLayer(options: VfxOptions): VfxLayer {
 
   return {
     object,
+    effects: { aoeRings, impactFlash },
     handleEvents: (events): void => {
       for (const event of events) {
         switch (event.type) {

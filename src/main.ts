@@ -8,6 +8,7 @@ import {
   type DebugLevelRequest,
   type DebugPlacement,
 } from './debug';
+import { parseDuelDebugUrl, startDebugDuel } from './debugDuel';
 import { startGameLoop, startRenderLoop, type GameLoop } from './loop';
 import {
   applyLevelResult,
@@ -829,6 +830,16 @@ function boot(): void {
   const renderer = createRenderer(root);
   if (query.has('result')) {
     startResultPreview(root, renderer, query);
+    return;
+  }
+  // Issue #129: `?duel=1` shows a bot-vs-bot Duel until the Training entry exists (#130).
+  const duelDebug = parseDuelDebugUrl(window.location.search);
+  if (duelDebug.kind === 'error') {
+    showDebugError(root, duelDebug.message);
+    return;
+  }
+  if (duelDebug.kind === 'duel') {
+    startDebugDuel(renderer, duelDebug);
     return;
   }
   const debugUrl = parseDebugUrl(window.location.search);

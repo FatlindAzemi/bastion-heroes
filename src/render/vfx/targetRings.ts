@@ -20,7 +20,8 @@ import {
 } from 'three';
 
 import { defenderById } from '../../data';
-import type { DefenderState, SimState } from '../../sim/types';
+import type { DefenderState } from '../../sim/types';
+import type { RenderSimState } from '../renderState';
 import { laneToWorldZ, simXToWorldX } from '../worldMapping';
 import {
   cooldownProgress,
@@ -52,7 +53,7 @@ interface TargetRingView {
 /** Thin radial progress rings over defenders (issue #114 §3). */
 export interface TargetRings {
   /** Rebuilds the rings from the current sim state; called once per drawn frame. */
-  update(state: Readonly<SimState>): void;
+  update(state: Readonly<RenderSimState>): void;
   dispose(): void;
 }
 

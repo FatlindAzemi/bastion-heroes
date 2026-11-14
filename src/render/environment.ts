@@ -45,7 +45,7 @@ export interface EnvironmentLayer {
 let world1Scene: Promise<Group | null> | null = null;
 
 /** Loads `public/models/world1.glb` once and turns its palette materials into toon materials. */
-function loadWorld1(): Promise<Group | null> {
+export function loadWorld1(): Promise<Group | null> {
   if (world1Scene !== null) {
     return world1Scene;
   }
