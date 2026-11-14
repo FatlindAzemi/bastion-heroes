@@ -1,31 +1,21 @@
-import { DirectionalLight, Group, HemisphereLight, PerspectiveCamera, Scene, Vector3 } from 'three';
+import { Group, type PerspectiveCamera, type Scene } from 'three';
 
 import { rules } from '../data/rules';
 import type { SimEvent, SimState } from '../sim/types';
 import { createAmbientMotes } from './ambientMotes';
-import { applySky } from './backdrop';
 import { fitLevelCamera } from './cameraFit';
-import { readDebugAnimationHold } from './debugAnimation';
 import { createEnvironmentLayer } from './environment';
 import { createGrid, type Grid, type LevelViewOptions } from './grid';
-import { setGroundSurfaceTime } from './groundSurface';
+import { GROUND_SURFACE, setGroundCorruption, setGroundSurfaceTime } from './groundSurface';
 import { createOrbLayer } from './orbs';
 import { createParticleBursts, type ParticleBursts } from './particles';
 import { createPortalVortex } from './portalVortex';
 import { createPropSpriteLayer } from './propSprites';
 import { createProjectileLayer } from './projectiles';
-import { createSpriteUnitLayer } from './sprites';
-import { createUnitLayer, type UnitLayer } from './units';
+import { createCameraShake, createSceneStage, createUnitLayerStack } from './sceneParts';
+import type { UnitLayer } from './units';
 import { readDebugVfx } from './vfx/debugVfx';
 import { createVfxLayer } from './vfx/index';
-import { SHAKE_AMPLITUDE, SHAKE_DURATION_S } from './vfx/juice';
-
-/**
- * Camera FOV of spec 9.1 (portrait). The distance is fitted to the aspect ratio by
- * `fitLevelCamera` so the whole playfield stays visible between the top status bar and
- * the bottom card tray (spec 9.1, 9.8).
- */
-const CAMERA_FOV = 32;
 
 /**
  * Greybox orb hover height. The sim state has no orb y yet; when issue #19 adds the
@@ -46,7 +36,7 @@ export interface LevelScene {
 }
 
 /** Applies one tick of sim events to the unit layers (spec 11.3, 11.7). */
-function applyUnitEvents(events: readonly SimEvent[], units: UnitLayer): void {
+export function applyUnitEvents(events: readonly SimEvent[], units: UnitLayer): void {
   for (const event of events) {
     switch (event.type) {
       case 'defenderPlaced':
@@ -98,18 +88,7 @@ function applyUnitEvents(events: readonly SimEvent[], units: UnitLayer): void {
  * enemy models/capsules, projectiles, Essence orbs and tick interpolation.
  */
 export function createLevelScene(options: LevelViewOptions): LevelScene {
-  const scene = new Scene();
-  applySky(scene);
-
-  const camera = new PerspectiveCamera(CAMERA_FOV, 1, 0.1, 60);
-  fitLevelCamera(camera, 1);
-
-  // Spec 9.2: one warm key light from the upper left front plus the cool hemisphere fill.
-  // No real-time shadows; the greybox units get no shadows until M3 (issue 3.4).
-  const keyLight = new DirectionalLight(0xfff2d9, 2.2);
-  keyLight.position.set(-6, 9, 6);
-  scene.add(keyLight);
-  scene.add(new HemisphereLight(0xbfe3ff, 0x6b8f4e, 0.9));
+  const { scene, camera } = createSceneStage();
 
   // The final World 1 environment (issue #73) replaces the greybox grid as soon as the
   // GLB has loaded; the grid stays on screen during loading and if loading fails, so the
@@ -125,6 +104,8 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
   const portalVortex = createPortalVortex();
   const ambientMotes = createAmbientMotes(Math.min(window.devicePixelRatio, 2));
   scene.add(portalVortex.group, ambientMotes.object);
+  // The campaign portal corrupts the far columns (spec 9.2).
+  setGroundCorruption(GROUND_SURFACE.corruptionStrength);
   const sceneStartMs = performance.now();
   void environment.ready.then((loaded) => {
     if (!loaded || grid === null) {
@@ -135,56 +116,20 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
     grid = null;
   });
 
-  const unitGroup = new Group();
-  const glbUnitGroup = new Group();
-  const projectileGroup = new Group();
-  const orbGroup = new Group();
-  scene.add(unitGroup, glbUnitGroup, projectileGroup, orbGroup);
-
   // Spec 9.7 (issue #75): one shared particle system for the 9.6 animations and all
   // VFX, plus the VFX layer with its sprite billboards, damage numbers and bars.
   const particles: ParticleBursts = createParticleBursts();
-  scene.add(particles.object);
-  let shakeEndsAtMs = 0;
-  const baseCameraPosition = new Vector3();
-  baseCameraPosition.copy(camera.position);
+  const shake = createCameraShake(camera);
   const vfx = createVfxLayer({
     particles,
-    onShake: (amplitude: number): void => {
-      shakeEndsAtMs = Math.max(shakeEndsAtMs, performance.now() + SHAKE_DURATION_S * 1000);
-      shakeAmplitude = Math.max(shakeAmplitude, amplitude);
-    },
+    onShake: shake.request,
     debugVfx: readDebugVfx(window.location.search),
   });
-  scene.add(vfx.object);
-  let shakeAmplitude = SHAKE_AMPLITUDE;
-  const debugAnimationHold = readDebugAnimationHold(window.location.search);
-  const glbUnits = createUnitLayer(glbUnitGroup, {
-    // Debug-only screenshot helper (`?debuganim=kind:progress`), issue #74.
-    debugAnimationHold,
-    particles,
-  });
-  // 2.5D sprite billboards (issue #114). The GLB unit layer stays visible until the
-  // atlases loaded, then the sprites take over and the 3D layer is removed.
-  const spriteUnits = createSpriteUnitLayer(unitGroup, {
-    camera,
-    particles,
-    debugAnimationHold,
-    // Phone readability: sprites draw 50 % taller than their measured model height.
-    worldScale: 1.5,
-  });
-  const unitLayers: UnitLayer[] = [glbUnits, spriteUnits];
-  void spriteUnits.ready.then((available) => {
-    if (!available) {
-      return;
-    }
-    glbUnitGroup.visible = false;
-    const index = unitLayers.indexOf(glbUnits);
-    if (index >= 0) {
-      unitLayers.splice(index, 1);
-    }
-    glbUnits.dispose();
-  });
+  const unitStack = createUnitLayerStack(scene, camera, particles);
+  const unitLayers = unitStack.layers;
+  const projectileGroup = new Group();
+  const orbGroup = new Group();
+  scene.add(projectileGroup, orbGroup, particles.object, vfx.object);
   const projectiles = createProjectileLayer(projectileGroup);
   const orbs = createOrbLayer(orbGroup);
 
@@ -246,25 +191,16 @@ export function createLevelScene(options: LevelViewOptions): LevelScene {
       particles.update(deltaSeconds);
       // Spec 9.7: 0.05 unit camera shake for 0.15 s on heavy hits, trap fire and
       // boss/Ogre smashes; the camera returns to its fitted position afterwards.
-      if (now < shakeEndsAtMs) {
-        camera.position.copy(baseCameraPosition);
-        camera.position.x += (Math.random() * 2 - 1) * shakeAmplitude;
-        camera.position.y += (Math.random() * 2 - 1) * shakeAmplitude;
-      } else {
-        camera.position.copy(baseCameraPosition);
-      }
+      shake.update(now);
     },
     resize: (aspect): void => {
       fitLevelCamera(camera, aspect);
-      baseCameraPosition.copy(camera.position);
+      shake.refit();
     },
     dispose: (): void => {
       vfx.dispose();
       particles.dispose();
-      for (const layer of unitLayers) {
-        layer.dispose();
-      }
-      unitLayers.length = 0;
+      unitStack.dispose();
       projectiles.dispose();
       orbs.dispose();
       propSprites.dispose();

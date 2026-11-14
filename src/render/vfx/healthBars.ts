@@ -16,7 +16,7 @@ import {
   Vector3,
 } from 'three';
 
-import type { SimState } from '../../sim/types';
+import type { RenderSimState } from '../renderState';
 import { laneToWorldZ, simXToWorldX } from '../worldMapping';
 import { HEALTH_BAR_WIDTH, healthFraction } from './juice';
 import { enemyHoverHeight, unitHeadHeight } from './unitHeights';
@@ -35,7 +35,7 @@ const BACKING_COLOR = 0x1b1b2f;
 export interface HealthBars {
   /** Marks a unit id as damaged so its bar starts showing (spec 9.7). */
   markDamaged(id: number): void;
-  update(state: Readonly<SimState>, camera: Camera): void;
+  update(state: Readonly<RenderSimState>, camera: Camera): void;
   dispose(): void;
 }
 

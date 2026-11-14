@@ -15,7 +15,8 @@ import {
   Vector3,
 } from 'three';
 
-import type { EnemyState, SimState } from '../../sim/types';
+import type { EnemyState } from '../../sim/types';
+import type { RenderSimState } from '../renderState';
 import { laneToWorldZ, simXToWorldX } from '../worldMapping';
 import { enemyHoverHeight } from './unitHeights';
 import { setMatrixPosition } from './matrix';
@@ -30,7 +31,7 @@ const ICE_DEPTH = 0.9;
 
 /** Ice blocks and slow tints of spec 9.7. */
 export interface StatusMeshes {
-  update(state: Readonly<SimState>): void;
+  update(state: Readonly<RenderSimState>): void;
   dispose(): void;
 }
 
