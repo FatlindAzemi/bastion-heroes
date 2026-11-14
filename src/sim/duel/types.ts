@@ -33,8 +33,9 @@ export type DuelCommand =
  * - `invalidTile`: the lane or column is outside the 5 x 9 grid (3.1).
  * - `invalidCard`: the card id is not a Duel card of the kind the command plays (18.8).
  * - `cardLimitReached`: the player already has the card's maximum number of copies (18.8).
+ * - `tooManyRaiders`: "Too many raiders": the card's raiders do not fit under the raider cap (18.6).
  * - `matchNotRunning`: the countdown is still running; no commands are accepted (18.2).
- * - `notImplemented`: the command belongs to a later D1 issue (`playRaider` #124, `surrender` #125).
+ * - `notImplemented`: the command belongs to a later D1 issue (`surrender` #125).
  */
 export type DuelRejectReason =
   | 'notEnoughEssence'
@@ -43,6 +44,7 @@ export type DuelRejectReason =
   | 'invalidTile'
   | 'invalidCard'
   | 'cardLimitReached'
+  | 'tooManyRaiders'
   | 'matchNotRunning'
   | 'notImplemented';
 
@@ -85,6 +87,8 @@ export type DuelEvent =
   // The "+1" popup of a producer (spec 18.3); emitted even when the point is lost at the cap.
   | { type: 'essenceProduced'; side: Side; sourceId: number; amount: number }
   | { type: 'gateDamaged'; side: Side; amount: number; health: number }
+  // A raider of `side` reached the enemy base line and left the lane (spec 18.7).
+  | { type: 'raiderReachedBase'; side: Side; id: number; enemyId: string; lane: number }
   | { type: 'phaseChanged'; phase: DuelPhase }
   | { type: 'duelEnded'; winner: Side | 'draw'; reason: DuelResult['reason'] };
 
@@ -93,6 +97,24 @@ export type DuelDefenderState = DefenderState & { side: Side };
 
 /** A raider in a Duel: a walking unit that is always owned by a side (spec 18.6). */
 export type DuelRaiderState = EnemyState & { side: Side };
+
+/**
+ * One raider of a played card that is not active yet (spec 18.5, 18.8). It appears at
+ * its side's spawn point at `appearTick` and becomes active at `activeAtTick`. Until
+ * then it is not in `DuelState.enemies`, so it cannot move, attack, block or be
+ * targeted, but it already counts towards the raider cap (spec 18.6).
+ */
+export interface DuelSummonState {
+  side: Side;
+  enemyId: string;
+  lane: number;
+  /** Tick at which the raider appears at the spawn point; later units of a card appear later. */
+  appearTick: number;
+  /** Tick at which the raider joins `DuelState.enemies`: the summon delay after it appeared. */
+  activeAtTick: number;
+  /** The raider standing at the spawn point, or null while it has not appeared yet. */
+  raider: DuelRaiderState | null;
+}
 
 /** The public numbers of one player (spec 19.3). */
 export interface DuelSideState {
@@ -129,8 +151,10 @@ export interface DuelState {
   readonly sides: Record<Side, DuelSideState>;
   /** Defenders of both sides on the grid. */
   readonly defenders: DuelDefenderState[];
-  /** Raiders of both sides (spec 18.6); named like the campaign list the shared code reads. */
+  /** Active raiders of both sides (spec 18.6); named like the campaign list the shared code reads. */
   readonly enemies: DuelRaiderState[];
+  /** Raiders of played cards that are still being summoned, in play order (spec 18.5). */
+  readonly summons: DuelSummonState[];
   /** Projectiles in flight; each carries the side of the defender that fired it. */
   readonly projectiles: ProjectileState[];
   /** ★3 Pyro Fox fire patches on the field (spec 5.2). */

@@ -10,7 +10,8 @@ import { updateDuelEssence } from './essence';
 import { createEventLog, type DuelEventLog } from './events';
 import { surrender, updateTrapsAndGates } from './gates';
 import { acceptsCommands, initialPhaseState, updatePhase } from './phases';
-import { playRaider, updateRaiders } from './raiders';
+import { playRaider } from './raiderCards';
+import { updateRaiders } from './raiders';
 import { DUEL_BOARD, sideOrder } from './sides';
 import type { DuelCommand, DuelEvent, DuelSim, DuelSideState, DuelState } from './types';
 
@@ -33,6 +34,7 @@ function initialDuelState(seed: number): DuelState {
     sides: { south: initialSideState(), north: initialSideState() },
     defenders: [],
     enemies: [],
+    summons: [],
     projectiles: [],
     firePatches: [],
     result: null,
@@ -118,7 +120,7 @@ export function createDuelSim(seed: number): DuelSim {
     applyScheduledCommands(log.events); // 1) commands of this tick
     updateDuelEssence(state, log.events); // 2) Essence income
     updateDefenderCombat(state, log); // 3) defenders, 4) projectiles, 5) status effects
-    updateRaiders(state, log); // 6) raiders move, block and fight (#124)
+    updateRaiders(state, log); // 6) raiders are summoned, move, block and fight
     removeDeadUnits(state, log); // 7) remove dead units
     updateTrapsAndGates(state, log.events); // 8) traps and gate damage (#125)
     updatePhase(state, log.events); // 9) phase changes and end check

@@ -147,16 +147,11 @@ describe('Duel match flow (spec 18.2)', () => {
     expect(sim.state.tick).toBe(before + 1);
   });
 
-  it('routes surrender and playRaider to the seams of #125 and #124', () => {
+  it('routes surrender to the seam of #125', () => {
     const sim = createStartedSim();
     expect(rejectReasons(apply(sim, { type: 'surrender', side: 'south' }))).toEqual([
       'notImplemented',
     ]);
-    expect(
-      rejectReasons(
-        apply(sim, { type: 'playRaider', side: 'north', cardId: 'gloomling', lane: 2 }),
-      ),
-    ).toEqual(['notImplemented']);
     expect(sim.state.result).toBeNull();
     expect(sim.state.enemies).toEqual([]);
   });
