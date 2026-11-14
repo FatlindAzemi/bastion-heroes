@@ -29,6 +29,7 @@ import { w1_l07 } from './levels/w1_l07';
 import { w1_l08 } from './levels/w1_l08';
 import { w1_l09 } from './levels/w1_l09';
 import { w1_l10 } from './levels/w1_l10';
+import { duelBots } from './duelBots';
 import { duelRules } from './duelRules';
 import { rules } from './rules';
 
@@ -89,8 +90,12 @@ export { rules };
 /** Duel rules and defaults (spec 18, 20.2): every Duel number that is not a card number. */
 export { duelRules };
 
+/** Duel bot tuning (spec 18.10). */
+export { duelBots };
+
 export type {
   DefenderDef,
+  DuelBotsDef,
   DuelCardDef,
   DuelRulesDef,
   EnemyDef,
