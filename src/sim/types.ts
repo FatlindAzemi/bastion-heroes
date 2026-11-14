@@ -170,7 +170,15 @@ export interface EnemyState {
   waveIndex: number;
   /** Defender currently blocking this enemy, or null when it walks freely (spec 3.8). */
   blockedByDefenderId: number | null;
-  /** Tick of the next bite of the blocking defender, or null when it is not biting (spec 4.7). */
+  /**
+   * Enemy raider this unit is fighting, or null when it fights none (spec 18.6). Only the
+   * Duel sets it; absent in the campaign, where walking units never fight each other.
+   */
+  blockedByEnemyId?: number | null;
+  /**
+   * Tick of the next bite of the blocking defender (spec 4.7) or of the next hit on the
+   * enemy raider it fights (spec 18.6), or null when it is not attacking.
+   */
   nextBiteTick: number | null;
   /** Active status effects, in application order (spec 4.5). */
   statuses: EnemyStatusState[];

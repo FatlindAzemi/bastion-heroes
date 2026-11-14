@@ -1,4 +1,4 @@
-import { duelRules, rules } from '../../../src/data';
+import { duelRules, enemyById, rules } from '../../../src/data';
 import { spawnEnemy } from '../../../src/sim/enemies/spawn';
 import { createDuelSim } from '../../../src/sim/duel';
 import type {
@@ -83,7 +83,19 @@ export function defenderAt(sim: DuelSim, lane: number, col: number): DuelDefende
   return defender;
 }
 
-/** Puts a raider of a side on the board directly; `playRaider` arrives with #124. */
+/** Plays a raider card on the next tick and returns the events of that tick. */
+export function playRaider(sim: DuelSim, side: Side, cardId: string, lane: number): DuelEvent[] {
+  return apply(sim, { type: 'playRaider', side, cardId, lane });
+}
+
+/** The active raiders of a side, in id order. */
+export function raidersOf(sim: DuelSim, side: Side): DuelRaiderState[] {
+  return sim.state.enemies
+    .filter((raider) => raider.side === side)
+    .sort((first, second) => first.id - second.id);
+}
+
+/** Puts an active raider of a side on the board directly, without the summon delay. */
 export function addRaider(
   sim: DuelSim,
   side: Side,
@@ -96,6 +108,12 @@ export function addRaider(
     throw new Error(`unknown raider ${enemyId}`);
   }
   return raider as DuelRaiderState;
+}
+
+/** World-x distance a raider walks in one tick: its speed at the Duel multiplier (spec 18.6). */
+export function raiderStepTiles(enemyId: string): number {
+  const speed = enemyById[enemyId]?.speed ?? 0;
+  return (speed * duelRules.raiders.speedMultiplier) / TICKS_PER_SECOND;
 }
 
 /** The reasons of every rejected command in a list of events. */

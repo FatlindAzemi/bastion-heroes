@@ -62,22 +62,29 @@ export function findBlockingDefender(
  * animation) and not the typed `hit` event that defender attacks use. The
  * reflection is an untyped hit too and reuses the same `attack` event, from the
  * defender to the enemy.
+ *
+ * `damageMultiplier` scales the bite; the Duel passes its raider attack multiplier
+ * (spec 18.6), the campaign uses the plain bite damage.
  */
-export function biteDefender(enemy: EnemyState, defender: DefenderState, events: SimEvent[]): void {
+export function biteDefender(
+  enemy: EnemyState,
+  defender: DefenderState,
+  events: SimEvent[],
+  damageMultiplier = 1,
+): void {
   const enemyDef = enemyById[enemy.enemyId];
   if (enemyDef === undefined || enemyDef.biteDamage <= 0 || enemyDef.biteIntervalS === undefined) {
     // Enemies without an attack (Bat Swarm's "—", spec 6.1) never damage a defender.
     return;
   }
-  defender.hp -= enemyDef.biteDamage;
+  const biteDamage = enemyDef.biteDamage * damageMultiplier;
+  defender.hp -= biteDamage;
   events.push({ type: 'attack', sourceId: enemy.id, targetId: defender.id });
   const defenderDef = defenderById[defender.defenderId];
   if (defenderDef === undefined) {
     return;
   }
-  const reflectedDamage = Math.round(
-    enemyDef.biteDamage * star3MeleeReflectRatio(defender, defenderDef),
-  );
+  const reflectedDamage = Math.round(biteDamage * star3MeleeReflectRatio(defender, defenderDef));
   if (reflectedDamage <= 0) {
     return;
   }
