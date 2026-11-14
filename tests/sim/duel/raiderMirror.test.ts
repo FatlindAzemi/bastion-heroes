@@ -70,8 +70,17 @@ function describeState(state: Readonly<DuelState>, mirrored: boolean): string[] 
       unit.activeAtTick,
     ]),
     ...state.projectiles.map((unit) => ['projectile', unit.kind, lane(unit.lane), x(unit.x)]),
-    ['essence', side('south'), state.sides.south.essence],
-    ['essence', side('north'), state.sides.north.essence],
+    ...(['south', 'north'] as const).flatMap((owner) => [
+      ['essence', side(owner), state.sides[owner].essence],
+      ['gate', side(owner), state.sides[owner].gateHealth],
+      ...state.sides[owner].traps.map((trap, trapLane) => [
+        'trap',
+        side(owner),
+        lane(trapLane),
+        trap.used,
+        trap.rollerX === null ? 'idle' : x(trap.rollerX),
+      ]),
+    ]),
   ];
   return rows.map((row) => row.join(' ')).sort();
 }
@@ -136,7 +145,7 @@ describe('mirror symmetry of the Duel (spec 18.1)', () => {
       script().map(({ tick, command }) => ({ tick, command: mirrorCommand(command) })),
     );
     const endTick = REGULAR_START_TICK + ticks(100);
-    const seen = { commandRejected: 0, enemyDied: 0, raiderReachedBase: 0, defenderRemoved: 0 };
+    const seen = { commandRejected: 0, enemyDied: 0, trapFired: 0, defenderRemoved: 0 };
     while (original.state.tick < endTick) {
       for (const event of original.step()) {
         if (event.type in seen) {
@@ -153,6 +162,6 @@ describe('mirror symmetry of the Duel (spec 18.1)', () => {
     // The script is legal and the match was eventful.
     expect(seen.commandRejected).toBe(0);
     expect(seen.enemyDied).toBeGreaterThan(0);
-    expect(seen.raiderReachedBase).toBeGreaterThan(0);
+    expect(seen.trapFired).toBeGreaterThan(0);
   });
 });

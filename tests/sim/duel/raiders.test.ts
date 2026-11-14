@@ -48,15 +48,10 @@ describe('raider movement (spec 18.6, 18.1)', () => {
   ])('a %s raider that reaches the enemy base line leaves the lane', (side, x, lane) => {
     const sim = createStartedSim();
     const raider = addRaider(sim, side, 'gloomling', lane, x);
-    const events = stepTicks(sim, 3);
-    expect(eventsOfType(events, 'raiderReachedBase')).toEqual([
-      { type: 'raiderReachedBase', side, id: raider.id, enemyId: 'gloomling', lane },
-    ]);
-    expect(eventsOfType(events, 'enemyDied')).toEqual([]);
+    stepTicks(sim, 3);
+    // What happens at the base line (trap or gate damage) is covered in gates.test.ts.
+    expect(sim.state.enemies).not.toContain(raider);
     expect(sim.state.enemies).toEqual([]);
-    // Gates and traps arrive with #125: nothing else happens yet.
-    expect(sim.state.sides.south.gateHealth).toBe(duelRules.gate.gateHealth);
-    expect(sim.state.sides.north.gateHealth).toBe(duelRules.gate.gateHealth);
   });
 });
 

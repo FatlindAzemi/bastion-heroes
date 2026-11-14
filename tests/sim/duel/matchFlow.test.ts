@@ -7,7 +7,6 @@ import {
   OVERDRIVE_START_TICK,
   REGULAR_START_TICK,
   SUDDEN_DEATH_END_TICK,
-  apply,
   createStartedSim,
   eventsOfType,
   playDefender,
@@ -145,14 +144,5 @@ describe('Duel match flow (spec 18.2)', () => {
     sim.step();
     // One step is always exactly one tick; the command union has no pause or speed member.
     expect(sim.state.tick).toBe(before + 1);
-  });
-
-  it('routes surrender to the seam of #125', () => {
-    const sim = createStartedSim();
-    expect(rejectReasons(apply(sim, { type: 'surrender', side: 'south' }))).toEqual([
-      'notImplemented',
-    ]);
-    expect(sim.state.result).toBeNull();
-    expect(sim.state.enemies).toEqual([]);
   });
 });
