@@ -59,7 +59,11 @@ export interface LaneReading {
 }
 
 /** Reads one lane of the public board from the bot's side. */
-function readLane(view: DuelBotView, lane: number, raiders: readonly DuelRaiderState[]): LaneReading {
+function readLane(
+  view: DuelBotView,
+  lane: number,
+  raiders: readonly DuelRaiderState[],
+): LaneReading {
   const enemy = opponentOf(view.side);
   const inLane = raiders.filter((raider) => raider.lane === lane);
   const distances = inLane.map((raider) => distanceFromOwnBase(view.side, raider.x));

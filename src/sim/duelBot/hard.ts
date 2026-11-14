@@ -2,13 +2,7 @@ import { duelRules } from '../../data';
 import { duelDefenderCard, type Side } from '../duel';
 import { duelCardKind, type DuelCardPlay } from '../duelMatch';
 import { readLanes, type LaneReading } from './board';
-import {
-  bestOf,
-  counterCardsOf,
-  counterPlayOf,
-  defenderPlayInLane,
-  threatLaneOf,
-} from './counter';
+import { bestOf, counterCardsOf, counterPlayOf, defenderPlayInLane, threatLaneOf } from './counter';
 import { duelCardCost, legalPlaysOfCard } from './legalPlays';
 import type { DuelBotStrategy, DuelBotView } from './types';
 
@@ -90,7 +84,10 @@ function buildPlayOf(view: DuelBotView, lanes: readonly LaneReading[]): DuelCard
 }
 
 /** A producer card the bot may spend on, while regular time leaves it time to pay back (spec 18.2). */
-function producerPlayOf(view: DuelBotView, lanes: readonly LaneReading[]): DuelCardPlay | undefined {
+function producerPlayOf(
+  view: DuelBotView,
+  lanes: readonly LaneReading[],
+): DuelCardPlay | undefined {
   if (view.state.phase !== 'regular') {
     return undefined;
   }

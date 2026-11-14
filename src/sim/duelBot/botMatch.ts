@@ -1,10 +1,6 @@
 import type { DuelResult, Side } from '../duel';
 import { DUEL_SIDES } from '../duel';
-import {
-  createLocalDuelMatch,
-  type DuelPlayRejectReason,
-  type LocalDuelMatch,
-} from '../duelMatch';
+import { createLocalDuelMatch, type DuelPlayRejectReason, type LocalDuelMatch } from '../duelMatch';
 import { createDuelBot } from './createDuelBot';
 import type { DuelBot, DuelBotLevel } from './types';
 
@@ -69,7 +65,11 @@ function stepWithBots(
 export function runDuelBotMatch(options: DuelBotMatchOptions): DuelBotMatchReport {
   const match = createLocalDuelMatch(options);
   const bots = DUEL_SIDES.map((side) =>
-    createDuelBot({ level: options.players[side].level, side, seed: options.players[side].botSeed }),
+    createDuelBot({
+      level: options.players[side].level,
+      side,
+      seed: options.players[side].botSeed,
+    }),
   );
   const rejectedPlays: Record<Side, number> = { south: 0, north: 0 };
   while (match.state.result === null) {
