@@ -15,6 +15,7 @@ import type { DuelEvent, DuelState } from '../sim/duel';
 import type { SimEvent, SimState } from '../sim/types';
 import { createDebugOverlay, type DebugSimInfo } from './debugOverlay';
 import { createDuelScene, type DuelScene, type DuelViewOptions } from './duel/duelScene';
+import type { PlacementHintKind } from './duel/placementHint';
 import type { LevelViewOptions } from './grid';
 import { createLevelScene, type LevelScene } from './levelScene';
 import { createPostProcessing, type PostProcessing } from './postprocessing';
@@ -50,6 +51,8 @@ export interface GameRenderer {
   drawDuel(state: Readonly<DuelState>, alpha: number): void;
   /** Applies one Duel tick's events; a no-op unless a Duel is shown. */
   handleDuelEvents(events: readonly DuelEvent[]): void;
+  /** Shows the board highlight of a held card (spec 18.9); a no-op unless a Duel is shown. */
+  setDuelPlacementHint(kind: PlacementHintKind): void;
   /**
    * Converts a DOM pointer position into the world point where its ray hits the ground
    * plane (spec 9.1). The HUD (#26) uses it to turn taps into tiles and orb picks. In a
@@ -222,6 +225,9 @@ export function createRenderer(container: HTMLElement): GameRenderer {
     },
     handleDuelEvents: (events): void => {
       duelScene?.handleEvents(events);
+    },
+    setDuelPlacementHint: (kind): void => {
+      duelScene?.setPlacementHint(kind);
     },
     showTitle: (): void => {
       disposeScenes();

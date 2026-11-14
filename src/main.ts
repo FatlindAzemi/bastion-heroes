@@ -9,6 +9,7 @@ import {
   type DebugPlacement,
 } from './debug';
 import { parseDuelDebugUrl, startDebugDuel } from './debugDuel';
+import { startTrainingRun, type TrainingRunHandle } from './duelTraining';
 import { startGameLoop, startRenderLoop, type GameLoop } from './loop';
 import {
   applyLevelResult,
@@ -51,6 +52,7 @@ import {
   type ShellHandle,
   type ShellLevel,
   type ShellScreenName,
+  type TrainingBotLevel,
 } from './ui';
 import { highestCardStars } from './ui/hud/cardStars';
 import { levelProgressView } from './ui/hud/levelProgressView';
@@ -620,6 +622,7 @@ function startShell(
   let shell: ShellHandle | null = null;
   let run: LevelRunHandle | null = null;
   let result: ResultHandle | null = null;
+  let training: TrainingRunHandle | null = null;
 
   /** Persists one shell transaction; the shell owns its local copy of the save. */
   const commitSave = (next: SaveData): void => {
@@ -633,6 +636,8 @@ function startShell(
     result = null;
     run?.dispose();
     run = null;
+    training?.dispose();
+    training = null;
     renderer.showTitle();
     playMusic('menu');
     shell?.dispose();
@@ -641,6 +646,7 @@ function startShell(
       save,
       onSave: commitSave,
       onFight: beginLevel,
+      onTraining: beginTraining,
       initialScreen: screen,
       ...(initialLevelId === undefined ? {} : { initialLevelId }),
     });
@@ -714,6 +720,18 @@ function startShell(
     );
   };
 
+  /** Training (spec 18.10, 20.6): a local Duel against a bot, ending on its result screen. */
+  const beginTraining = (level: TrainingBotLevel): void => {
+    shell?.dispose();
+    shell = null;
+    training?.dispose();
+    training = startTrainingRun(root, renderer, {
+      level,
+      onPlayAgain: (): void => beginTraining(level),
+      onHome: (): void => mountMenu('title'),
+    });
+  };
+
   const beginLevel = (levelId: string, loadout: readonly LoadoutChoice[]): void => {
     shell?.dispose();
     shell = null;
@@ -727,7 +745,10 @@ function startShell(
 
   mountMenu(initialScreen);
   startRenderLoop(() => {
-    renderer.draw();
+    // Training draws its own Duel frames; drawing here as well would render every frame twice.
+    if (training === null) {
+      renderer.draw();
+    }
   });
   playMusic('menu');
 }

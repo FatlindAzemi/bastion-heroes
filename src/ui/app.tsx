@@ -196,6 +196,7 @@ function ShellFlow({ options }: { readonly options: ShellOptions }) {
         onChests={(): void => openMeta('chests', 'title')}
         onQuests={(): void => openMeta('quests', 'title')}
         onSettings={(): void => openMeta('settings', 'title')}
+        {...(options.onTraining === undefined ? {} : { onTraining: options.onTraining })}
       />
     );
   }

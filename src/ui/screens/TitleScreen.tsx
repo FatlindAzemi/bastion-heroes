@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 
 import {
   chestCount,
@@ -9,6 +9,8 @@ import {
 } from '../../meta';
 import { playSfx } from '../../platform/audio';
 import { Icon, type IconName } from '../components/Icon';
+import { TrainingSheet } from '../duel/TrainingSheet';
+import type { TrainingBotLevel } from '../duel/types';
 import { TitleSparkles } from './TitleSparkles';
 
 /** Props of the title screen of the playable shell (issue #113, M4). */
@@ -25,6 +27,8 @@ export interface TitleScreenProps {
   readonly onQuests: () => void;
   /** Opens the settings screen. */
   readonly onSettings: () => void;
+  /** Starts a Training Duel; the Training button is hidden while absent (spec 18.10, 20.6). */
+  readonly onTraining?: (level: TrainingBotLevel) => void;
 }
 
 /** One functional quick button of the title screen. */
@@ -50,7 +54,9 @@ export function TitleScreen({
   onChests,
   onQuests,
   onSettings,
+  onTraining,
 }: TitleScreenProps) {
+  const [trainingOpen, setTrainingOpen] = useState(false);
   const rootRef = useRef<HTMLElement>(null);
   usePointerParallax(rootRef);
   const cleared = clearedLevelCount(save);
@@ -127,6 +133,23 @@ export function TitleScreen({
             <Icon name="play" class="title-play__icon" />
             <span class="title-play__label">Play</span>
           </button>
+          {onTraining === undefined ? null : (
+            <button
+              type="button"
+              class="title-training"
+              data-testid="title-training"
+              onClick={(): void => {
+                playSfx('button_tap');
+                setTrainingOpen(true);
+              }}
+            >
+              <Icon name="swords" class="title-training__icon" />
+              <span class="title-training__text">
+                <span class="title-training__label">Training</span>
+                <span class="title-training__hint">1v1 Duel vs AI</span>
+              </span>
+            </button>
+          )}
           <div class="title-quick" aria-label="More game options">
             {quickActions.map((action) => (
               <button
@@ -160,6 +183,9 @@ export function TitleScreen({
         </div>
       </div>
       <div class="title-screen__scrim title-screen__scrim--bottom" aria-hidden="true" />
+      {trainingOpen && onTraining !== undefined ? (
+        <TrainingSheet onStart={onTraining} onClose={(): void => setTrainingOpen(false)} />
+      ) : null}
     </main>
   );
 }

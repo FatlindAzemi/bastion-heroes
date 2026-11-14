@@ -1,6 +1,15 @@
 import { createElement, render } from 'preact';
 
 import { App } from './app';
+import { DuelHud } from './duel/DuelHud';
+import { DuelResultScreen } from './duel/DuelResultScreen';
+import type {
+  DuelHudBus,
+  DuelHudHandle,
+  DuelHudOptions,
+  DuelResultHandle,
+  DuelResultOptions,
+} from './duel/types';
 import { Hud } from './hud/Hud';
 import type { HudBus, HudHandle, HudOptions } from './hud/types';
 import type { ScoutFlowHandle, ScoutFlowOptions } from './screens/types';
@@ -11,6 +20,7 @@ import './styles/cards.css';
 import './styles/hud.css';
 import './styles/screens.css';
 import './styles/meta.css';
+import './styles/duel.css';
 
 /** Mounts the Preact UI overlay on top of the 3D canvas (spec 11.8). */
 export function mountUi(container: HTMLElement): void {
@@ -98,6 +108,60 @@ export function mountHud(container: HTMLElement, options: HudOptions): HudHandle
   };
 }
 
+/**
+ * Mounts the Duel HUD of spec 18.9 over the Duel canvas and returns its handle. The
+ * Training loop forwards per-tick rejections and phase changes to `handleEvents`.
+ */
+export function mountDuelHud(container: HTMLElement, options: DuelHudOptions): DuelHudHandle {
+  const hudRoot = document.createElement('div');
+  hudRoot.className = 'ui-root hud-root duel-hud-root';
+  container.appendChild(hudRoot);
+  const bus: DuelHudBus = { listener: null };
+  render(createElement(DuelHud, { ...options, bus }), hudRoot);
+  return {
+    handleEvents: (events): void => {
+      bus.listener?.(events);
+    },
+    dispose: (): void => {
+      render(null, hudRoot);
+      hudRoot.remove();
+    },
+  };
+}
+
+/** Mounts the Duel result screen (spec 18.9, 20.6) over the frozen Duel board. */
+export function mountDuelResult(
+  container: HTMLElement,
+  options: DuelResultOptions,
+): DuelResultHandle {
+  const uiRoot = document.createElement('div');
+  uiRoot.className = 'ui-root result-root';
+  container.appendChild(uiRoot);
+  render(createElement(DuelResultScreen, options), uiRoot);
+  return {
+    dispose: (): void => {
+      render(null, uiRoot);
+      uiRoot.remove();
+    },
+  };
+}
+
+export type {
+  DuelHeldKind,
+  DuelHudActions,
+  DuelHudEvent,
+  DuelHudHandle,
+  DuelHudOptions,
+  DuelHudPhase,
+  DuelHudRejectReason,
+  DuelHudStateView,
+  DuelEndReason,
+  DuelOpponentView,
+  DuelOutcome,
+  DuelResultHandle,
+  DuelResultOptions,
+  TrainingBotLevel,
+} from './duel/types';
 export type {
   HudActions,
   HudBannerKind,
