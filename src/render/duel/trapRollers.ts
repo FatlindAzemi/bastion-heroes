@@ -27,12 +27,13 @@ import { viewLane, viewX } from './duelView';
 const SIDES: readonly Side[] = ['south', 'north'];
 /** Two instances per broken roller, both sides, every lane. */
 const MAX_INSTANCES = SIDES.length * rules.grid.laneCount * 2;
-const ROLLER_RADIUS = 0.17;
-const ROLLER_LENGTH = 0.7;
-/** Rest position in front of the bastion wall, measured inward from the base line. */
-const REST_INSET = 0.12;
-const INTACT_COLOR = 0x8a5a32;
-const BROKEN_COLOR = 0x3b2a22;
+const ROLLER_RADIUS = 0.22;
+const ROLLER_LENGTH = 0.86;
+/** Rest offsets from the drawn base line: in front of the near wall, on the far wall edge. */
+const NEAR_REST_INSET = 0.16;
+const FAR_REST_OUTSET = 0.12;
+const INTACT_COLOR = 0xc0773a;
+const BROKEN_COLOR = 0x4a3428;
 
 /** One roller piece: offset across the lane, yaw, tilt and length scale. */
 interface Piece {
@@ -62,12 +63,17 @@ interface InstanceWriter {
   write(x: number, z: number, piece: Piece, roll: number, color: Color): void;
 }
 
-/** View x of a side's resting roller: just inside its base line (spec 18.1). */
+/**
+ * View x of a side's resting roller. The near roller lies just in front of the near
+ * wall (its parapet would hide it otherwise), the far roller on the far wall's inner
+ * edge, so both players read the open lanes of both bastions (spec 18.7).
+ */
 function restX(side: Side, viewSide: Side): number {
   const baseLine =
     side === 'south' ? duelRules.board.southBaseLineX : duelRules.board.northBaseLineX;
-  const inward = side === 'south' ? REST_INSET : -REST_INSET;
-  return simXToWorldX(viewX(baseLine + inward, viewSide));
+  const viewBaseLine = viewX(baseLine, viewSide);
+  const near = side === viewSide;
+  return simXToWorldX(near ? viewBaseLine + NEAR_REST_INSET : viewBaseLine + FAR_REST_OUTSET);
 }
 
 /** Writes the instances of one lane's trap. */

@@ -8,22 +8,25 @@
  * playfield keeps exactly the same framing with a cohesive HD-2D look.
  */
 import {
+  BufferGeometry,
   DoubleSide,
   Group,
   Mesh,
   MeshBasicMaterial,
   NearestFilter,
   PlaneGeometry,
+  Quaternion,
   SRGBColorSpace,
   TextureLoader,
   type PerspectiveCamera,
   type Texture,
 } from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 import { createBottomCenterQuad } from './sprites/billboard';
 import { createSpriteMaterial, type SpriteMaterial } from './sprites/material';
 import { loadSpriteManifest } from './sprites/sheets';
-import type { SpriteProp } from './sprites/types';
+import type { SpriteManifest, SpriteProp } from './sprites/types';
 
 /** One prop instance placed in the world. */
 interface PropPlacement {
@@ -148,39 +151,132 @@ export interface PropSpriteLayer {
   dispose(): void;
 }
 
-/** Creates the soft ground shadow of a prop. */
-function createShadow(width: number): Mesh {
-  const geometry = new PlaneGeometry(width, width * 0.45);
-  geometry.rotateX(-Math.PI / 2);
-  const material = new MeshBasicMaterial({
+/** Shared material of every prop ground shadow. */
+function createShadowMaterial(): MeshBasicMaterial {
+  return new MeshBasicMaterial({
     color: 0x1b1b2f,
     transparent: true,
     opacity: 0.22,
     depthWrite: false,
     side: DoubleSide,
   });
-  return new Mesh(geometry, material);
 }
 
-/** Builds one prop billboard from a loaded prop sheet. */
-function buildPropMesh(
+/** The soft ground shadow quad of one prop, in world space. */
+function shadowGeometry(placement: PropPlacement): BufferGeometry {
+  const width = Math.max(0.5, placement.height * 0.5);
+  const geometry = new PlaneGeometry(width, width * 0.45);
+  geometry.rotateX(-Math.PI / 2);
+  geometry.translate(placement.x, PROP_GROUND_Y + 0.01, placement.z + 0.1);
+  return geometry;
+}
+
+/**
+ * The camera-facing quad of one prop, baked into world space: bottom-centre anchor,
+ * mirrored UVs for flipped props. The level camera never turns (spec 9.1), so props
+ * of one sheet can share one merged mesh and one draw call (spec 9.3 budget).
+ */
+function propGeometry(
   sheet: SpriteProp,
-  texture: Texture,
   placement: PropPlacement,
-  camera: PerspectiveCamera,
-): { mesh: Mesh; material: SpriteMaterial; geometry: PlaneGeometry } {
+  rotation: Quaternion,
+): BufferGeometry {
   const height = Math.max(0.05, placement.height);
   const width = height * (sheet.frameWidth / sheet.frameHeight);
-  const material = createSpriteMaterial(texture);
-  material.uvRect.set(0, 0, 1, 1);
   const geometry = createBottomCenterQuad(width, height);
-  const mesh = new Mesh(geometry, material.material);
-  mesh.position.set(placement.x, PROP_GROUND_Y, placement.z);
-  mesh.quaternion.copy(camera.quaternion);
   if (placement.flip === true) {
-    mesh.scale.x = -1;
+    const uv = geometry.getAttribute('uv');
+    for (let index = 0; index < uv.count; index += 1) {
+      uv.setX(index, 1 - uv.getX(index));
+    }
   }
-  return { mesh, material, geometry };
+  geometry.applyQuaternion(rotation);
+  geometry.translate(placement.x, PROP_GROUND_Y, placement.z);
+  return geometry;
+}
+
+/** Merges geometries into one, freeing the parts; null when there are none. */
+function mergeAll(parts: BufferGeometry[]): BufferGeometry | null {
+  const merged = parts.length === 0 ? null : mergeGeometries(parts, false);
+  for (const part of parts) {
+    part.dispose();
+  }
+  return merged;
+}
+
+/** One merged billboard mesh per prop sheet. */
+interface PropBatch {
+  readonly sheet: SpriteProp;
+  readonly placements: readonly PropPlacement[];
+  readonly material: SpriteMaterial;
+  readonly mesh: Mesh;
+}
+
+/** (Re)bakes a batch's merged geometry for the camera orientation. */
+function bakeBatch(batch: PropBatch, rotation: Quaternion): void {
+  const merged = mergeAll(batch.placements.map((p) => propGeometry(batch.sheet, p, rotation)));
+  batch.mesh.geometry.dispose();
+  batch.mesh.geometry = merged ?? new BufferGeometry();
+}
+
+/** Groups the placements by prop sheet. */
+function placementsBySheet(): Map<PropPlacement['prop'], PropPlacement[]> {
+  const groups = new Map<PropPlacement['prop'], PropPlacement[]>();
+  for (const placement of PROP_PLACEMENTS) {
+    const list = groups.get(placement.prop) ?? [];
+    list.push(placement);
+    groups.set(placement.prop, list);
+  }
+  return groups;
+}
+
+/** Loads every prop sheet named in the manifest; missing sheets map to null. */
+async function loadPropSheets(
+  manifest: SpriteManifest,
+): Promise<Map<PropPlacement['prop'], { sheet: SpriteProp; texture: Texture } | null>> {
+  const entries = await Promise.all(
+    Object.values(PROP_MANIFEST_KEYS).map(async (key) => {
+      const sheet = manifest.props[key];
+      const texture = sheet === undefined ? null : await loadPropTexture(sheet.image);
+      return [key, sheet === undefined || texture === null ? null : { sheet, texture }] as const;
+    }),
+  );
+  return new Map(entries);
+}
+
+/** Builds the per-sheet batches and the merged shadow mesh into the group. */
+function buildBatches(
+  group: Group,
+  sheets: Awaited<ReturnType<typeof loadPropSheets>>,
+  rotation: Quaternion,
+): { batches: PropBatch[]; shadow: Mesh | null } {
+  const batches: PropBatch[] = [];
+  const shadowParts: BufferGeometry[] = [];
+  for (const [key, placements] of placementsBySheet()) {
+    const loaded = sheets.get(key);
+    if (loaded === null || loaded === undefined) {
+      continue;
+    }
+    const material = createSpriteMaterial(loaded.texture);
+    material.uvRect.set(0, 0, 1, 1);
+    const batch = {
+      ...loaded,
+      placements,
+      material,
+      mesh: new Mesh(new BufferGeometry(), material.material),
+    };
+    bakeBatch(batch, rotation);
+    group.add(batch.mesh);
+    batches.push(batch);
+    shadowParts.push(...placements.filter((p) => p.shadow === true).map(shadowGeometry));
+  }
+  const shadowGeometryMerged = mergeAll(shadowParts);
+  const shadow =
+    shadowGeometryMerged === null ? null : new Mesh(shadowGeometryMerged, createShadowMaterial());
+  if (shadow !== null) {
+    group.add(shadow);
+  }
+  return { batches, shadow };
 }
 
 /**
@@ -191,70 +287,44 @@ function buildPropMesh(
 export function createPropSpriteLayer(camera: PerspectiveCamera): PropSpriteLayer {
   const group = new Group();
   group.name = 'prop_sprites';
-  const materials: SpriteMaterial[] = [];
-  const geometries: PlaneGeometry[] = [];
-  const shadows: Mesh[] = [];
-  const billboards: Mesh[] = [];
+  const bakedRotation = new Quaternion().copy(camera.quaternion);
+  let built: { batches: PropBatch[]; shadow: Mesh | null } = { batches: [], shadow: null };
+  let disposed = false;
   const manifestUrl = `${import.meta.env.BASE_URL}sprites/manifest.json`;
 
   void loadSpriteManifest(manifestUrl).then(async (manifest) => {
     if (manifest === null) {
       return;
     }
-    const textures = await Promise.all(
-      Object.values(PROP_MANIFEST_KEYS).map(async (key) => {
-        const prop = manifest.props[key];
-        if (prop === undefined) {
-          return [key, null] as const;
-        }
-        return [key, await loadPropTexture(prop.image)] as const;
-      }),
-    );
-    const textureByKey = new Map(textures);
-    for (const placement of PROP_PLACEMENTS) {
-      const sheet = manifest.props[placement.prop];
-      const texture = textureByKey.get(placement.prop);
-      if (sheet === undefined || texture === null || texture === undefined) {
-        continue;
-      }
-      const built = buildPropMesh(sheet, texture, placement, camera);
-      group.add(built.mesh);
-      billboards.push(built.mesh);
-      materials.push(built.material);
-      geometries.push(built.geometry);
-      if (placement.shadow === true) {
-        const width = Math.max(0.5, placement.height * 0.5);
-        const shadow = createShadow(width);
-        shadow.position.set(placement.x, PROP_GROUND_Y + 0.01, placement.z + 0.1);
-        group.add(shadow);
-        shadows.push(shadow);
-      }
+    const sheets = await loadPropSheets(manifest);
+    if (!disposed) {
+      built = buildBatches(group, sheets, bakedRotation);
     }
   });
 
   return {
     group,
     update: (targetCamera: PerspectiveCamera): void => {
-      for (const mesh of billboards) {
-        mesh.quaternion.copy(targetCamera.quaternion);
+      // The level camera only shakes; re-bake only if it ever turns.
+      if (bakedRotation.angleTo(targetCamera.quaternion) < 1e-6) {
+        return;
+      }
+      bakedRotation.copy(targetCamera.quaternion);
+      for (const batch of built.batches) {
+        bakeBatch(batch, bakedRotation);
       }
     },
     dispose: (): void => {
-      for (const material of materials) {
-        material.dispose();
+      disposed = true;
+      for (const batch of built.batches) {
+        batch.material.dispose();
+        batch.mesh.geometry.dispose();
       }
-      for (const geometry of geometries) {
-        geometry.dispose();
+      if (built.shadow !== null) {
+        built.shadow.geometry.dispose();
+        (built.shadow.material as MeshBasicMaterial).dispose();
       }
-      for (const shadow of shadows) {
-        shadow.geometry.dispose();
-        const material = shadow.material as MeshBasicMaterial;
-        material.dispose();
-      }
-      materials.length = 0;
-      geometries.length = 0;
-      shadows.length = 0;
-      billboards.length = 0;
+      built = { batches: [], shadow: null };
       group.clear();
     },
   };

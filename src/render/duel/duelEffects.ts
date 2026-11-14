@@ -1,7 +1,7 @@
 /**
  * Gate-hit and trap VFX of the Duel (spec 18.7, 9.7; issue #129). They are built
  * only from the existing 9.7 ids and batches (impact flash, `aoe_ring`,
- * `aoe_shockwave`, `hit_blast`, `trap_roll`, `glow_rise`), so they add no draw calls.
+ * `aoe_shockwave`, `hit_blast`, `spawn_dust`, `trap_roll`, `glow_rise`), so they add no draw calls.
  * Colours follow the side rings of 18.1: an effect takes the colour of the side that
  * caused it, teal when it is the viewer's and red when it is the opponent's.
  */
@@ -20,12 +20,12 @@ import { viewLane, viewX } from './duelView';
 const ROLLER_DUST_INTERVAL_S = 0.09;
 /** Sizes of the gate-hit blast: wider than a unit hit, it is the biggest event of a match. */
 const GATE_GROUND_RADIUS = 2.4;
-const GATE_SHOCKWAVE_RADIUS = 1.7;
-const GATE_FLASH_SCALE = 3.2;
+const GATE_SHOCKWAVE_RADIUS = 1.4;
+const GATE_FLASH_SCALE = 1.7;
 /** Sizes of the trap fire, matching the campaign trap ring (vfx/index.ts). */
 const TRAP_GROUND_RADIUS = 2.8;
 const TRAP_SHOCKWAVE_RADIUS = 1.8;
-const TRAP_FLASH_SCALE = 2.4;
+const TRAP_FLASH_SCALE = 1.5;
 
 /** What the Duel effects drive. */
 export interface DuelEffectsOptions {
@@ -73,13 +73,15 @@ export function createDuelEffects(options: DuelEffectsOptions): DuelEffects {
     const x = baseLineViewX(gateSide, viewSide);
     const z = laneToWorldZ(viewLane(lane, viewSide));
     impactFlash.spawn(x, 0.9, z, color, GATE_FLASH_SCALE);
-    impactFlash.spawn(x, 0.6, z, FLASH_WHITE, GATE_FLASH_SCALE * 0.6);
+    impactFlash.spawn(x, 0.6, z, FLASH_WHITE, GATE_FLASH_SCALE * 0.7);
     aoeRings.spawnGround(x, AOE_GROUND_Y, z, GATE_GROUND_RADIUS, color);
-    aoeRings.spawnShockwave(x, 0.8, z, GATE_SHOCKWAVE_RADIUS, FLASH_WHITE);
-    aoeRings.spawnShockwave(x, 0.55, z, GATE_SHOCKWAVE_RADIUS * 1.5, color);
-    particles.burst('hit_blast', x, 0.8, z, undefined, 2);
-    particles.burst('hit_blast', x, 0.6, z, STONE_DEBRIS_COLOR, 1.5);
-    particles.sparkle(x, 0.9, z, color, 16);
+    // Side-coloured shockwaves only: a white one blooms into a blob over the bright ground.
+    aoeRings.spawnShockwave(x, 0.8, z, GATE_SHOCKWAVE_RADIUS * 0.6, color);
+    aoeRings.spawnShockwave(x, 0.55, z, GATE_SHOCKWAVE_RADIUS, color);
+    // Side-coloured blast sparks plus unlit stone dust, so only the sparks bloom.
+    particles.burst('hit_blast', x, 0.8, z, color);
+    particles.burst('spawn_dust', x, 0.5, z, STONE_DEBRIS_COLOR, 2.5);
+    particles.sparkle(x, 0.9, z, color, 14);
     options.flashBastion(endOf(gateSide), color);
   }
 
@@ -91,7 +93,6 @@ export function createDuelEffects(options: DuelEffectsOptions): DuelEffects {
     impactFlash.spawn(x, 0.5, z, color, TRAP_FLASH_SCALE);
     aoeRings.spawnGround(x, AOE_GROUND_Y, z, TRAP_GROUND_RADIUS, color);
     aoeRings.spawnShockwave(x, 0.5, z, TRAP_SHOCKWAVE_RADIUS, color);
-    aoeRings.spawnShockwave(x, 0.4, z, TRAP_SHOCKWAVE_RADIUS * 1.4, FLASH_WHITE);
     particles.burst('trap_roll', x, 0.15, z, undefined, 1.5);
     particles.sparkle(x, 0.3, z, color, 12);
     // Spec 9.7: trap firing shakes the screen.

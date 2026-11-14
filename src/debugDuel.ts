@@ -6,6 +6,7 @@
  * - `view=south|north`: whose view is drawn (spec 18.1, default south).
  * - `tick=<n>`: fast-forward this many ticks before the first frame (default 0).
  * - `hold=1`: stop the sim after the fast-forward, for still screenshots.
+ * - `speed=<0..1>`: slow motion of the sim and the effect clock, to inspect VFX (default 1).
  * - `south=` / `north=`: bot level `easy`, `normal` or `hard` (default hard).
  * `parseDuelDebugUrl` is pure, so it is tested without a browser.
  */
@@ -39,6 +40,9 @@ const DEBUG_DECKS: Readonly<Record<Side, readonly string[]>> = {
   ],
 };
 
+/** Fast-forward ticks whose events are still drawn, for screenshots of fresh VFX. */
+const FED_TICKS = 3;
+
 const BOT_LEVELS: readonly DuelBotLevel[] = ['easy', 'normal', 'hard'];
 
 /** A valid debug Duel request. */
@@ -47,6 +51,8 @@ export interface DuelDebugRequest {
   readonly viewSide: Side;
   readonly tick: number;
   readonly hold: boolean;
+  /** Slow-motion factor of the sim and the effect clock (0 < speed <= 1). */
+  readonly speed: number;
   readonly bots: Readonly<Record<Side, DuelBotLevel>>;
 }
 
@@ -91,6 +97,10 @@ export function parseDuelDebugUrl(search: string): DuelDebugUrlResult {
   if (typeof problem === 'string') {
     return { kind: 'error', message: problem };
   }
+  const speed = Number(parameters.get('speed') ?? '1');
+  if (!(speed > 0 && speed <= 1)) {
+    return { kind: 'error', message: 'Debug Duel: "speed" must be above 0 and at most 1.' };
+  }
   if (view !== 'south' && view !== 'north') {
     return { kind: 'error', message: 'Debug Duel: "view" must be south or north.' };
   }
@@ -100,6 +110,7 @@ export function parseDuelDebugUrl(search: string): DuelDebugUrlResult {
     viewSide: view,
     tick: Number(tick),
     hold: parameters.get('hold') === '1',
+    speed,
     bots: { south: south as DuelBotLevel, north: north as DuelBotLevel },
   };
 }
@@ -139,9 +150,14 @@ function stepDebugDuel(duel: DebugDuel): ReturnType<LocalDuelMatch['step']> | nu
 /** Starts the debug Duel and its 30 Hz loop (spec 11.4) on the given renderer. */
 export function startDebugDuel(renderer: GameRenderer, request: DuelDebugRequest): void {
   const duel = createDebugDuel(request);
-  renderer.showDuel({ viewSide: request.viewSide });
+  renderer.showDuel({ viewSide: request.viewSide, timeScale: request.speed });
+  // The last ticks of the fast-forward reach the renderer, so a held frame still shows
+  // the effects of the events just before it (more ticks would pile up their hits).
   for (let tick = 0; tick < request.tick; tick += 1) {
-    stepDebugDuel(duel);
+    const events = stepDebugDuel(duel) ?? [];
+    if (request.tick - tick <= FED_TICKS) {
+      renderer.handleDuelEvents(events);
+    }
   }
   let accumulatorSeconds = 0;
   let lastTimeMs = performance.now();
@@ -149,7 +165,7 @@ export function startDebugDuel(renderer: GameRenderer, request: DuelDebugRequest
     const advanced = advance(
       accumulatorSeconds,
       (timeMs - lastTimeMs) / 1000,
-      request.hold ? 0 : 1,
+      request.hold ? 0 : request.speed,
     );
     accumulatorSeconds = advanced.accumulatorSeconds;
     lastTimeMs = timeMs;

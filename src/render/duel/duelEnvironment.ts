@@ -22,7 +22,7 @@ export type BoardEnd = 'near' | 'far';
 /** Seconds a gate-hit flash takes to fade. */
 const GATE_FLASH_S = 0.45;
 /** Peak emissive strength of the flash; above 1 the bloom pass makes the bastion glow. */
-const GATE_FLASH_PEAK = 1.35;
+const GATE_FLASH_PEAK = 0.55;
 
 /** The two bastions and the ground of the Duel board. */
 export interface DuelEnvironment {

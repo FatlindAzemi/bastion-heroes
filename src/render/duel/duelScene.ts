@@ -32,6 +32,8 @@ import { createTrapRollers } from './trapRollers';
 /** What the Duel renderer needs to know: whose view it draws (spec 18.1). */
 export interface DuelViewOptions {
   readonly viewSide: Side;
+  /** Debug slow motion of the effect clock (0..1, default 1); the debug Duel URL sets it. */
+  readonly timeScale?: number;
 }
 
 /** The Duel renderer surface: like a level scene, fed with Duel state and events. */
@@ -148,7 +150,8 @@ export function createDuelScene(options: DuelViewOptions): DuelScene {
   /** Advances every per-frame animation. */
   function animate(state: Readonly<DuelState>, current: RenderSimState): void {
     const now = performance.now();
-    const deltaSeconds = Math.min(Math.max((now - clock.lastDrawMs) / 1000, 0), 0.1);
+    const frameSeconds = Math.min(Math.max((now - clock.lastDrawMs) / 1000, 0), 0.1);
+    const deltaSeconds = frameSeconds * (options.timeScale ?? 1);
     clock.lastDrawMs = now;
     const sceneSeconds = (now - clock.startMs) / 1000;
     propSprites.update(camera);
