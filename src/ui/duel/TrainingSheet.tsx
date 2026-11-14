@@ -18,6 +18,31 @@ const LEVEL_HINTS: Readonly<Record<TrainingBotLevel, string>> = {
 
 const LEVELS: readonly TrainingBotLevel[] = ['easy', 'normal', 'hard'];
 
+/** One bot level button: name, short hint and a play arrow. */
+function TrainingLevelButton({
+  level,
+  onStart,
+}: {
+  readonly level: TrainingBotLevel;
+  readonly onStart: (level: TrainingBotLevel) => void;
+}) {
+  return (
+    <button
+      type="button"
+      class={`training-level training-level--${level}`}
+      data-testid={`training-${level}`}
+      onClick={(): void => {
+        playSfx('button_tap');
+        onStart(level);
+      }}
+    >
+      <span class="training-level__name">{BOT_LEVEL_NAMES[level]}</span>
+      <span class="training-level__hint">{LEVEL_HINTS[level]}</span>
+      <Icon name="play" class="training-level__go" />
+    </button>
+  );
+}
+
 /**
  * Training entry (spec 18.10, 20.6): a bottom sheet over Home that picks the bot
  * level and starts a local Duel. Training gives no trophies and no rewards.
@@ -43,20 +68,7 @@ export function TrainingSheet({ onStart, onClose }: TrainingSheetProps) {
         </header>
         <div class="training-sheet__levels">
           {LEVELS.map((level) => (
-            <button
-              key={level}
-              type="button"
-              class={`training-level training-level--${level}`}
-              data-testid={`training-${level}`}
-              onClick={(): void => {
-                playSfx('button_tap');
-                onStart(level);
-              }}
-            >
-              <span class="training-level__name">{BOT_LEVEL_NAMES[level]}</span>
-              <span class="training-level__hint">{LEVEL_HINTS[level]}</span>
-              <Icon name="play" class="training-level__go" />
-            </button>
+            <TrainingLevelButton key={level} level={level} onStart={onStart} />
           ))}
         </div>
         <button

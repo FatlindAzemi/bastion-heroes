@@ -15,6 +15,30 @@ function TrainingNote({ botLevel }: { readonly botLevel: DuelResultOptions['botL
   );
 }
 
+/** Both gates' remaining health side by side. */
+function ResultGates({ options }: { readonly options: DuelResultOptions }) {
+  return (
+    <div class="duel-result__gates">
+      <div class="duel-result__gate">
+        <span class="duel-result__gate-label">Your gate</span>
+        <GatePips health={options.ownGate} max={options.maxGate} side="own" label="Your gate" />
+      </div>
+      <div class="duel-result__gate">
+        <span class="duel-result__gate-label">Enemy gate</span>
+        <GatePips
+          health={options.opponentGate}
+          max={options.maxGate}
+          side="enemy"
+          label="Enemy gate"
+        />
+      </div>
+    </div>
+  );
+}
+
+/** The crest icon of each outcome. */
+const CREST_ICONS = { won: 'crest', lost: 'skull', draw: 'swords' } as const;
+
 /**
  * Duel result screen (spec 18.9, 20.6): Victory, Defeat or Draw over the frozen
  * board, both gates' remaining health, the trophy change and rewards (none in
@@ -36,30 +60,13 @@ export function DuelResultScreen(options: DuelResultOptions) {
       <div class="result-panel glass-panel">
         <span class="result-panel__trim" aria-hidden="true" />
         <span class="result-panel__crest" aria-hidden="true">
-          <Icon
-            name={won ? 'crest' : options.outcome === 'draw' ? 'swords' : 'skull'}
-            class="result-panel__crest-icon"
-          />
+          <Icon name={CREST_ICONS[options.outcome]} class="result-panel__crest-icon" />
         </span>
         <p class="result-panel__eyebrow">{options.training ? 'Training' : 'Duel'}</p>
         <h1 class="result-panel__title">{text.heading}</h1>
         <span class="result-panel__rule" aria-hidden="true" />
         <p class="result-panel__subtitle">{text.subtitle}</p>
-        <div class="duel-result__gates">
-          <div class="duel-result__gate">
-            <span class="duel-result__gate-label">Your gate</span>
-            <GatePips health={options.ownGate} max={options.maxGate} side="own" label="Your gate" />
-          </div>
-          <div class="duel-result__gate">
-            <span class="duel-result__gate-label">Enemy gate</span>
-            <GatePips
-              health={options.opponentGate}
-              max={options.maxGate}
-              side="enemy"
-              label="Enemy gate"
-            />
-          </div>
-        </div>
+        <ResultGates options={options} />
         {options.training ? <TrainingNote botLevel={options.botLevel} /> : null}
         <div class="result-panel__actions">
           <Button variant="primary" onClick={options.onPlayAgain} testId="duel-play-again">

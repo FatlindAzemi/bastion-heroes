@@ -44,6 +44,19 @@ function isOverTray(event: PointerEvent): boolean {
   return element?.closest('.duel-tray') !== null && element !== null;
 }
 
+/** Ends a press: a drag released over the board plays, a short tap on the held card lets go. */
+function releasePress(
+  current: CardPress | null,
+  event: PointerEvent,
+  options: CardDragOptions,
+): void {
+  if (current?.moved === true && !isOverTray(event)) {
+    options.playAt(current.slot, event.clientX, event.clientY);
+  } else if (current?.moved === false && current.wasHeld) {
+    options.setHeldSlot(null);
+  }
+}
+
 /**
  * A press on a card holds it; moving the finger further than the threshold turns it
  * into a drag, and releasing over the board plays it there (spec 18.5). A short tap
@@ -83,11 +96,7 @@ export function useCardDrag(options: CardDragOptions): CardDrag {
       const current = press.current;
       press.current = null;
       setGhost(null);
-      if (current?.moved === true && !isOverTray(event)) {
-        options.playAt(current.slot, event.clientX, event.clientY);
-      } else if (current?.moved === false && current.wasHeld) {
-        options.setHeldSlot(null);
-      }
+      releasePress(current, event, options);
     },
   };
 }

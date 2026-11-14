@@ -139,6 +139,35 @@ function mountTrainingResult(
   });
 }
 
+/** The per-run state the tick and the draw share. */
+interface TrainingRunState {
+  alpha: number;
+  resultTimer: number;
+  hud: DuelHudHandle | null;
+  result: { dispose(): void } | null;
+}
+
+/** One tick in the order of #127/#128: bot, human (taps arrive between frames), `step()`. */
+function stepTrainingTick(
+  training: TrainingMatch,
+  renderer: GameRenderer,
+  run: TrainingRunState,
+  onEnded: () => void,
+): void {
+  const { match, bot } = training;
+  if (match.state.result !== null) {
+    return;
+  }
+  playDuelBotTurn(bot, match);
+  const events = match.step();
+  renderer.handleDuelEvents(events);
+  run.hud?.handleEvents(duelHudEventsOf(events));
+  playTickAudio(events);
+  if (match.state.result !== null) {
+    run.resultTimer = window.setTimeout(onEnded, RESULT_DELAY_MS);
+  }
+}
+
 /** Starts one Training match on the renderer and returns its handle. */
 export function startTrainingRun(
   root: HTMLElement,
@@ -146,48 +175,30 @@ export function startTrainingRun(
   options: TrainingRunOptions,
 ): TrainingRunHandle {
   const training = createTrainingMatch(options.level);
-  const { match, bot } = training;
+  const { match } = training;
   renderer.showDuel({ viewSide: TRAINING_SIDE });
   playMusic('world1_calm');
-  const run = { alpha: 0, resultTimer: 0 };
-  let hud: DuelHudHandle | null = mountTrainingHud(
-    root,
-    renderer,
-    training,
-    options.level,
-    () => run.alpha,
-  );
-  let result: { dispose(): void } | null = null;
+  const run: TrainingRunState = { alpha: 0, resultTimer: 0, hud: null, result: null };
+  run.hud = mountTrainingHud(root, renderer, training, options.level, () => run.alpha);
   const finish = (): void => {
-    hud?.dispose();
-    hud = null;
+    run.hud?.dispose();
+    run.hud = null;
     renderer.setDuelPlacementHint(null);
-    result = mountTrainingResult(root, match, options);
+    run.result = mountTrainingResult(root, match, options);
   };
-  // One tick in the order of #127/#128: bot, human (taps arrive between frames), `step()`.
-  const stepTick = (): void => {
-    if (match.state.result !== null) {
-      return;
-    }
-    playDuelBotTurn(bot, match);
-    const events = match.step();
-    renderer.handleDuelEvents(events);
-    hud?.handleEvents(duelHudEventsOf(events));
-    playTickAudio(events);
-    if (match.state.result !== null) {
-      run.resultTimer = window.setTimeout(finish, RESULT_DELAY_MS);
-    }
-  };
-  const stopLoop = runFrameLoop(stepTick, (alpha) => {
-    run.alpha = match.state.result === null ? alpha : 0;
-    renderer.drawDuel(match.state, run.alpha);
-  });
+  const stopLoop = runFrameLoop(
+    () => stepTrainingTick(training, renderer, run, finish),
+    (alpha) => {
+      run.alpha = match.state.result === null ? alpha : 0;
+      renderer.drawDuel(match.state, run.alpha);
+    },
+  );
   return {
     dispose: (): void => {
       stopLoop();
       window.clearTimeout(run.resultTimer);
-      hud?.dispose();
-      result?.dispose();
+      run.hud?.dispose();
+      run.result?.dispose();
       renderer.setDuelPlacementHint(null);
     },
   };

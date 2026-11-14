@@ -5,7 +5,12 @@ import { duelCardView } from './duelCards';
 import { resolveDuelTap } from './duelTap';
 import type { DuelHudBus, DuelHudOptions } from './types';
 import { useCardDrag, type DragGhost } from './useCardDrag';
-import { useDuelFeedback, type DuelBannerView, type RejectionState } from './useDuelFeedback';
+import {
+  useDuelFeedback,
+  type DuelBannerView,
+  type DuelFeedback,
+  type RejectionState,
+} from './useDuelFeedback';
 
 /** HUD behaviour state and handlers for one frame. */
 export interface DuelInteraction {
@@ -33,20 +38,14 @@ function useHeldSlot(options: DuelHudOptions): [number | null, (slot: number | n
   return [heldSlot, setHeldSlot];
 }
 
-/**
- * Card selection, drag-and-drop and tap-to-place (spec 18.5: "drags a card onto a
- * tile, or taps the card and then the tile"), with the rejection feedback of 3.4
- * and the phase banners of 18.2.
- */
-export function useDuelInteraction(
-  options: DuelHudOptions & { readonly bus: DuelHudBus },
-): DuelInteraction {
-  const [heldSlot, setHeldSlot] = useHeldSlot(options);
-  const lastPlayedSlot = useRef<number | null>(null);
-  const feedback = useDuelFeedback(options.bus, lastPlayedSlot);
-
-  /** Plays the card of `slot` at a board point and clears the hold (spec 18.5). */
-  const playAt = (slot: number, clientX: number, clientY: number): void => {
+/** Plays the card of a hand slot at a board point and clears the hold (spec 18.5). */
+function createPlayAt(
+  options: DuelHudOptions,
+  setHeldSlot: (slot: number | null) => void,
+  feedback: DuelFeedback,
+  lastPlayedSlot: { current: number | null },
+): (slot: number, clientX: number, clientY: number) => void {
+  return (slot, clientX, clientY): void => {
     const view = options.readState();
     const cardId = view.hand[slot];
     const card = cardId === undefined ? null : duelCardView(cardId);
@@ -63,6 +62,21 @@ export function useDuelInteraction(
     lastPlayedSlot.current = slot;
     playSfx('card_place');
   };
+}
+
+/**
+ * Card selection, drag-and-drop and tap-to-place (spec 18.5: "drags a card onto a
+ * tile, or taps the card and then the tile"), with the rejection feedback of 3.4
+ * and the phase banners of 18.2.
+ */
+export function useDuelInteraction(
+  options: DuelHudOptions & { readonly bus: DuelHudBus },
+): DuelInteraction {
+  const [heldSlot, setHeldSlot] = useHeldSlot(options);
+  const lastPlayedSlot = useRef<number | null>(null);
+  const feedback = useDuelFeedback(options.bus, lastPlayedSlot);
+
+  const playAt = createPlayAt(options, setHeldSlot, feedback, lastPlayedSlot);
 
   const drag = useCardDrag({ heldSlot, setHeldSlot, playAt, readState: options.readState });
   return {

@@ -12,7 +12,7 @@ import { MatchTimer } from './MatchTimer';
 import { OpponentBar } from './OpponentBar';
 import { PhaseOverlay } from './PhaseOverlay';
 import { SurrenderButton, SurrenderDialog } from './SurrenderMenu';
-import type { DuelHudBus, DuelHudOptions } from './types';
+import type { DuelHudBus, DuelHudOptions, DuelHudStateView } from './types';
 import { useDuelInteraction, type DuelInteraction } from './useDuelInteraction';
 
 /** Props of the mounted Duel HUD: view adapter, actions and the event bus. */
@@ -43,6 +43,32 @@ function DragGhostView({ interaction }: { readonly interaction: DuelInteraction 
   );
 }
 
+/** The bottom tray: reason toast, own gate pips, Essence bar and the hand (spec 18.9). */
+function DuelTray({
+  view,
+  interaction,
+}: {
+  readonly view: DuelHudStateView;
+  readonly interaction: DuelInteraction;
+}) {
+  return (
+    <div class="duel-tray">
+      <RejectionMessage message={interaction.rejection?.message ?? null} />
+      <div class="duel-tray__status">
+        <Icon name="shield" class="duel-tray__gate-icon" />
+        <GatePips health={view.ownGate} max={view.maxGate} side="own" label="Your gate" />
+      </div>
+      <EssenceBar essence={view.essence} max={view.maxEssence} progress={view.essenceProgress} />
+      <DuelHand
+        hand={view.hand}
+        next={view.next}
+        essence={view.essence}
+        interaction={interaction}
+      />
+    </div>
+  );
+}
+
 /**
  * Portrait Duel HUD of spec 18.9: the opponent bar and the match timer at the top,
  * the surrender menu top right, and above the hand the own gate pips and the
@@ -67,20 +93,7 @@ export function DuelHud(props: DuelHudProps) {
         showFight={interaction.showFight}
         banner={interaction.banner}
       />
-      <div class="duel-tray">
-        <RejectionMessage message={interaction.rejection?.message ?? null} />
-        <div class="duel-tray__status">
-          <Icon name="shield" class="duel-tray__gate-icon" />
-          <GatePips health={view.ownGate} max={view.maxGate} side="own" label="Your gate" />
-        </div>
-        <EssenceBar essence={view.essence} max={view.maxEssence} progress={view.essenceProgress} />
-        <DuelHand
-          hand={view.hand}
-          next={view.next}
-          essence={view.essence}
-          interaction={interaction}
-        />
-      </div>
+      <DuelTray view={view} interaction={interaction} />
       <DragGhostView interaction={interaction} />
       {menuOpen && !view.ended ? (
         <SurrenderDialog
